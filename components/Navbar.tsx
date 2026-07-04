@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Github } from "lucide-react";
+import { withBasePath } from "@/lib/paths";
 
 const links = [
   { label: "What is MoliVerse", href: "#what" },
@@ -23,7 +24,7 @@ export default function Navbar() {
         <a href="#" className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-white/20">
             <Image
-              src="/mascot.png"
+              src={withBasePath("/mascot.png")}
               alt="MoliVerse mascot"
               width={36}
               height={36}

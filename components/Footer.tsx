@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Github, Linkedin, Mail } from "lucide-react";
+import { withBasePath } from "@/lib/paths";
 
 const socials = [
   { icon: Github, label: "GitHub", href: "https://github.com" },
@@ -15,7 +16,7 @@ export default function Footer() {
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-white/20">
               <Image
-                src="/mascot.png"
+                src={withBasePath("/mascot.png")}
                 alt="MoliVerse mascot"
                 width={32}
                 height={32}

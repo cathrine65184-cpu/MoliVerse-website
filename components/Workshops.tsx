@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { withBasePath } from "@/lib/paths";
 import Reveal from "./ui/Reveal";
 import SectionHeading from "./ui/SectionHeading";
 
@@ -64,7 +65,7 @@ export default function Workshops() {
               <div className="glass-card group h-full overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-white/20">
                 <div className="relative overflow-hidden">
                   <Image
-                    src={workshop.image}
+                    src={withBasePath(workshop.image)}
                     alt={`${workshop.language} workshop — ${workshop.title}`}
                     width={1400}
                     height={645}
