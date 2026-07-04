@@ -8,6 +8,7 @@ import { withBasePath } from "@/lib/paths";
 const links = [
   { label: "What is MoliVerse", href: "#what" },
   { label: "How It Works", href: "#how" },
+  { label: "Teachers", href: "#teachers" },
   { label: "Workshops", href: "#workshops" },
   { label: "Vision", href: "#vision" },
 ];
