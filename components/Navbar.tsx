@@ -1,16 +1,17 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Github } from "lucide-react";
 import { withBasePath } from "@/lib/paths";
 
 const links = [
-  { label: "What is MoliVerse", href: "#what" },
-  { label: "How It Works", href: "#how" },
-  { label: "Teachers", href: "#teachers" },
-  { label: "Workshops", href: "#workshops" },
-  { label: "Vision", href: "#vision" },
+  { label: "What is MoliVerse", href: "/#what" },
+  { label: "How It Works", href: "/#how" },
+  { label: "Teachers", href: "/#teachers" },
+  { label: "Workshops", href: "/#workshops" },
+  { label: "Live Demo", href: "/demo/" },
 ];
 
 export default function Navbar() {
@@ -22,7 +23,7 @@ export default function Navbar() {
       className="fixed inset-x-0 top-0 z-50"
     >
       <nav className="mx-auto mt-4 flex max-w-5xl items-center justify-between rounded-2xl border border-white/[0.08] bg-void/70 px-5 py-3 backdrop-blur-xl sm:mx-6 lg:mx-auto">
-        <a href="#" className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-white/20">
             <Image
               src={withBasePath("/mascot.png")}
@@ -36,17 +37,17 @@ export default function Navbar() {
           <span className="font-display text-lg font-semibold tracking-tight text-white">
             MoliVerse
           </span>
-        </a>
+        </Link>
 
         <div className="hidden items-center gap-8 md:flex">
           {links.map((link) => (
-            <a
+            <Link
               key={link.href}
               href={link.href}
               className="text-sm text-slate-400 transition-colors hover:text-white"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </div>
 

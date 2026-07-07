@@ -8,6 +8,7 @@ const basePath = isGithubActions ? "/MoliVerse-website" : "";
 const nextConfig = {
   reactStrictMode: true,
   output: "export",
+  trailingSlash: true,
   images: { unoptimized: true },
   basePath,
   // Unoptimized next/image does not prepend basePath to src, so components

@@ -1,4 +1,5 @@
-import { ScanFace, Wand2, HeartHandshake } from "lucide-react";
+import Link from "next/link";
+import { ScanFace, Wand2, HeartHandshake, Gamepad2 } from "lucide-react";
 import Reveal from "./ui/Reveal";
 import SectionHeading from "./ui/SectionHeading";
 
@@ -75,6 +76,16 @@ export default function Teachers() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal delay={0.3} className="mt-12 flex justify-center">
+          <Link
+            href="/demo/"
+            className="group flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-7 py-3.5 text-sm font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,0.6)] transition-all hover:shadow-[0_0_56px_-8px_rgba(139,92,246,0.8)]"
+          >
+            <Gamepad2 className="h-4 w-4" />
+            Try the live demo · 试玩数字老师
+          </Link>
+        </Reveal>
       </div>
     </section>
   );
