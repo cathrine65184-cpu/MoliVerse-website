@@ -36,7 +36,7 @@ export default function Hero() {
         >
           <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
           <span className="text-xs font-medium tracking-wide text-slate-300">
-            An AI-powered RPG language learning universe
+            An AI-powered RPG language universe — for every child, everywhere
           </span>
         </motion.div>
 

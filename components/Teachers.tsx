@@ -7,25 +7,25 @@ const steps = [
   {
     number: "01",
     icon: ScanFace,
-    title: "Teachers Get a Digital Twin",
+    title: "Create Your Digital Twin",
     description:
-      "Real language teachers join MoliVerse, and we build each one a cyber persona — an AI character with their voice, personality, and teaching style, alive inside the story world around the clock.",
+      "Anyone who can teach — a university student, a tutor, a native speaker — joins as a creator, and we build them a cyber persona with their voice, personality, and teaching style, alive in the story world around the clock.",
     accent: "text-indigo-300",
   },
   {
     number: "02",
     icon: Wand2,
-    title: "Teachers Craft the Worlds",
+    title: "Design Your Own Courses",
     description:
-      "Teachers design the scenarios, storylines, and quests you play. Every adventure is a real lesson in disguise, shaped by someone who knows exactly how languages are learned.",
+      "Creators craft personalized, localized story-quests — their culture, their language, their way of teaching. Every adventure is a real lesson in disguise.",
     accent: "text-violet-300",
   },
   {
     number: "03",
     icon: HeartHandshake,
-    title: "Players Learn, Humans Guide",
+    title: "Kids Discover and Connect",
     description:
-      "You explore vivid stories with the teacher's digital twin at your side — while the real teacher watches your journey, gives feedback, and steps in when you need a human touch.",
+      "Children browse a universe of teachers and courses, find the ones they love, adventure with the twin anytime — and can always reach the real human behind it.",
     accent: "text-cyan-300",
   },
 ];
@@ -38,14 +38,15 @@ export default function Teachers() {
       <div className="relative mx-auto max-w-5xl">
         <SectionHeading
           eyebrow="Human + AI"
-          title="Real teachers, living inside the story."
+          title="A universe built by teachers everywhere."
         />
 
         <Reveal delay={0.1} className="mx-auto mt-8 max-w-2xl text-center">
           <p className="text-base leading-relaxed text-slate-400 sm:text-lg">
-            Behind every adventure stands a real language teacher. MoliVerse
-            gives each teacher a digital twin — so human expertise can guide
-            you inside worlds no classroom could ever hold.
+            MoliVerse is a creator platform. Real teachers from around the
+            world give their teaching a digital twin and open their own corner
+            of the universe — so human expertise can guide every child, inside
+            worlds no classroom could ever hold.
           </p>
         </Reveal>
 

@@ -24,7 +24,8 @@ export default function Vision() {
             We believe the future of education is immersive, interactive, and
             AI-native. MoliVerse is building a universe where language learning
             is no longer about memorization, but about exploration, creativity,
-            and meaningful experiences.
+            and meaningful experiences — a universe that belongs to every
+            child, not only those born near great schools.
           </p>
         </Reveal>
       </div>
