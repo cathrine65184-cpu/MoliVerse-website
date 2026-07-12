@@ -45,16 +45,17 @@ export default function Workshops() {
 
       <div className="relative mx-auto max-w-5xl">
         <SectionHeading
-          eyebrow="Where It Began"
-          title="This isn't a concept. We already teach."
+          eyebrow="Live Workshops"
+          title="The universe is already open for young explorers."
         />
 
         <Reveal delay={0.1} className="mx-auto mt-8 max-w-2xl text-center">
           <p className="text-base leading-relaxed text-slate-400 sm:text-lg">
-            MoliVerse started with real classrooms: live story-driven language
+            While we build MoliVerse, our team already runs live story-driven
             workshops where children learn Spanish, French, and German inside
-            imaginary worlds. Every scene below is a real class — and every AI
-            mentor on the platform begins with a real educator like these.
+            imaginary worlds — football kingdoms, animal ateliers, and ancient
+            legends reimagined across European cities. Every scene below is a
+            real class.
           </p>
         </Reveal>
 

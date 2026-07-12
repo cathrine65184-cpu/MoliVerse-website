@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { Compass, GraduationCap } from "lucide-react";
+import { ArrowRight, Github } from "lucide-react";
 import Starfield from "./Starfield";
-import Globe from "./Globe";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -26,12 +24,6 @@ export default function Hero() {
       <div className="absolute bottom-[-30%] left-[10%] h-[40rem] w-[40rem] animate-orb-drift-slow rounded-full bg-violet-600/15 blur-[120px]" />
       <div className="absolute right-[5%] top-[20%] h-[30rem] w-[30rem] animate-orb-drift rounded-full bg-cyan-500/10 blur-[110px]" />
       <Starfield />
-
-      {/* Rotating globe behind the headline — the world this is for */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-[44%] opacity-70 sm:h-[42rem] sm:w-[42rem]">
-        <Globe className="h-full w-full" />
-      </div>
-
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-void to-transparent" />
 
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-6 pb-24 pt-36 text-center">
@@ -44,7 +36,7 @@ export default function Hero() {
         >
           <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
           <span className="text-xs font-medium tracking-wide text-slate-300">
-            A global AI education platform
+            An AI-powered RPG language universe — for every child, everywhere
           </span>
         </motion.div>
 
@@ -53,12 +45,12 @@ export default function Hero() {
           initial={reduceMotion ? "visible" : "hidden"}
           animate="visible"
           custom={0.12}
-          className="font-display text-4xl font-semibold leading-[1.08] tracking-tight text-white sm:text-6xl md:text-7xl"
+          className="font-display text-5xl font-semibold leading-[1.05] tracking-tight text-white sm:text-7xl md:text-8xl"
         >
-          Every Child Deserves
+          Learn Languages.
           <br />
           <span className="animate-shimmer bg-gradient-to-r from-indigo-300 via-violet-300 via-50% to-cyan-300 bg-[length:200%_auto] bg-clip-text text-transparent">
-            a Great Teacher.
+            Live Stories.
           </span>
         </motion.h1>
 
@@ -81,20 +73,22 @@ export default function Hero() {
           custom={0.36}
           className="mt-10 flex flex-col items-center gap-4 sm:flex-row"
         >
-          <Link
-            href="/#creators"
+          <a
+            href="#what"
             className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-7 py-3.5 text-sm font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,0.6)] transition-all hover:shadow-[0_0_56px_-8px_rgba(139,92,246,0.8)]"
           >
-            <GraduationCap className="h-4 w-4" />
-            Become an Educator
-          </Link>
-          <Link
-            href="/#community"
+            Explore MoliVerse
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </a>
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-7 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur-sm transition-all hover:border-white/25 hover:bg-white/[0.08]"
           >
-            <Compass className="h-4 w-4" />
-            Explore AI Mentors
-          </Link>
+            <Github className="h-4 w-4" />
+            GitHub
+          </a>
         </motion.div>
       </div>
     </section>

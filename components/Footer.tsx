@@ -27,7 +27,7 @@ export default function Footer() {
               MoliVerse
             </span>
           </div>
-          <p className="text-sm text-slate-500">AI × Educators × Every Child</p>
+          <p className="text-sm text-slate-500">AI × RPG × Language Learning</p>
         </div>
 
         <div className="flex items-center gap-3">

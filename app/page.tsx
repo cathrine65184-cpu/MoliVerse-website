@@ -1,12 +1,11 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import Problem from "@/components/Problem";
+import WhatIs from "@/components/WhatIs";
+import HowItWorks from "@/components/HowItWorks";
 import HumanAI from "@/components/HumanAI";
-import CreatorEconomy from "@/components/CreatorEconomy";
-import Subjects from "@/components/Subjects";
 import Workshops from "@/components/Workshops";
+import Mission from "@/components/Mission";
 import Vision from "@/components/Vision";
-import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -14,13 +13,12 @@ export default function Home() {
     <main className="relative">
       <Navbar />
       <Hero />
-      <Problem />
+      <WhatIs />
+      <HowItWorks />
       <HumanAI />
-      <CreatorEconomy />
-      <Subjects />
       <Workshops />
+      <Mission />
       <Vision />
-      <CTA />
       <Footer />
     </main>
   );
