@@ -15,13 +15,13 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "MoliVerse — Learn Languages. Live Stories.",
+  title: "MoliVerse — Every Child Deserves a Great Teacher",
   description:
-    "MoliVerse is an AI-powered RPG language universe where teachers worldwide create digital twins and story-quest courses, making human-guided language learning affordable for every child.",
+    "MoliVerse is a global AI education platform where educators create AI versions of themselves — making quality education accessible, affordable and available everywhere.",
   openGraph: {
-    title: "MoliVerse — Learn Languages. Live Stories.",
+    title: "MoliVerse — Every Child Deserves a Great Teacher",
     description:
-      "A creator platform where real teachers build AI digital twins and immersive story-quests — human-guided language learning that every family can afford.",
+      "A global AI education platform: educators create AI mentors with their personality and expertise, and learners anywhere can afford to learn from them.",
     type: "website",
   },
 };

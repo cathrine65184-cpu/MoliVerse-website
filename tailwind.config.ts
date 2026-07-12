@@ -25,8 +25,14 @@ const config: Config = {
         "orb-drift": "orb-drift 24s ease-in-out infinite alternate",
         "orb-drift-slow": "orb-drift 36s ease-in-out infinite alternate-reverse",
         shimmer: "shimmer 8s ease-in-out infinite",
+        float: "float 6s ease-in-out infinite",
+        "float-slow": "float 9s ease-in-out infinite",
       },
       keyframes: {
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
         "orb-drift": {
           "0%": { transform: "translate3d(0, 0, 0) scale(1)" },
           "50%": { transform: "translate3d(6%, -4%, 0) scale(1.08)" },

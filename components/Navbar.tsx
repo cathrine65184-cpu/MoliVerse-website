@@ -7,10 +7,9 @@ import { Github } from "lucide-react";
 import { withBasePath } from "@/lib/paths";
 
 const links = [
-  { label: "What is MoliVerse", href: "/#what" },
-  { label: "How It Works", href: "/#how" },
-  { label: "Teachers", href: "/#teachers" },
-  { label: "Workshops", href: "/#workshops" },
+  { label: "Why MoliVerse", href: "/#why" },
+  { label: "Human + AI", href: "/#human-ai" },
+  { label: "Creators", href: "/#creators" },
   { label: "Live Demo", href: "/demo/" },
 ];
 

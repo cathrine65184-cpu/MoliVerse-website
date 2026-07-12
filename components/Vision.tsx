@@ -14,18 +14,17 @@ export default function Vision() {
 
         <Reveal delay={0.1}>
           <h2 className="mt-6 font-display text-3xl font-semibold leading-tight tracking-tight text-white sm:text-5xl">
-            Language learning should feel like{" "}
-            <span className="text-gradient">living another life.</span>
+            A world where every child learns from{" "}
+            <span className="text-gradient">inspiring educators.</span>
           </h2>
         </Reveal>
 
         <Reveal delay={0.2}>
           <p className="mt-8 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
-            We believe the future of education is immersive, interactive, and
-            AI-native. MoliVerse is building a universe where language learning
-            is no longer about memorization, but about exploration, creativity,
-            and meaningful experiences — a universe that belongs to every
-            child, not only those born near great schools.
+            Regardless of where they are born. Regardless of what their
+            families can pay. We believe the future of education is human at
+            heart and AI at scale — and we&apos;re building the universe where
+            that future begins.
           </p>
         </Reveal>
       </div>
