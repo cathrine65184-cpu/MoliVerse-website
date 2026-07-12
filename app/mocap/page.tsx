@@ -14,6 +14,19 @@ import { withBasePath } from "@/lib/paths";
 
 type Point = { x: number; y: number; visibility?: number };
 
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace JSX {
+    interface IntrinsicElements {
+      "model-viewer": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      > &
+        Record<string, unknown>;
+    }
+  }
+}
+
 // MediaPipe Pose landmark indices
 const L = {
   nose: 0,
@@ -170,6 +183,8 @@ export default function MocapPage() {
   themeRef.current = theme;
 
   useEffect(() => {
+    // Register the <model-viewer> web component for the 3D showcase
+    import("@google/model-viewer");
     return () => stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -769,6 +784,66 @@ export default function MocapPage() {
         </div>
 
         <video ref={videoRef} className="hidden" playsInline muted />
+
+        {/* Real 3D showcase */}
+        <div className="mt-10 grid gap-6 lg:grid-cols-[1fr,340px]">
+          <div className="glass-card overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] px-5 py-3">
+              <p className="text-sm font-semibold text-white">
+                真 · 3D 角色舞台 <span className="text-slate-500">Real 3D stage</span>
+              </p>
+              <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
+                可拖动旋转 · 缩放
+              </span>
+            </div>
+            <model-viewer
+              src={withBasePath("/models3d/fox.glb")}
+              alt="开源 3D 示例角色 — 奔跑的小狐狸"
+              camera-controls=""
+              auto-rotate=""
+              autoplay=""
+              loading="eager"
+              animation-name="Run"
+              shadow-intensity="1"
+              exposure="1.1"
+              style={{ width: "100%", height: "380px", backgroundColor: "transparent" }}
+            />
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="glass-card p-5">
+              <h3 className="font-display text-sm font-semibold text-white">
+                这就是最终形态的雏形
+              </h3>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                左边是一个真实的 3D 模型，在你的浏览器里实时渲染 ——
+                拖动它、转动它、看它奔跑。接入 Tripo text-to-3D 生成 API
+                后，上面输入框里的提示词将直接生成这样的专属 3D
+                角色，再由动作捕捉的骨骼数据驱动。
+              </p>
+            </div>
+            <div className="glass-card p-5">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                生产管线 · Pipeline
+              </p>
+              <ul className="mt-3 space-y-2 text-xs text-slate-300">
+                {[
+                  "① 提示词 → Tripo 生成 3D 模型（接入就绪）",
+                  "② 模型进入网页 3D 舞台（✓ 已上线）",
+                  "③ 摄像头骨骼流驱动角色（✓ 技术已验证）",
+                ].map((step) => (
+                  <li key={step} className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2">
+                    {step}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <p className="text-[11px] leading-relaxed text-slate-600">
+              示例模型：Fox（glTF 开源样例，模型 CC0 · 动画 CC-BY 4.0 by
+              @tomkranis）。积分到账后将替换为 MoliVerse 专属生成角色。
+            </p>
+          </div>
+        </div>
 
         {/* Why it matters */}
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
