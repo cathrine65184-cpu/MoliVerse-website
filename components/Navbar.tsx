@@ -10,6 +10,7 @@ const links = [
   { label: "What is MoliVerse", href: "/#what" },
   { label: "How It Works", href: "/#how" },
   { label: "Human + AI", href: "/#human-ai" },
+  { label: "Studio", href: "/studio/" },
   { label: "Workshops", href: "/#workshops" },
   { label: "Live Demo", href: "/demo/" },
 ];
