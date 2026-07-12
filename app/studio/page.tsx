@@ -528,6 +528,23 @@ export default function StudioPage() {
               </div>
             )}
 
+            <Link
+              href="/mocap/"
+              className="glass-card group flex items-center gap-4 border-cyan-400/20 p-5 transition-all hover:border-cyan-400/40"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
+                <ScanFace className="h-5 w-5" />
+              </span>
+              <span>
+                <span className="block font-display text-sm font-semibold text-white">
+                  下一步：让分身动起来 → MoCap Lab
+                </span>
+                <span className="block text-xs text-slate-500">
+                  摄像头动作捕捉，实时驱动角色 — 你动，TA 就动
+                </span>
+              </span>
+            </Link>
+
             <p className="text-xs leading-relaxed text-slate-600">
               隐私说明：照片、录音和文件全部只在你的浏览器本地处理，不会上传到任何服务器。
               视频级数字人渲染与声音克隆将通过合作伙伴 API（如 HeyGen / ElevenLabs）在下一阶段接入。
