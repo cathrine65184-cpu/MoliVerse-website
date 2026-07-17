@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Github } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { withBasePath } from "@/lib/paths";
 
 const links = [
@@ -52,15 +52,13 @@ export default function Navbar() {
           ))}
         </div>
 
-        <a
-          href="https://github.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200 transition-all hover:border-white/20 hover:bg-white/[0.08]"
+        <Link
+          href="/account/"
+          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_0_24px_-8px_rgba(139,92,246,0.6)] transition-all hover:opacity-90"
         >
-          <Github className="h-4 w-4" />
-          <span className="hidden sm:inline">GitHub</span>
-        </a>
+          <UserRound className="h-4 w-4" />
+          <span className="hidden sm:inline">登录 / Sign In</span>
+        </Link>
       </nav>
     </motion.header>
   );
