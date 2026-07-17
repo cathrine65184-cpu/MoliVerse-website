@@ -11,9 +11,8 @@ const links = [
   { label: "How It Works", href: "/#how" },
   { label: "Human + AI", href: "/#human-ai" },
   { label: "Studio", href: "/studio/" },
-  { label: "MoCap Lab", href: "/mocap/" },
+  { label: "Story Stage", href: "/mocap/" },
   { label: "Workshops", href: "/#workshops" },
-  { label: "Live Demo", href: "/demo/" },
 ];
 
 export default function Navbar() {
