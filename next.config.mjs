@@ -1,18 +1,15 @@
-// GitHub Pages serves the site from /MoliVerse-website, so the base path is
-// only applied when building inside GitHub Actions.
-const isGithubActions = process.env.GITHUB_ACTIONS === "true";
+// Served from the root of the custom domain moliverse.tec, so there is no
+// base path. (Static export keeps the previous NEXT_PUBLIC_BASE_PATH plumbing
+// harmless: it now resolves to an empty prefix.)
+const basePath = "";
 
 /** @type {import('next').NextConfig} */
-const basePath = isGithubActions ? "/MoliVerse-website" : "";
-
 const nextConfig = {
   reactStrictMode: true,
   output: "export",
   trailingSlash: true,
   images: { unoptimized: true },
   basePath,
-  // Unoptimized next/image does not prepend basePath to src, so components
-  // read it from this env var and prefix image URLs themselves.
   env: { NEXT_PUBLIC_BASE_PATH: basePath },
 };
 
