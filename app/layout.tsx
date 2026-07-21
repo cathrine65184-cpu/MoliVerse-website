@@ -15,13 +15,17 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://moliverse.tech"),
   title: "MoliVerse — Learn Languages. Live Stories.",
   description:
     "MoliVerse is an AI-powered RPG language universe where teachers worldwide create digital twins and story-quest courses, making human-guided language learning affordable for every child.",
+  alternates: { canonical: "/" },
   openGraph: {
     title: "MoliVerse — Learn Languages. Live Stories.",
     description:
       "A creator platform where real teachers build AI digital twins and immersive story-quests — human-guided language learning that every family can afford.",
+    url: "https://moliverse.tech",
+    siteName: "MoliVerse",
     type: "website",
   },
 };
