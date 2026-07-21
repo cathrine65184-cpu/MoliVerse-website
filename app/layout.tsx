@@ -27,6 +27,21 @@ export const metadata: Metadata = {
     url: "https://moliverse.tech",
     siteName: "MoliVerse",
     type: "website",
+    images: [
+      {
+        url: "/og.jpg",
+        width: 1200,
+        height: 630,
+        alt: "MoliVerse — Learn Languages. Live Stories.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MoliVerse — Learn Languages. Live Stories.",
+    description:
+      "A global AI education platform where educators create AI mentors — making quality education accessible and affordable for every child.",
+    images: ["/og.jpg"],
   },
 };
 
