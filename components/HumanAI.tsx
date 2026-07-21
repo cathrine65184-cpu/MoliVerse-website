@@ -46,7 +46,7 @@ function CatherinePhoto({
   return (
     <Image
       src={withBasePath("/catherine-sq.jpg")}
-      alt="Catherine, French language educator"
+      alt="Catherine, English language educator"
       width={size}
       height={size}
       className={`object-cover ${className}`}
@@ -91,13 +91,13 @@ function TeacherPanel() {
             className="h-32 w-32 animate-float rounded-3xl border border-white/15 shadow-[0_0_50px_-12px_rgba(251,191,36,0.4)] sm:h-36 sm:w-36"
           />
           <span className="absolute -bottom-2 -right-2 text-2xl" aria-hidden>
-            🇫🇷
+            🇬🇧
           </span>
         </span>
         <h3 className="mt-5 font-display text-2xl font-semibold text-white">
           Catherine
         </h3>
-        <p className="mt-1 text-sm text-slate-400">French Language Educator</p>
+        <p className="mt-1 text-sm text-slate-400">English Language Educator</p>
         <div className="mt-4 flex flex-wrap justify-center gap-2">
           {["Storytelling", "Culture", "Conversation"].map((tag) => (
             <span
@@ -264,7 +264,7 @@ function DigitalHumanPanel() {
               ))}
             </div>
             <p className="text-sm font-medium text-white">
-              « Bonjour ! Je suis Catherine. On apprend le français ensemble ? »
+              “Hi! I&apos;m Catherine. Shall we learn English together?”
             </p>
             <p className="mt-0.5 text-xs text-slate-400">
               Speaking with Catherine&apos;s own cloned voice
@@ -327,7 +327,7 @@ function ConnectionPanel() {
       <div className="mt-8 flex w-full flex-col gap-2.5">
         <div className="flex justify-end">
           <p className="max-w-[85%] rounded-2xl rounded-br-md bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2.5 text-sm text-white">
-            I&apos;m afraid to speak French in front of my classmates.
+            I&apos;m afraid to speak English in front of my classmates.
           </p>
         </div>
         <div className="flex justify-start">
@@ -374,10 +374,9 @@ function ConnectionPanel() {
 /* ---------- panel 5 · network + finale ---------- */
 
 const educators = [
-  { flag: "🇪🇸", name: "Mateo", language: "Spanish", learners: "1,870" },
-  { flag: "🇨🇳", name: "Xiaoyu", language: "Chinese", learners: "3,150" },
-  { flag: "🇯🇵", name: "Yuki", language: "Japanese", learners: "2,680" },
-  { flag: "🇩🇪", name: "Lutifiya", language: "German", learners: "1,420" },
+  { flag: "🇫🇷", name: "Leo", language: "French" },
+  { flag: "🇪🇸", name: "Nicolò", language: "Spanish" },
+  { flag: "🇩🇪", name: "Lutfiya", language: "German" },
 ];
 
 function NetworkPanel() {
@@ -393,8 +392,7 @@ function NetworkPanel() {
         <div className="flex max-w-2xl flex-wrap items-center justify-center gap-2.5">
           <span className="flex items-center gap-2 rounded-full border border-violet-300/30 bg-violet-400/10 py-1.5 pl-1.5 pr-4 text-sm text-white">
             <CatherinePhoto size={28} className="h-7 w-7 rounded-full" />
-            Catherine · French
-            <span className="text-xs text-cyan-300">2,340 learners</span>
+            Catherine · English
           </span>
           {educators.map((educator) => (
             <span
@@ -403,13 +401,10 @@ function NetworkPanel() {
             >
               <span aria-hidden>{educator.flag}</span>
               {educator.name} · {educator.language}
-              <span className="text-xs text-cyan-300">
-                {educator.learners} learners
-              </span>
             </span>
           ))}
           <span className="rounded-full border border-dashed border-white/15 px-4 py-1.5 text-sm text-slate-500">
-            + thousands more
+            + more joining soon
           </span>
         </div>
 
