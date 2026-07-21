@@ -1,4 +1,4 @@
-// Served from the root of the custom domain moliverse.tec, so there is no
+// Served from the root of the custom domain moliverse.tech, so there is no
 // base path. (Static export keeps the previous NEXT_PUBLIC_BASE_PATH plumbing
 // harmless: it now resolves to an empty prefix.)
 const basePath = "";
