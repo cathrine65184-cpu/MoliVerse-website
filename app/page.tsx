@@ -6,6 +6,7 @@ import HumanAI from "@/components/HumanAI";
 import Workshops from "@/components/Workshops";
 import Mission from "@/components/Mission";
 import Vision from "@/components/Vision";
+import Waitlist from "@/components/Waitlist";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -19,6 +20,7 @@ export default function Home() {
       <Workshops />
       <Mission />
       <Vision />
+      <Waitlist />
       <Footer />
     </main>
   );

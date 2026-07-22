@@ -59,9 +59,14 @@ function CatherinePhoto({
 function IntroPanel() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-      <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-violet-300">
-        Human + AI
-      </span>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-violet-300">
+          Human + AI
+        </span>
+        <span className="inline-flex items-center rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-200">
+          Beta · 技术预览
+        </span>
+      </div>
       <h2 className="mt-6 font-display text-3xl font-semibold tracking-tight text-white sm:text-5xl">
         A universe built by language educators everywhere.
       </h2>

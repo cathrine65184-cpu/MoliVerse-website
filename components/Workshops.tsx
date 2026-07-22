@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Compass } from "lucide-react";
 import { withBasePath } from "@/lib/paths";
 import Reveal from "./ui/Reveal";
 import SectionHeading from "./ui/SectionHeading";
@@ -87,6 +88,19 @@ export default function Workshops() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal delay={0.2} className="mt-14 flex flex-col items-center gap-3 text-center">
+          <a
+            href="mailto:cathrine65184@gmail.com?subject=Book%20a%20free%20MoliVerse%20workshop&body=Hi%20MoliVerse%20team%2C%20I%27d%20love%20to%20join%20a%20workshop.%20My%20child%27s%20age%2Flanguage%2Fcity%3A"
+            className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-7 py-3.5 text-sm font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,0.6)] transition-all hover:shadow-[0_0_56px_-8px_rgba(139,92,246,0.8)]"
+          >
+            <Compass className="h-4 w-4" />
+            Join the Adventure · 预约免费工坊
+          </a>
+          <p className="text-xs text-slate-500">
+            Free trial workshops, small groups — email us your child&apos;s age, language, and city.
+          </p>
+        </Reveal>
       </div>
     </section>
   );

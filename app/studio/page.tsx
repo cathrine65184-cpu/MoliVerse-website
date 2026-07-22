@@ -220,9 +220,14 @@ export default function StudioPage() {
         </Link>
 
         <div className="mt-6 max-w-2xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-violet-300">
-            Mentor Studio · 数字人工作室
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-violet-300">
+              Mentor Studio · 数字人工作室
+            </span>
+            <span className="inline-flex items-center rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-200">
+              Beta · 技术预览
+            </span>
+          </div>
           <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             Create your own AI mentor.
           </h1>
