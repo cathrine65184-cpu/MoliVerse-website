@@ -11,6 +11,7 @@ import {
   type Message,
   type Profile,
 } from "@/lib/supabase";
+import { defaultFilter } from "@/lib/sensitiveFilter";
 
 function ChatInner() {
   const router = useRouter();
@@ -23,6 +24,7 @@ function ChatInner() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const loadConvos = useCallback(async (profile: Profile) => {
@@ -91,7 +93,14 @@ function ChatInner() {
   async function send(e: React.FormEvent) {
     e.preventDefault();
     if (!draft.trim() || !activeId || !me) return;
-    const content = draft.trim();
+    const raw = draft.trim();
+    // Content safety — Module 1: mask sensitive words before the message is
+    // ever stored, so the other party (often a child) never receives them.
+    const content = defaultFilter.filter(raw);
+    if (content !== raw) {
+      setNotice("消息中的敏感内容已被自动屏蔽，请友善交流。");
+      setTimeout(() => setNotice(null), 4000);
+    }
     setDraft("");
     setSending(true);
     const { data, error } = await supabase
@@ -230,6 +239,12 @@ function ChatInner() {
               )}
               <div ref={endRef} />
             </div>
+
+            {notice && (
+              <p className="border-t border-amber-400/20 bg-amber-400/10 px-4 py-2 text-xs text-amber-300">
+                {notice}
+              </p>
+            )}
 
             <form onSubmit={send} className="flex gap-2 border-t border-white/[0.08] px-4 py-3.5">
               <input
