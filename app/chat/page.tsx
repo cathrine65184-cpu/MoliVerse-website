@@ -3,15 +3,27 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Send } from "lucide-react";
+import { Ban, Flag, Loader2, MoreVertical, Send, ShieldCheck } from "lucide-react";
 import {
   supabase,
   getMyProfile,
+  fileReport,
+  blockUser,
+  unblockUser,
+  loadBlockedIds,
   type Conversation,
   type Message,
   type Profile,
 } from "@/lib/supabase";
 import { defaultFilter } from "@/lib/sensitiveFilter";
+
+const reportReasons = [
+  "骚扰或辱骂",
+  "不当 / 危险内容",
+  "索要私人联系方式",
+  "垃圾广告",
+  "其他",
+];
 
 function ChatInner() {
   const router = useRouter();
@@ -25,7 +37,15 @@ function ChatInner() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState<Set<string>>(new Set());
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+
+  function flash(msg: string) {
+    setNotice(msg);
+    setTimeout(() => setNotice(null), 4000);
+  }
 
   const loadConvos = useCallback(async (profile: Profile) => {
     const { data } = await supabase
@@ -42,7 +62,10 @@ function ChatInner() {
     getMyProfile().then((p) => {
       setMe(p);
       setChecking(false);
-      if (p) loadConvos(p);
+      if (p) {
+        loadConvos(p);
+        loadBlockedIds(p.id).then(setBlocked);
+      }
     });
   }, [loadConvos]);
 
@@ -90,9 +113,47 @@ function ChatInner() {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
 
+  const activeConv = convos.find((c) => c.id === activeId);
+  const otherId = activeConv
+    ? me?.id === activeConv.student_id
+      ? activeConv.teacher_id
+      : activeConv.student_id
+    : null;
+  const isBlocked = !!otherId && blocked.has(otherId);
+
+  async function reportConversation(reason: string) {
+    if (!me || !activeId) return;
+    await fileReport(me.id, "conversation", activeId, reason);
+    setReporting(false);
+    setMenuOpen(false);
+    flash("举报已提交，我们会尽快审核。感谢你帮助社区更安全。");
+  }
+
+  async function toggleBlock() {
+    if (!me || !otherId) return;
+    setMenuOpen(false);
+    if (blocked.has(otherId)) {
+      await unblockUser(me.id, otherId);
+      setBlocked((s) => {
+        const n = new Set(s);
+        n.delete(otherId);
+        return n;
+      });
+      flash("已取消拉黑。");
+    } else {
+      await blockUser(me.id, otherId);
+      setBlocked((s) => new Set(s).add(otherId));
+      flash("已拉黑，你们将无法再互发消息。");
+    }
+  }
+
   async function send(e: React.FormEvent) {
     e.preventDefault();
     if (!draft.trim() || !activeId || !me) return;
+    if (isBlocked) {
+      flash("你们之间已拉黑，无法发送消息。");
+      return;
+    }
     const raw = draft.trim();
     // Content safety — Module 1: mask sensitive words before the message is
     // ever stored, so the other party (often a child) never receives them.
@@ -207,10 +268,69 @@ function ChatInner() {
                 )}
               </span>
               <div>
-                <p className="text-sm font-semibold text-white">{other.name}</p>
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-white">
+                  {other.name}
+                  {other.verified && (
+                    <span
+                      title="已实名核验"
+                      className="inline-flex items-center gap-0.5 rounded-full bg-sky-400/15 px-1.5 py-0.5 text-[10px] font-medium text-sky-300"
+                    >
+                      <ShieldCheck className="h-3 w-3" />
+                      已核验
+                    </span>
+                  )}
+                </p>
                 <p className="text-xs text-slate-500">
                   {me.id === active.student_id ? "真人老师 · 会亲自回复你" : "你的学生"}
                 </p>
+              </div>
+
+              {/* Safety menu */}
+              <div className="relative ml-auto">
+                <button
+                  onClick={() => setMenuOpen((o) => !o)}
+                  aria-label="更多"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </button>
+                {menuOpen && (
+                  <div className="absolute right-0 top-9 z-10 w-44 overflow-hidden rounded-xl border border-white/10 bg-void/95 py-1 shadow-xl backdrop-blur">
+                    {!reporting ? (
+                      <>
+                        <button
+                          onClick={() => setReporting(true)}
+                          className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-slate-200 transition-colors hover:bg-white/[0.06]"
+                        >
+                          <Flag className="h-3.5 w-3.5 text-amber-300" />
+                          举报
+                        </button>
+                        <button
+                          onClick={toggleBlock}
+                          className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-slate-200 transition-colors hover:bg-white/[0.06]"
+                        >
+                          <Ban className="h-3.5 w-3.5 text-rose-300" />
+                          {isBlocked ? "取消拉黑" : "拉黑"}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="px-4 py-2 text-[11px] uppercase tracking-wide text-slate-500">
+                          举报原因
+                        </p>
+                        {reportReasons.map((r) => (
+                          <button
+                            key={r}
+                            onClick={() => reportConversation(r)}
+                            className="block w-full px-4 py-2 text-left text-sm text-slate-200 transition-colors hover:bg-white/[0.06]"
+                          >
+                            {r}
+                          </button>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -246,22 +366,37 @@ function ChatInner() {
               </p>
             )}
 
-            <form onSubmit={send} className="flex gap-2 border-t border-white/[0.08] px-4 py-3.5">
-              <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder={`发消息给 ${other.name}…`}
-                className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
-              />
-              <button
-                type="submit"
-                disabled={sending || !draft.trim()}
-                aria-label="发送"
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white transition-all enabled:hover:opacity-90 disabled:opacity-40"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </form>
+            {isBlocked ? (
+              <div className="flex items-center justify-between gap-2 border-t border-white/[0.08] px-4 py-3.5">
+                <span className="flex items-center gap-2 text-sm text-slate-500">
+                  <Ban className="h-4 w-4 text-rose-300" />
+                  已拉黑，无法发送消息
+                </span>
+                <button
+                  onClick={toggleBlock}
+                  className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:border-white/25 hover:text-white"
+                >
+                  取消拉黑
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={send} className="flex gap-2 border-t border-white/[0.08] px-4 py-3.5">
+                <input
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder={`发消息给 ${other.name}…`}
+                  className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
+                />
+                <button
+                  type="submit"
+                  disabled={sending || !draft.trim()}
+                  aria-label="发送"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white transition-all enabled:hover:opacity-90 disabled:opacity-40"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </form>
+            )}
           </>
         ) : (
           <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-slate-600">

@@ -21,12 +21,13 @@ export default function Waitlist() {
     if (!email.trim()) return;
     setStatus("sending");
     setError(null);
-    // Insert into the private waitlist table. RLS allows anonymous inserts
-    // only — nobody can read the list back through the public key.
+    // Plain insert (no read-back): the private waitlist has no SELECT policy,
+    // so the list stays unreadable through the public key. A duplicate email
+    // (unique-violation 23505) just means they already joined — treat as done.
     const { error: err } = await supabase
       .from("waitlist")
-      .upsert({ email: email.trim().toLowerCase(), role }, { onConflict: "email", ignoreDuplicates: true });
-    if (err) {
+      .insert({ email: email.trim().toLowerCase(), role });
+    if (err && err.code !== "23505") {
       setStatus("error");
       setError("提交失败，请稍后再试，或直接邮件 cathrine65184@gmail.com");
       return;

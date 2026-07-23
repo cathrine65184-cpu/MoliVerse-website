@@ -14,7 +14,58 @@ export type Profile = {
   bio: string;
   language: string;
   avatar_url: string | null;
+  verified?: boolean;
 };
+
+export type ReportTarget = "message" | "conversation" | "course" | "user";
+
+/** Report a piece of content or a user for review. */
+export async function fileReport(
+  reporterId: string,
+  targetType: ReportTarget,
+  targetId: string | null,
+  reason: string,
+  detail = ""
+) {
+  return supabase.from("reports").insert({
+    reporter_id: reporterId,
+    target_type: targetType,
+    target_id: targetId,
+    reason,
+    detail,
+  });
+}
+
+/** Block another user (blocker stops seeing / messaging blocked). */
+export async function blockUser(blockerId: string, blockedId: string) {
+  return supabase
+    .from("blocks")
+    .upsert(
+      { blocker_id: blockerId, blocked_id: blockedId },
+      { onConflict: "blocker_id,blocked_id", ignoreDuplicates: true }
+    );
+}
+
+export async function unblockUser(blockerId: string, blockedId: string) {
+  return supabase
+    .from("blocks")
+    .delete()
+    .eq("blocker_id", blockerId)
+    .eq("blocked_id", blockedId);
+}
+
+/** All user ids that are blocked in either direction relative to me. */
+export async function loadBlockedIds(myId: string): Promise<Set<string>> {
+  const { data } = await supabase
+    .from("blocks")
+    .select("blocker_id, blocked_id")
+    .or(`blocker_id.eq.${myId},blocked_id.eq.${myId}`);
+  const set = new Set<string>();
+  for (const b of (data as { blocker_id: string; blocked_id: string }[]) ?? []) {
+    set.add(b.blocker_id === myId ? b.blocked_id : b.blocker_id);
+  }
+  return set;
+}
 
 export type Course = {
   id: string;

@@ -3,8 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FileText, Heart, Loader2, MessageCircle } from "lucide-react";
-import { supabase, getMyProfile, type Course, type Profile } from "@/lib/supabase";
+import { Flag, FileText, Heart, Loader2, MessageCircle, ShieldCheck } from "lucide-react";
+import {
+  supabase,
+  getMyProfile,
+  fileReport,
+  type Course,
+  type Profile,
+} from "@/lib/supabase";
 
 export default function LearnPage() {
   const router = useRouter();
@@ -12,6 +18,14 @@ export default function LearnPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [reported, setReported] = useState<Set<string>>(new Set());
+
+  async function reportCourse(course: Course) {
+    if (!me) return router.push("/account/");
+    if (!confirm(`举报课程「${course.title}」？我们会尽快审核。`)) return;
+    await fileReport(me.id, "course", course.id, "课程内容举报");
+    setReported((s) => new Set(s).add(course.id));
+  }
 
   async function refresh() {
     const { data } = await supabase
@@ -132,10 +146,19 @@ export default function LearnPage() {
                           </span>
                         )}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500">
-                        {teacher?.name ?? "老师"}
-                        {teacher?.language ? ` · ${teacher.language}` : ""}
-                        {teacher?.bio ? ` — ${teacher.bio.slice(0, 50)}` : ""}
+                      <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                        <span className="text-slate-400">{teacher?.name ?? "老师"}</span>
+                        {teacher?.verified && (
+                          <span
+                            title="已实名核验"
+                            className="inline-flex items-center gap-0.5 rounded-full bg-sky-400/15 px-1.5 py-0.5 text-[10px] font-medium text-sky-300"
+                          >
+                            <ShieldCheck className="h-3 w-3" />
+                            已核验
+                          </span>
+                        )}
+                        {teacher?.language ? `· ${teacher.language}` : ""}
+                        {teacher?.bio ? `— ${teacher.bio.slice(0, 50)}` : ""}
                       </p>
                       <p className="mt-2 text-sm leading-relaxed text-slate-300">
                         {course.description}
@@ -210,6 +233,14 @@ export default function LearnPage() {
                         私信{teacher?.name ?? "老师"}
                       </button>
                     )}
+                    <button
+                      onClick={() => reportCourse(course)}
+                      disabled={reported.has(course.id)}
+                      className="ml-auto flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs text-slate-500 transition-all hover:border-amber-400/30 hover:text-amber-300 disabled:opacity-50"
+                    >
+                      <Flag className="h-3 w-3" />
+                      {reported.has(course.id) ? "已举报" : "举报"}
+                    </button>
                   </div>
                 </div>
               );

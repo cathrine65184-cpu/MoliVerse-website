@@ -11,6 +11,7 @@ import {
   MessageCircle,
   Mic,
   Plus,
+  ShieldCheck,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -41,6 +42,9 @@ export default function TeachPage() {
   const [creating, setCreating] = useState(false);
   const [uploadingTo, setUploadingTo] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [realName, setRealName] = useState("");
+  const [verifStatus, setVerifStatus] = useState<"none" | "pending" | "approved">("none");
+  const [submittingVerif, setSubmittingVerif] = useState(false);
 
   const refresh = useCallback(async (profile: Profile) => {
     const [{ data: cs }, { data: cv }] = await Promise.all([
@@ -66,9 +70,36 @@ export default function TeachPage() {
         setBio(p.bio);
         setLanguage(p.language);
         refresh(p);
+        if (p.verified) {
+          setVerifStatus("approved");
+        } else {
+          const { data } = await supabase
+            .from("verifications")
+            .select("status")
+            .eq("teacher_id", p.id)
+            .order("created_at", { ascending: false })
+            .limit(1);
+          if (data && data.length > 0 && data[0].status !== "rejected") {
+            setVerifStatus("pending");
+          }
+        }
       }
     });
   }, [refresh]);
+
+  async function submitVerification() {
+    if (!me || !realName.trim()) return;
+    setSubmittingVerif(true);
+    const { error } = await supabase
+      .from("verifications")
+      .insert({ teacher_id: me.id, real_name: realName.trim() });
+    setSubmittingVerif(false);
+    if (!error) {
+      setVerifStatus("pending");
+      setNotice("实名核验申请已提交，我们会尽快审核。");
+      setTimeout(() => setNotice(null), 3000);
+    }
+  }
 
   async function saveProfile() {
     if (!me) return;
@@ -230,6 +261,55 @@ export default function TeachPage() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Real-name verification */}
+        <div className="glass-card mt-5 p-6">
+          <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
+            <ShieldCheck className="h-4 w-4 text-sky-300" />
+            实名核验
+            {verifStatus === "approved" && (
+              <span className="rounded-full bg-sky-400/15 px-2 py-0.5 text-xs font-medium text-sky-300">
+                已核验 ✓
+              </span>
+            )}
+            {verifStatus === "pending" && (
+              <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-xs font-medium text-amber-300">
+                审核中
+              </span>
+            )}
+          </h2>
+          {verifStatus === "approved" ? (
+            <p className="mt-3 text-sm text-slate-400">
+              你已通过实名核验，课程和资料上会显示蓝色「已核验」徽章，家长和学生更信任你。
+            </p>
+          ) : verifStatus === "pending" ? (
+            <p className="mt-3 text-sm text-slate-400">
+              申请已提交，我们会通过视频等方式与你核实身份后开通「已核验」徽章。感谢你为孩子的安全把关。
+            </p>
+          ) : (
+            <>
+              <p className="mt-3 text-sm text-slate-400">
+                为保护孩子，与学生私信、发布课程前建议完成实名核验。提交真实姓名即可，
+                我们会**线下**与你核实（不会在平台存储证件照片）。
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <input
+                  value={realName}
+                  onChange={(e) => setRealName(e.target.value)}
+                  placeholder="你的真实姓名"
+                  className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-sky-400/50"
+                />
+                <button
+                  onClick={submitVerification}
+                  disabled={submittingVerif || !realName.trim()}
+                  className="rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 px-5 py-2.5 text-sm font-semibold text-white transition-all enabled:hover:opacity-90 disabled:opacity-40"
+                >
+                  {submittingVerif ? "提交中…" : "申请核验"}
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Messages */}
