@@ -56,6 +56,8 @@ function LessonInner() {
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoRef = useRef(true);
   const indexRef = useRef(0);
+  const spokenRef = useRef(-1);
+  const camOnRef = useRef(false);
 
   // Scene stage
   const stageRef = useRef<HTMLCanvasElement>(null);
@@ -88,6 +90,14 @@ function LessonInner() {
   const step = steps?.[index];
   const total = steps?.length ?? 0;
   const costume = costumes[step?.costume ?? "ranger"] ?? costumes.ranger;
+
+  const stepsRef = useRef<LessonStep[] | null>(null);
+  useEffect(() => {
+    stepsRef.current = steps;
+  }, [steps]);
+  useEffect(() => {
+    camOnRef.current = camOn;
+  }, [camOn]);
 
   /* ---------- load lesson (data-driven core) ---------- */
 
@@ -216,7 +226,7 @@ function LessonInner() {
     u.onerror = finish;
     synth.speak(u);
     // Safety net in case the platform never fires onend
-    setTimeout(finish, Math.max(4000, text.length * 160));
+    setTimeout(finish, Math.min(20000, Math.max(3500, text.length * 120)));
   }, []);
 
   const goto = useCallback(
@@ -231,30 +241,45 @@ function LessonInner() {
     []
   );
 
-  // Narrate each step; auto-advance non-interactive steps when done
-  useEffect(() => {
-    if (!started || !step || !steps) return;
-    setQuizFeedback(null);
-    setMoveDone(false);
-    moveDoneRef.current = false;
-    meterRef.current = 0;
-    setMeter(0);
-    stepMoveRef.current = step.t === "move" || (step.t === "card" && !!step.move);
-    if (step.scene) switchScene(step.scene);
+  // Narrate a step: reset per-step state, switch scene, and speak. Called
+  // both from the index-change effect and directly from the start gesture
+  // (so the very first utterance is user-gesture-bound and not autoplay-blocked).
+  const narrate = useCallback(
+    (i: number) => {
+      const list = stepsRef.current;
+      const s = list?.[i];
+      if (!s || !list) return;
+      setQuizFeedback(null);
+      setMoveDone(false);
+      moveDoneRef.current = false;
+      meterRef.current = 0;
+      setMeter(0);
+      stepMoveRef.current = s.t === "move" || (s.t === "card" && !!s.move);
+      if (s.scene) switchScene(s.scene);
+      const isLast = i >= list.length - 1;
+      const interactive =
+        s.t === "quiz" || s.t === "move" || s.t === "audio" || s.t === "video";
+      speak(s.say, () => {
+        if (!autoRef.current || isLast) return;
+        if (interactive) return;
+        if (stepMoveRef.current && camOnRef.current && !moveDoneRef.current) return;
+        autoTimer.current = setTimeout(() => {
+          if (indexRef.current === i) goto(i + 1);
+        }, 1300);
+      });
+    },
+    [speak, goto]
+  );
 
-    const isLast = index >= steps.length - 1;
-    const interactive =
-      step.t === "quiz" || step.t === "move" || step.t === "audio" || step.t === "video";
-    speak(step.say, () => {
-      if (!autoRef.current || isLast) return;
-      if (interactive) return; // wait for the child (or media) to finish
-      if (stepMoveRef.current && camOn && !moveDoneRef.current) return; // wait for movement
-      autoTimer.current = setTimeout(() => {
-        if (indexRef.current === index) goto(index + 1);
-      }, 1300);
-    });
+  // Speak on each index change (deduped so the gesture-driven first speak
+  // isn't repeated).
+  useEffect(() => {
+    if (!started) return;
+    if (spokenRef.current === index) return;
+    spokenRef.current = index;
+    narrate(index);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, started, steps]);
+  }, [index, started]);
 
   /* ---------- motion detection ---------- */
 
@@ -402,7 +427,12 @@ function LessonInner() {
   function restart() {
     setStars(0);
     setStarted(true);
-    goto(0);
+    clearAuto();
+    window.speechSynthesis?.cancel();
+    setIndex(0);
+    indexRef.current = 0;
+    spokenRef.current = 0;
+    narrate(0);
   }
 
   /* ---------- render ---------- */
@@ -561,8 +591,12 @@ function LessonInner() {
               </p>
               <button
                 onClick={() => {
+                  // Unlock speech within the user gesture (Safari/Chrome autoplay).
+                  window.speechSynthesis?.resume();
                   setStarted(true);
                   indexRef.current = 0;
+                  spokenRef.current = 0;
+                  narrate(0);
                 }}
                 className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-500 px-8 py-4 text-base font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,0.8)] transition-all hover:shadow-[0_0_56px_-8px_rgba(139,92,246,1)]"
               >
