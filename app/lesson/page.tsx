@@ -58,6 +58,7 @@ function LessonInner() {
   const indexRef = useRef(0);
   const spokenRef = useRef(-1);
   const camOnRef = useRef(false);
+  const stepStartRef = useRef(0);
 
   // Scene stage
   const stageRef = useRef<HTMLCanvasElement>(null);
@@ -255,6 +256,7 @@ function LessonInner() {
       meterRef.current = 0;
       setMeter(0);
       stepMoveRef.current = s.t === "move" || (s.t === "card" && !!s.move);
+      stepStartRef.current = performance.now();
       if (s.scene) switchScene(s.scene);
       const isLast = i >= list.length - 1;
       const interactive =
@@ -263,9 +265,13 @@ function LessonInner() {
         if (!autoRef.current || isLast) return;
         if (interactive) return;
         if (stepMoveRef.current && camOnRef.current && !moveDoneRef.current) return;
+        // Keep each step on screen a comfortable minimum, even if the
+        // browser reports speech ended early.
+        const elapsed = performance.now() - stepStartRef.current;
+        const wait = Math.max(2000, 3800 - elapsed);
         autoTimer.current = setTimeout(() => {
           if (indexRef.current === i) goto(i + 1);
-        }, 1300);
+        }, wait);
       });
     },
     [speak, goto]
@@ -340,7 +346,16 @@ function LessonInner() {
       const pose = landmarker.detectForVideo(video, performance.now()).landmarks?.[0];
       drawPip(video, pose);
 
-      if (pose && prevPoseRef.current && stepMoveRef.current && !moveDoneRef.current) {
+      // Grace period: ignore motion for the first 2s of a step so residual
+      // movement from the previous action can't instantly fill the bar.
+      const graceOver = performance.now() - stepStartRef.current > 2000;
+      if (
+        graceOver &&
+        pose &&
+        prevPoseRef.current &&
+        stepMoveRef.current &&
+        !moveDoneRef.current
+      ) {
         const keys = [11, 12, 13, 14, 15, 16, 23, 24];
         const prev = prevPoseRef.current;
         let disp = 0;
@@ -352,7 +367,10 @@ function LessonInner() {
           pose[11] && pose[12]
             ? Math.max(0.05, Math.hypot(pose[11].x - pose[12].x, pose[11].y - pose[12].y))
             : 0.2;
-        meterRef.current = Math.min(1, meterRef.current * 0.985 + (disp / torso) * 0.9);
+        // Slower fill + faster decay → needs sustained, deliberate movement
+        // (~2.5s of real jumping), not a momentary spike, to complete.
+        const energy = Math.min(0.12, disp / torso);
+        meterRef.current = Math.max(0, Math.min(1, meterRef.current * 0.94 + energy * 0.16));
         setMeter(meterRef.current);
         if (meterRef.current >= 1) {
           moveDoneRef.current = true;
