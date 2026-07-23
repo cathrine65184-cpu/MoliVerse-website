@@ -209,7 +209,7 @@ export default function LearnPage() {
 
                   <div className="flex flex-wrap items-center gap-3 border-t border-white/[0.08] px-6 py-3.5">
                     <Link
-                      href="/lesson/"
+                      href={`/lesson/?c=${course.id}`}
                       className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-1.5 text-xs font-semibold text-white shadow-[0_0_24px_-8px_rgba(139,92,246,0.7)] transition-all hover:opacity-90"
                     >
                       <Play className="h-3.5 w-3.5 fill-white" />
