@@ -24,6 +24,7 @@ import {
   langCode,
   type LessonStep,
 } from "@/lib/lessonEngine";
+import { generatedLessons } from "@/lib/generatedLessons";
 import { type BgSpec, parseBg, drawBackground } from "@/lib/sceneEngine";
 import { withBasePath } from "@/lib/paths";
 
@@ -128,7 +129,11 @@ function LessonInner() {
       });
       setVoiceLang(langCode(c.language));
       setLessonTitle(c.title);
-      if (/alphabet|字母/i.test(c.title)) {
+      const aiLesson = generatedLessons[c.id];
+      if (aiLesson && aiLesson.length > 2) {
+        // AI-authored lesson (DeepSeek read the courseware)
+        setSteps(aiLesson);
+      } else if (/alphabet|字母/i.test(c.title)) {
         setSteps(alphabetLesson());
       } else {
         setSteps(buildLessonFromCourse(c, c.course_files ?? [], teacherName));
