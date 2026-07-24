@@ -46,6 +46,7 @@ function LessonInner() {
   );
   const [voiceLang, setVoiceLang] = useState("en-GB");
   const [lessonTitle, setLessonTitle] = useState("Animal Alphabet Adventure");
+  const [generating, setGenerating] = useState(false);
 
   // Player state
   const [started, setStarted] = useState(false);
@@ -129,14 +130,54 @@ function LessonInner() {
       });
       setVoiceLang(langCode(c.language));
       setLessonTitle(c.title);
-      const aiLesson = generatedLessons[c.id];
-      if (aiLesson && aiLesson.length > 2) {
-        // AI-authored lesson (DeepSeek read the courseware)
-        setSteps(aiLesson);
-      } else if (/alphabet|字母/i.test(c.title)) {
+      // 1) Baked-in AI lesson (instant)
+      const baked = generatedLessons[c.id];
+      if (baked && baked.length > 2) {
+        setSteps(baked);
+        return;
+      }
+      // 2) Hand-authored alphabet
+      if (/alphabet|字母/i.test(c.title)) {
         setSteps(alphabetLesson());
-      } else {
-        setSteps(buildLessonFromCourse(c, c.course_files ?? [], teacherName));
+        return;
+      }
+      // 3) Cached runtime generation
+      const cacheKey = `moli-lesson-${c.id}`;
+      const cached =
+        typeof window !== "undefined" ? window.localStorage.getItem(cacheKey) : null;
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 2) {
+            setSteps(parsed);
+            return;
+          }
+        } catch {
+          /* fall through */
+        }
+      }
+      // 4) Live AI generation via the edge function (DeepSeek), then cache
+      setGenerating(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("generate-lesson", {
+          body: { title: c.title, description: c.description, teacherName },
+        });
+        if (cancelled) return;
+        const genSteps = (data as { steps?: LessonStep[] } | null)?.steps;
+        if (!error && genSteps && genSteps.length > 2) {
+          try {
+            window.localStorage.setItem(cacheKey, JSON.stringify(genSteps));
+          } catch {
+            /* storage full — ignore */
+          }
+          setSteps(genSteps);
+        } else {
+          setSteps(buildLessonFromCourse(c, c.course_files ?? [], teacherName));
+        }
+      } catch {
+        if (!cancelled) setSteps(buildLessonFromCourse(c, c.course_files ?? [], teacherName));
+      } finally {
+        if (!cancelled) setGenerating(false);
       }
     }
     load();
@@ -462,8 +503,20 @@ function LessonInner() {
 
   if (!steps) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-slate-500">
-        <Loader2 className="h-6 w-6 animate-spin" />
+      <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 px-6 text-center">
+        <Loader2 className="h-7 w-7 animate-spin text-violet-300" />
+        {generating ? (
+          <>
+            <p className="font-display text-lg font-semibold text-white">
+              AI 老师正在为你备课…
+            </p>
+            <p className="max-w-xs text-sm text-slate-400">
+              正在阅读这门课的内容，编写专属剧情课堂（约 10–20 秒，之后就秒开）
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-slate-500">正在加载课堂…</p>
+        )}
       </div>
     );
   }
