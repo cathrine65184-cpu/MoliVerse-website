@@ -11,7 +11,9 @@ import {
   MessageCircle,
   Mic,
   Plus,
+  RotateCcw,
   ShieldCheck,
+  Sparkles,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -430,26 +432,54 @@ export default function TeachPage() {
                 </ul>
               )}
 
-              <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-white/20 px-4 py-2 text-xs text-slate-400 transition-all hover:border-violet-400/40 hover:text-white">
-                {uploadingTo === course.id ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    上传中…
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-3.5 w-3.5" />
-                    上传照片 / 声音 / 视频 / 课件
-                  </>
-                )}
-                <input
-                  type="file"
-                  multiple
-                  className="hidden"
-                  disabled={uploadingTo !== null}
-                  onChange={(e) => addFiles(course.id, e.target.files)}
-                />
-              </label>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-white/20 px-4 py-2 text-xs text-slate-400 transition-all hover:border-violet-400/40 hover:text-white">
+                  {uploadingTo === course.id ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      上传中…
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-3.5 w-3.5" />
+                      上传照片 / 声音 / 视频 / 课件
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    disabled={uploadingTo !== null}
+                    onChange={(e) => addFiles(course.id, e.target.files)}
+                  />
+                </label>
+
+                <a
+                  href={`/lesson/?c=${course.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2 text-xs font-semibold text-white transition-all hover:opacity-90"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  预览 AI 课堂
+                </a>
+
+                <button
+                  onClick={() => {
+                    try {
+                      window.localStorage.removeItem(`moli-lesson-${course.id}`);
+                    } catch {
+                      /* ignore */
+                    }
+                    window.open(`/lesson/?c=${course.id}`, "_blank", "noopener");
+                  }}
+                  title="清除缓存并让 AI 重新编课（改了内容后用）"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-400 transition-all hover:border-white/25 hover:text-white"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  重新生成
+                </button>
+              </div>
             </div>
           ))}
           {courses.length === 0 && (
