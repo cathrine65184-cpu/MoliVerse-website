@@ -108,6 +108,10 @@ export default function TeacherStudioPage() {
   const bgRef = useRef<{ curr: BgSpec }>({ curr: parseBg(previewScenes[0].scene) });
 
   // character + motion capture
+  // real talking-head generation
+  const [genState, setGenState] = useState<"idle" | "working" | "done" | "error">("idle");
+  const [genMsg, setGenMsg] = useState<string | null>(null);
+
   const [capturing, setCapturing] = useState(false);
   const [captureSecs, setCaptureSecs] = useState(0);
   const [camLoading, setCamLoading] = useState(false);
@@ -149,6 +153,7 @@ export default function TeacherStudioPage() {
           subject: saved?.subject || p.language || "",
           character: saved?.character || "森林向导",
           motion: saved?.motion ?? null,
+          talkingUrl: saved?.talkingUrl ?? null,
           updatedAt: saved?.updatedAt ?? "",
         });
         if (saved?.motion?.length) motionRef.current = saved.motion;
@@ -274,6 +279,47 @@ export default function TeacherStudioPage() {
     stopCapture();
     setPersona((p) => ({ ...p, motion: motionRef.current.slice() }));
     flash(`动作已录制 ✓ ${motionRef.current.length} 帧，角色会循环演出你的动作`);
+  }
+
+  /* ---------- real talking-head video (HeyGen via edge function) ---------- */
+
+  async function generateTalkingVideo() {
+    if (!me || !persona.photoUrl) return;
+    setGenState("working");
+    setGenMsg("正在把你的照片变成会说话的数字人…（约 1–3 分钟）");
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-avatar", {
+        body: { action: "create", text: persona.greeting || `Hi! I'm ${me.name}.` },
+      });
+      const created = data as { videoId?: string; error?: string; message?: string } | null;
+      if (error || !created?.videoId) {
+        setGenState("error");
+        setGenMsg(created?.message ?? "生成失败，请稍后重试");
+        return;
+      }
+      // poll until the video is ready
+      for (let i = 0; i < 40; i++) {
+        await new Promise((r) => setTimeout(r, 10000));
+        const { data: st } = await supabase.functions.invoke("generate-avatar", {
+          body: { action: "status", videoId: created.videoId },
+        });
+        const s = st as { status?: string; videoUrl?: string } | null;
+        if (s?.status === "completed" && s.videoUrl) {
+          const url = `${s.videoUrl}?t=${Date.now()}`;
+          setPersona((p) => ({ ...p, talkingUrl: url }));
+          setGenState("done");
+          setGenMsg("你的数字人视频已生成 ✓ 记得点保存");
+          return;
+        }
+        if (s?.status === "failed") break;
+        setGenMsg(`生成中…（已等待 ${(i + 1) * 10} 秒）`);
+      }
+      setGenState("error");
+      setGenMsg("生成超时，请稍后重试");
+    } catch {
+      setGenState("error");
+      setGenMsg("生成失败，请稍后重试");
+    }
   }
 
   useEffect(() => {
@@ -744,6 +790,66 @@ export default function TeacherStudioPage() {
               </div>
             </div>
 
+            {/* real talking-head generation */}
+            <div className="glass-card border-cyan-400/20 p-6">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
+                  <Play className="h-4 w-4" />
+                </span>
+                <div className="flex-1">
+                  <h2 className="font-display text-base font-semibold text-white">
+                    05 · 生成会说话的我
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    用你的照片和开场白，生成一段真正会开口的数字人视频
+                  </p>
+                </div>
+                {persona.talkingUrl && <Check className="h-5 w-5 text-emerald-400" />}
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={generateTalkingVideo}
+                  disabled={genState === "working" || !persona.photoUrl}
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white transition-all enabled:hover:opacity-90 disabled:opacity-40"
+                >
+                  {genState === "working" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  {persona.talkingUrl ? "重新生成" : "生成我的说话视频"}
+                </button>
+                {!persona.photoUrl && (
+                  <span className="text-xs text-slate-500">先上传一张照片</span>
+                )}
+              </div>
+
+              {genMsg && (
+                <p
+                  className={`mt-3 text-xs ${
+                    genState === "error"
+                      ? "text-amber-300"
+                      : genState === "done"
+                        ? "text-emerald-300"
+                        : "text-cyan-300"
+                  }`}
+                >
+                  {genMsg}
+                </p>
+              )}
+
+              {persona.talkingUrl && (
+                <video
+                  key={persona.talkingUrl}
+                  src={persona.talkingUrl}
+                  controls
+                  playsInline
+                  className="mt-4 w-full max-w-[240px] rounded-2xl border border-white/15"
+                />
+              )}
+            </div>
+
             <button
               onClick={save}
               disabled={saving || !ready}
@@ -786,17 +892,29 @@ export default function TeacherStudioPage() {
                   </div>
 
                   <div className="flex flex-col items-center gap-1.5">
-                    {/* small talking-head inset keeps the real face present */}
-                    {persona.photoUrl && (
+                    {/* talking-head inset — the real generated video when it exists */}
+                    {(persona.talkingUrl || persona.photoUrl) && (
                       <span
-                        className="relative h-12 w-12 overflow-hidden rounded-full border-2 shadow-lg"
+                        className="relative h-14 w-14 overflow-hidden rounded-full border-2 shadow-lg"
                         style={{ borderColor: costume.color }}
                       >
                         {speaking && (
                           <span className="absolute -inset-1 animate-ping rounded-full bg-cyan-400/40" />
                         )}
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={persona.photoUrl} alt="" className="h-full w-full object-cover" />
+                        {persona.talkingUrl ? (
+                          <video
+                            key={persona.talkingUrl}
+                            src={persona.talkingUrl}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={persona.photoUrl!} alt="" className="h-full w-full object-cover" />
+                        )}
                       </span>
                     )}
                     <p className="max-w-[92%] rounded-2xl bg-black/50 px-4 py-2 text-center text-xs italic leading-relaxed text-slate-100 backdrop-blur">

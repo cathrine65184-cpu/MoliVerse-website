@@ -22,6 +22,8 @@ export type Persona = {
   character: string;
   /** Short loop of the teacher's own captured movement, driving the character. */
   motion: MotionFrame[] | null;
+  /** Real talking-head video generated from the portrait. */
+  talkingUrl: string | null;
   updatedAt: string;
 };
 
@@ -33,6 +35,7 @@ export const emptyPersona: Persona = {
   subject: "",
   character: "",
   motion: null,
+  talkingUrl: null,
   updatedAt: "",
 };
 

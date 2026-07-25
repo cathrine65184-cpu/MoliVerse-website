@@ -26,6 +26,22 @@ import {
 } from "@/lib/lessonEngine";
 import { generatedLessons } from "@/lib/generatedLessons";
 import { type BgSpec, parseBg, drawBackground } from "@/lib/sceneEngine";
+import { parseTheme, drawPuppet, L, type Point as CPoint } from "@/lib/characterEngine";
+import { loadPersona, type Persona } from "@/lib/persona";
+
+/** Joints stored per motion frame — must match the studio's packing. */
+const MOTION_JOINTS = [
+  L.nose, L.lShoulder, L.rShoulder, L.lElbow, L.rElbow,
+  L.lWrist, L.rWrist, L.lHip, L.rHip, L.lKnee, L.rKnee, L.lAnkle, L.rAnkle,
+];
+
+function unpackFrame(frame: number[]): CPoint[] {
+  const pose: CPoint[] = [];
+  MOTION_JOINTS.forEach((j, i) => {
+    pose[j] = { x: frame[i * 2], y: frame[i * 2 + 1] };
+  });
+  return pose;
+}
 import { withBasePath } from "@/lib/paths";
 
 type Point = { x: number; y: number };
@@ -97,6 +113,13 @@ function LessonInner() {
   const stepVideo = step?.video;
   const talkRef = useRef<HTMLVideoElement>(null);
 
+  // The teacher's own story character (built in the studio)
+  const [persona, setPersona] = useState<Persona | null>(null);
+  const personaRef = useRef<Persona | null>(null);
+  const motionIdx = useRef(0);
+  personaRef.current = persona;
+  const hasCharacter = !!persona?.motion?.length;
+
   const stepsRef = useRef<LessonStep[] | null>(null);
   useEffect(() => {
     stepsRef.current = steps;
@@ -131,6 +154,8 @@ function LessonInner() {
         avatar: c.profiles?.avatar_url ?? null,
         verified: !!c.profiles?.verified,
       });
+      // Their story character + captured motion, if they built one
+      if (c.teacher_id) loadPersona(c.teacher_id).then((p) => !cancelled && setPersona(p));
       setVoiceLang(langCode(c.language));
       setLessonTitle(c.title);
       // 1) Baked-in AI lesson (instant)
@@ -192,20 +217,41 @@ function LessonInner() {
   /* ---------- animated scene stage ---------- */
 
   useEffect(() => {
-    const loop = () => {
+    let lastFrame = 0;
+    const loop = (t: number) => {
       const canvas = stageRef.current;
       if (canvas) {
         const ctx = canvas.getContext("2d");
         if (ctx) {
           const w = (canvas.width = 960);
           const h = (canvas.height = 540);
-          const t = performance.now();
           const ref = bgRef.current;
           drawBackground(ctx, w, h, ref.curr, t);
           if (ref.prev && t - ref.switchedAt < 800) {
             ctx.save();
             ctx.globalAlpha = 1 - (t - ref.switchedAt) / 800;
             drawBackground(ctx, w, h, ref.prev, t);
+            ctx.restore();
+          }
+
+          // The teacher, in character, performing their own captured motion
+          const p = personaRef.current;
+          const frames = p?.motion;
+          if (frames && frames.length > 4) {
+            if (t - lastFrame > 50) {
+              motionIdx.current = (motionIdx.current + 1) % frames.length;
+              lastFrame = t;
+            }
+            const pose = unpackFrame(frames[motionIdx.current]);
+            ctx.save();
+            // stand the character to one side so lesson content stays readable
+            ctx.translate(w * 0.22, h * 0.06);
+            ctx.scale(0.56, 0.56);
+            ctx.beginPath();
+            ctx.ellipse(w / 2, h * 0.95, w * 0.24, 14, 0, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(2,6,23,0.3)";
+            ctx.fill();
+            drawPuppet(ctx, w, h, pose, parseTheme(p!.character || "森林向导"));
             ctx.restore();
           }
         }
@@ -689,7 +735,12 @@ function LessonInner() {
             <p className="text-sm font-semibold text-white">{teacher.name}</p>
             {teacher.verified && <ShieldCheck className="h-3.5 w-3.5 text-sky-300" />}
             <span className="text-xs text-slate-300">
-              · 化身 <span style={{ color: costume.color }}>{costume.label}</span>
+              · 化身{" "}
+              <span style={{ color: costume.color }}>
+                {hasCharacter
+                  ? parseTheme(persona!.character || "森林向导").label
+                  : costume.label}
+              </span>
             </span>
           </div>
 
