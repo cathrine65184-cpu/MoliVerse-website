@@ -265,6 +265,38 @@ export default function TeachPage() {
           </div>
         </div>
 
+        {/* Digital human studio */}
+        <Link
+          href="/teach/studio/"
+          className="glass-card group mt-5 flex items-center gap-4 border-violet-400/20 p-6 transition-all hover:border-violet-400/50"
+        >
+          <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-violet-400/50 bg-gradient-to-br from-indigo-400 to-violet-400">
+            {me.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={me.avatar_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-lg font-bold text-white">{me.name.slice(0, 1)}</span>
+            )}
+            <span className="absolute -bottom-0.5 -right-0.5 text-lg" aria-hidden>
+              ✨
+            </span>
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
+              我的数字人工作室
+              <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-2 py-0.5 text-[10px] font-medium text-amber-200">
+                Beta
+              </span>
+            </h2>
+            <p className="mt-1 text-sm text-slate-400">
+              上传照片、录声音、设定人设 —— 实时预览你的数字分身在课堂世界里的样子
+            </p>
+          </div>
+          <span className="shrink-0 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2.5 text-xs font-semibold text-white transition-all group-hover:opacity-90">
+            打造分身 →
+          </span>
+        </Link>
+
         {/* Real-name verification */}
         <div className="glass-card mt-5 p-6">
           <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
