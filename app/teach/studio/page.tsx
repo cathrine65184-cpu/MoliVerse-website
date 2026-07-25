@@ -8,6 +8,7 @@ import {
   Check,
   Loader2,
   Mic,
+  PersonStanding,
   Play,
   ScanFace,
   Save,
@@ -27,7 +28,38 @@ import {
 } from "@/lib/persona";
 import { costumes } from "@/lib/lessonEngine";
 import { parseBg, drawBackground, type BgSpec } from "@/lib/sceneEngine";
+import {
+  L,
+  parseTheme,
+  drawPuppet,
+  themes,
+  type Point,
+} from "@/lib/characterEngine";
 import { withBasePath } from "@/lib/paths";
+
+/** Joints we store per motion frame (keeps the saved loop small). */
+const MOTION_JOINTS = [
+  L.nose, L.lShoulder, L.rShoulder, L.lElbow, L.rElbow,
+  L.lWrist, L.rWrist, L.lHip, L.rHip, L.lKnee, L.rKnee, L.lAnkle, L.rAnkle,
+];
+
+function packFrame(pose: Point[]): number[] {
+  const out: number[] = [];
+  for (const j of MOTION_JOINTS) {
+    const p = pose[j];
+    out.push(p ? +p.x.toFixed(3) : 0, p ? +p.y.toFixed(3) : 0);
+  }
+  return out;
+}
+
+/** Rebuild a sparse pose array the character renderer understands. */
+function unpackFrame(frame: number[]): Point[] {
+  const pose: Point[] = [];
+  MOTION_JOINTS.forEach((j, i) => {
+    pose[j] = { x: frame[i * 2], y: frame[i * 2 + 1] };
+  });
+  return pose;
+}
 
 type Landmark = { x: number; y: number };
 
@@ -75,7 +107,23 @@ export default function TeacherStudioPage() {
   const stageRaf = useRef(0);
   const bgRef = useRef<{ curr: BgSpec }>({ curr: parseBg(previewScenes[0].scene) });
 
+  // character + motion capture
+  const [capturing, setCapturing] = useState(false);
+  const [captureSecs, setCaptureSecs] = useState(0);
+  const [camLoading, setCamLoading] = useState(false);
+  const [camError, setCamError] = useState<string | null>(null);
+  const [frameCount, setFrameCount] = useState(0);
+  const motionRef = useRef<number[][]>([]);
+  const poseRef = useRef<Point[] | null>(null);
+  const playIdx = useRef(0);
+  const camVideoRef = useRef<HTMLVideoElement>(null);
+  const poseLandmarkerRef = useRef<unknown>(null);
+  const camRaf = useRef(0);
+  const camStream = useRef<MediaStream | null>(null);
+  const characterRef = useRef("");
+
   const costume = costumes[previewScenes[sceneIdx].costume] ?? costumes.ranger;
+  characterRef.current = persona.character;
 
   const flash = (msg: string) => {
     setNotice(msg);
@@ -99,8 +147,11 @@ export default function TeacherStudioPage() {
             `Hi! I'm ${p.name}. Shall we learn together?`,
           style: saved?.style || styleOptions[0],
           subject: saved?.subject || p.language || "",
+          character: saved?.character || "森林向导",
+          motion: saved?.motion ?? null,
           updatedAt: saved?.updatedAt ?? "",
         });
+        if (saved?.motion?.length) motionRef.current = saved.motion;
       }
     });
   }, []);
@@ -108,14 +159,35 @@ export default function TeacherStudioPage() {
   /* ---------- animated preview stage ---------- */
 
   useEffect(() => {
-    const loop = () => {
+    let last = 0;
+    const loop = (t: number) => {
       const canvas = stageRef.current;
       if (canvas) {
         const ctx = canvas.getContext("2d");
         if (ctx) {
           const w = (canvas.width = 640);
           const h = (canvas.height = 400);
-          drawBackground(ctx, w, h, bgRef.current.curr, performance.now());
+          drawBackground(ctx, w, h, bgRef.current.curr, t);
+
+          // The teacher, as their story character
+          const live = poseRef.current;
+          const loopFrames = motionRef.current;
+          let pose: Point[] | null = live;
+          if (!pose && loopFrames.length > 4) {
+            // replay the captured motion loop at ~20fps
+            if (t - last > 50) {
+              playIdx.current = (playIdx.current + 1) % loopFrames.length;
+              last = t;
+            }
+            pose = unpackFrame(loopFrames[playIdx.current]);
+          }
+          if (pose) {
+            ctx.beginPath();
+            ctx.ellipse(w / 2, h * 0.95, w * 0.28, 14, 0, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(2,6,23,0.35)";
+            ctx.fill();
+            drawPuppet(ctx, w, h, pose, parseTheme(characterRef.current));
+          }
         }
       }
       stageRaf.current = requestAnimationFrame(loop);
@@ -123,6 +195,86 @@ export default function TeacherStudioPage() {
     stageRaf.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(stageRaf.current);
   }, []);
+
+  /* ---------- motion capture (teacher becomes the character) ---------- */
+
+  const stopCapture = useCallback(() => {
+    cancelAnimationFrame(camRaf.current);
+    camStream.current?.getTracks().forEach((t) => t.stop());
+    camStream.current = null;
+    poseRef.current = null;
+    setCapturing(false);
+  }, []);
+
+  useEffect(() => () => stopCapture(), [stopCapture]);
+
+  async function startCapture() {
+    setCamError(null);
+    setCamLoading(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 480, height: 360, facingMode: "user" },
+        audio: false,
+      });
+      camStream.current = stream;
+      const video = camVideoRef.current!;
+      video.srcObject = stream;
+      await video.play();
+      if (!poseLandmarkerRef.current) {
+        const { PoseLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
+        const vision = await FilesetResolver.forVisionTasks(withBasePath("/mediapipe/wasm"));
+        poseLandmarkerRef.current = await PoseLandmarker.createFromOptions(vision, {
+          baseOptions: { modelAssetPath: withBasePath("/mediapipe/pose_landmarker_lite.task") },
+          runningMode: "VIDEO",
+          numPoses: 1,
+        });
+      }
+      motionRef.current = [];
+      setFrameCount(0);
+      setCaptureSecs(0);
+      setCapturing(true);
+      const started = Date.now();
+      const tick = () => {
+        const v = camVideoRef.current;
+        const lm = poseLandmarkerRef.current as {
+          detectForVideo: (el: HTMLVideoElement, ts: number) => { landmarks: Point[][] };
+        } | null;
+        if (!v || !lm || !camStream.current) return;
+        if (v.readyState >= 2) {
+          const pose = lm.detectForVideo(v, performance.now()).landmarks?.[0];
+          if (pose) {
+            poseRef.current = pose;
+            // record at ~20fps, cap the loop at 8 seconds
+            if (motionRef.current.length < 160) {
+              const n = motionRef.current.length;
+              if (n === 0 || Date.now() - started > n * 50) {
+                motionRef.current.push(packFrame(pose));
+                setFrameCount(motionRef.current.length);
+              }
+            }
+          }
+          setCaptureSecs(Math.floor((Date.now() - started) / 1000));
+        }
+        camRaf.current = requestAnimationFrame(tick);
+      };
+      tick();
+    } catch (err) {
+      stopCapture();
+      setCamError(
+        err instanceof DOMException && err.name === "NotAllowedError"
+          ? "摄像头未授权 — 点「允许」后重试"
+          : "摄像头启动失败"
+      );
+    } finally {
+      setCamLoading(false);
+    }
+  }
+
+  function finishCapture() {
+    stopCapture();
+    setPersona((p) => ({ ...p, motion: motionRef.current.slice() }));
+    flash(`动作已录制 ✓ ${motionRef.current.length} 帧，角色会循环演出你的动作`);
+  }
 
   useEffect(() => {
     bgRef.current.curr = parseBg(previewScenes[sceneIdx].scene);
@@ -474,6 +626,78 @@ export default function TeacherStudioPage() {
               {micError && <p className="mt-3 text-xs text-amber-300">{micError}</p>}
             </div>
 
+            {/* character + motion */}
+            <div className="glass-card p-6">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-cyan-300">
+                  <PersonStanding className="h-4 w-4" />
+                </span>
+                <div className="flex-1">
+                  <h2 className="font-display text-base font-semibold text-white">
+                    03 · 故事角色与动作
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    选一个化身，再录一段你的动作 —— 角色会演出你的动作走进故事
+                  </p>
+                </div>
+                {(persona.motion?.length ?? 0) > 0 && (
+                  <Check className="h-5 w-5 text-emerald-400" />
+                )}
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {themes.map((t) => (
+                  <button
+                    key={t.label}
+                    onClick={() => setPersona((p) => ({ ...p, character: t.match[0] }))}
+                    className={`rounded-full border px-3 py-1.5 text-xs transition-all ${
+                      parseTheme(persona.character).label === t.label
+                        ? "border-cyan-400/50 bg-cyan-400/15 text-white"
+                        : "border-white/10 bg-white/[0.03] text-slate-400 hover:border-white/25 hover:text-white"
+                    }`}
+                  >
+                    {t.emoji} {t.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                {!capturing ? (
+                  <button
+                    onClick={startCapture}
+                    disabled={camLoading}
+                    className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white transition-all enabled:hover:opacity-90 disabled:opacity-50"
+                  >
+                    {camLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Camera className="h-4 w-4" />
+                    )}
+                    {(persona.motion?.length ?? 0) > 0 ? "重新录动作" : "录一段动作"}
+                  </button>
+                ) : (
+                  <button
+                    onClick={finishCapture}
+                    className="flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white"
+                  >
+                    <Check className="h-4 w-4" />
+                    完成录制（{captureSecs}s · {frameCount} 帧）
+                  </button>
+                )}
+                {capturing && (
+                  <span className="text-xs text-cyan-300">
+                    动起来！挥手、转身、跳一跳 —— 右边就是你的角色
+                  </span>
+                )}
+                {!capturing && (persona.motion?.length ?? 0) > 0 && (
+                  <span className="text-xs text-slate-500">
+                    已保存 {persona.motion!.length} 帧动作循环
+                  </span>
+                )}
+              </div>
+              {camError && <p className="mt-3 text-xs text-amber-300">{camError}</p>}
+            </div>
+
             {/* persona */}
             <div className="glass-card p-6">
               <div className="flex items-center gap-3">
@@ -482,7 +706,7 @@ export default function TeacherStudioPage() {
                 </span>
                 <div>
                   <h2 className="font-display text-base font-semibold text-white">
-                    03 · 人设与开场白
+                    04 · 人设与开场白
                   </h2>
                   <p className="text-xs text-slate-500">这决定了数字人怎么和孩子说话</p>
                 </div>
@@ -543,57 +767,47 @@ export default function TeacherStudioPage() {
 
               <div className="relative">
                 <canvas ref={stageRef} className="aspect-[8/5] w-full" />
-                {/* digital human on stage */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                  <div className="relative animate-float" style={{ animationDuration: "5s" }}>
-                    {speaking && (
-                      <span
-                        className="absolute -inset-2 animate-ping rounded-full opacity-40"
-                        style={{ background: `${costume.color}55` }}
-                      />
-                    )}
-                    <span
-                      className="relative block h-24 w-24 overflow-hidden rounded-full border-4 shadow-2xl transition-all duration-500"
-                      style={{ borderColor: costume.color, boxShadow: `0 0 40px -6px ${costume.color}` }}
-                    >
-                      {persona.photoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={persona.photoUrl} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center bg-slate-800 text-2xl font-bold text-slate-500">
-                          {me.name.slice(0, 1)}
-                        </span>
-                      )}
-                    </span>
-                    <span
-                      className="absolute -right-2 -top-2 text-3xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
-                      aria-hidden
-                    >
-                      {costume.emoji}
-                    </span>
-                  </div>
-                  <div className="rounded-full bg-black/40 px-4 py-1.5 backdrop-blur">
-                    <p className="text-sm font-semibold text-white">
-                      {me.name}
-                      <span className="ml-1.5 text-xs font-normal" style={{ color: costume.color }}>
-                        · 化身{costume.label}
+
+                {/* overlays around the rendered character */}
+                <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1 text-xs backdrop-blur">
+                      <span className="font-semibold text-white">{me.name}</span>
+                      <span className="text-cyan-300">
+                        · 化身{parseTheme(persona.character).label}
                       </span>
-                    </p>
+                    </span>
+                    {capturing && (
+                      <span className="flex items-center gap-1.5 rounded-full bg-red-500/80 px-3 py-1 text-xs font-medium text-white">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+                        录制中
+                      </span>
+                    )}
                   </div>
-                  {speaking && (
-                    <div className="flex items-end gap-[3px]" aria-hidden>
-                      {[8, 14, 7, 16, 10].map((h, i) => (
-                        <span
-                          key={i}
-                          className="w-[3px] animate-pulse rounded-full bg-cyan-300"
-                          style={{ height: `${h}px`, animationDelay: `${i * 90}ms` }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  <p className="mx-6 mt-1 max-w-[92%] rounded-2xl bg-black/45 px-4 py-2 text-center text-xs italic leading-relaxed text-slate-100 backdrop-blur">
-                    “{persona.greeting || "写一句开场白试试…"}”
-                  </p>
+
+                  <div className="flex flex-col items-center gap-1.5">
+                    {/* small talking-head inset keeps the real face present */}
+                    {persona.photoUrl && (
+                      <span
+                        className="relative h-12 w-12 overflow-hidden rounded-full border-2 shadow-lg"
+                        style={{ borderColor: costume.color }}
+                      >
+                        {speaking && (
+                          <span className="absolute -inset-1 animate-ping rounded-full bg-cyan-400/40" />
+                        )}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={persona.photoUrl} alt="" className="h-full w-full object-cover" />
+                      </span>
+                    )}
+                    <p className="max-w-[92%] rounded-2xl bg-black/50 px-4 py-2 text-center text-xs italic leading-relaxed text-slate-100 backdrop-blur">
+                      “{persona.greeting || "写一句开场白试试…"}”
+                    </p>
+                    {!capturing && (persona.motion?.length ?? 0) === 0 && !poseRef.current && (
+                      <p className="rounded-full bg-black/50 px-3 py-1 text-[11px] text-amber-200 backdrop-blur">
+                        录一段动作，角色就会动起来
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -623,8 +837,11 @@ export default function TeacherStudioPage() {
             </div>
 
             <p className="mt-3 text-center text-[11px] leading-relaxed text-slate-600">
-              目前用浏览器语音朗读；接入声音克隆后，将用你录的声音授课。
+              角色由你的真实动作驱动（姿态识别在本地运行，视频不上传）。
+              开场白目前用浏览器语音朗读；接入声音克隆后将用你自己的声音。
             </p>
+
+            <video ref={camVideoRef} className="hidden" playsInline muted />
           </div>
         </div>
       </div>

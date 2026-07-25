@@ -9,12 +9,19 @@
 
 import { supabase } from "./supabase";
 
+/** One captured pose frame: flattened [x,y] pairs for the tracked joints. */
+export type MotionFrame = number[];
+
 export type Persona = {
   photoUrl: string | null;
   voiceUrl: string | null;
   greeting: string;
   style: string;
   subject: string;
+  /** Character the teacher becomes inside stories (prompt for parseTheme). */
+  character: string;
+  /** Short loop of the teacher's own captured movement, driving the character. */
+  motion: MotionFrame[] | null;
   updatedAt: string;
 };
 
@@ -24,6 +31,8 @@ export const emptyPersona: Persona = {
   greeting: "",
   style: "",
   subject: "",
+  character: "",
+  motion: null,
   updatedAt: "",
 };
 
