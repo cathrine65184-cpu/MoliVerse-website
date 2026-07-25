@@ -291,8 +291,17 @@ export default function TeacherStudioPage() {
       const { data, error } = await supabase.functions.invoke("generate-avatar", {
         body: { action: "create", text: persona.greeting || `Hi! I'm ${me.name}.` },
       });
-      const created = data as { videoId?: string; error?: string; message?: string } | null;
-      if (error || !created?.videoId) {
+      let created = data as { videoId?: string; message?: string } | null;
+      if (error) {
+        // supabase-js hides the body on non-2xx — read the server's real message
+        try {
+          const ctx = (error as { context?: Response }).context;
+          if (ctx) created = await ctx.json();
+        } catch {
+          /* keep the generic message */
+        }
+      }
+      if (!created?.videoId) {
         setGenState("error");
         setGenMsg(created?.message ?? "生成失败，请稍后重试");
         return;

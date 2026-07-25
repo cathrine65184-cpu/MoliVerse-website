@@ -65,25 +65,61 @@ Deno.serve(async (req: Request) => {
       if (!text) return json({ error: "missing text" }, 400);
       if (text.length > 600) return json({ error: "text too long" }, 400);
 
-      // The teacher's portrait, saved by the studio
       const admin = createClient(supabaseUrl, serviceKey);
-      const portraitPath = `${user.id}/persona/portrait.jpg`;
-      const { data: file, error: dlErr } = await admin.storage
-        .from("media")
-        .download(portraitPath);
-      if (dlErr || !file) {
-        return json({ error: "no_portrait", message: "请先在工作室上传一张照片" }, 400);
-      }
 
-      // Register the photo with HeyGen (talking photo)
-      const upRes = await fetch("https://upload.heygen.com/v1/talking_photo", {
-        method: "POST",
-        headers: { "X-Api-Key": heygenKey, "Content-Type": "image/jpeg" },
-        body: new Uint8Array(await file.arrayBuffer()),
-      });
-      const upJson = await upRes.json();
-      const talkingPhotoId = upJson?.data?.talking_photo_id;
-      if (!talkingPhotoId) return json({ error: "upload_failed", detail: upJson }, 502);
+      // Reuse this teacher's existing HeyGen photo avatar when we have one.
+      // (Free plans cap the number of photo avatars, so re-uploading the same
+      // portrait on every generation would quickly exhaust the quota.)
+      const idPath = `${user.id}/persona/heygen_photo_id.txt`;
+      let talkingPhotoId = "";
+      const { data: idFile } = await admin.storage.from("media").download(idPath);
+      if (idFile) talkingPhotoId = (await idFile.text()).trim();
+
+      if (!talkingPhotoId) {
+        // Find the teacher's portrait, whatever extension the studio saved it with
+        const { data: listing } = await admin.storage
+          .from("media")
+          .list(`${user.id}/persona`);
+        const portrait = listing?.find((f) => f.name.startsWith("portrait"));
+        if (!portrait) {
+          return json({ error: "no_portrait", message: "请先在工作室上传一张照片" }, 400);
+        }
+        const { data: file, error: dlErr } = await admin.storage
+          .from("media")
+          .download(`${user.id}/persona/${portrait.name}`);
+        if (dlErr || !file) {
+          return json({ error: "no_portrait", message: "请先在工作室上传一张照片" }, 400);
+        }
+
+        const upRes = await fetch("https://upload.heygen.com/v1/talking_photo", {
+          method: "POST",
+          headers: {
+            "X-Api-Key": heygenKey,
+            "Content-Type": file.type || "image/jpeg",
+          },
+          body: new Uint8Array(await file.arrayBuffer()),
+        });
+        const upJson = await upRes.json();
+        talkingPhotoId = upJson?.data?.talking_photo_id ?? "";
+        if (!talkingPhotoId) {
+          const detail = upJson?.message ?? upJson?.data?.message ?? "";
+          const quota = String(detail).includes("exceeded your limit");
+          return json({
+            error: "upload_failed",
+            message: quota
+              ? "HeyGen 账户的照片形象数量已达上限（免费版 3 个），请在 HeyGen 后台删除旧形象或升级套餐"
+              : "照片上传到数字人服务失败，请稍后重试",
+            detail: upJson,
+          }, 502);
+        }
+        // Remember it so future generations reuse the same avatar
+        await admin.storage
+          .from("media")
+          .upload(idPath, new TextEncoder().encode(talkingPhotoId), {
+            upsert: true,
+            contentType: "text/plain",
+          });
+      }
 
       const genRes = await hg("/v2/video/generate", {
         method: "POST",
