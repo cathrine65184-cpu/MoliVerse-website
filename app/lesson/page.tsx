@@ -94,6 +94,9 @@ function LessonInner() {
   const total = steps?.length ?? 0;
   const costume = costumes[step?.costume ?? "ranger"] ?? costumes.ranger;
 
+  const stepVideo = step?.video;
+  const talkRef = useRef<HTMLVideoElement>(null);
+
   const stepsRef = useRef<LessonStep[] | null>(null);
   useEffect(() => {
     stepsRef.current = steps;
@@ -307,6 +310,12 @@ function LessonInner() {
       const isLast = i >= list.length - 1;
       const interactive =
         s.t === "quiz" || s.t === "move" || s.t === "audio" || s.t === "video";
+      // A pre-generated talking-head video narrates this line instead of TTS;
+      // advancing is driven by the video's onEnded handler.
+      if (s.video) {
+        window.speechSynthesis?.cancel();
+        return;
+      }
       speak(s.say, () => {
         if (!autoRef.current || isLast) return;
         if (interactive) return;
@@ -322,6 +331,21 @@ function LessonInner() {
     },
     [speak, goto]
   );
+
+  // Play the teacher's talking-head video for this step. If the browser
+  // blocks audible autoplay, fall back to speech synthesis so the lesson
+  // still narrates.
+  useEffect(() => {
+    if (!started || !stepVideo) return;
+    const el = talkRef.current;
+    if (!el) return;
+    el.currentTime = 0;
+    el.play().catch(() => {
+      const s = stepsRef.current?.[indexRef.current];
+      if (s) speak(s.say, onTalkEnded);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepVideo, started]);
 
   // Speak on each index change (deduped so the gesture-driven first speak
   // isn't repeated).
@@ -482,6 +506,18 @@ function LessonInner() {
     }
   }
 
+  /** The teacher's talking-head video finished — advance like speech would. */
+  function onTalkEnded() {
+    setSpeaking(false);
+    const s = stepsRef.current?.[indexRef.current];
+    if (!s || !autoRef.current) return;
+    if (indexRef.current >= total - 1) return;
+    // Interactive steps wait for the child, not the clock.
+    if (s.t === "quiz" || s.t === "move") return;
+    if (stepMoveRef.current && camOnRef.current && !moveDoneRef.current) return;
+    autoTimer.current = setTimeout(() => goto(indexRef.current + 1), 1200);
+  }
+
   function toggleAuto() {
     const next = !auto;
     setAuto(next);
@@ -612,15 +648,31 @@ function LessonInner() {
               />
             )}
             <span
-              className="relative block h-24 w-24 overflow-hidden rounded-full border-4 shadow-2xl transition-all duration-500 sm:h-28 sm:w-28"
+              className={`relative block overflow-hidden rounded-full border-4 shadow-2xl transition-all duration-500 ${
+                stepVideo ? "h-32 w-32 sm:h-40 sm:w-40" : "h-24 w-24 sm:h-28 sm:w-28"
+              }`}
               style={{ borderColor: costume.color, boxShadow: `0 0 44px -6px ${costume.color}` }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={teacher.avatar ?? withBasePath("/catherine-sq.jpg")}
-                alt={teacher.name}
-                className="h-full w-full object-cover"
-              />
+              {stepVideo ? (
+                // Real generated talking-head video of the teacher saying this line
+                <video
+                  ref={talkRef}
+                  key={stepVideo}
+                  src={withBasePath(stepVideo)}
+                  playsInline
+                  autoPlay
+                  className="h-full w-full object-cover"
+                  onPlay={() => setSpeaking(true)}
+                  onEnded={onTalkEnded}
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={teacher.avatar ?? withBasePath("/catherine-sq.jpg")}
+                  alt={teacher.name}
+                  className="h-full w-full object-cover"
+                />
+              )}
             </span>
             {/* costume transformation */}
             <span

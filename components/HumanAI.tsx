@@ -181,98 +181,40 @@ function CreatePanel() {
 
 /* ---------- panel 3 · the digital human ---------- */
 
-const poseKeypoints = [
-  { x: 41, y: 36 }, // left eye
-  { x: 57, y: 35 }, // right eye
-  { x: 51, y: 44 }, // nose
-  { x: 52, y: 54 }, // chin
-  { x: 26, y: 82 }, // left shoulder
-  { x: 74, y: 74 }, // right shoulder
-  { x: 84, y: 70 }, // wrist
-  { x: 80, y: 52 }, // finger 1
-  { x: 90, y: 54 }, // finger 2
-];
-
-const poseLines = [
-  [0, 1],
-  [0, 2],
-  [1, 2],
-  [2, 3],
-  [3, 4],
-  [3, 5],
-  [5, 6],
-  [6, 7],
-  [6, 8],
-];
-
 function DigitalHumanPanel() {
   return (
     <div className="flex flex-col items-center">
       <StepLabel number="03" label="The Digital Human" />
 
       <div className="flex flex-col items-center gap-5 lg:flex-row lg:items-center lg:gap-8">
-        {/* Live digital-human frame */}
+        {/* Live digital-human frame — a real generated talking video */}
         <div className="relative aspect-[3/4] h-[46vh] max-h-[430px] min-h-[300px] overflow-hidden rounded-2xl border border-white/15 shadow-[0_0_70px_-15px_rgba(139,92,246,0.5)]">
-          <Image
-            src={withBasePath("/catherine.jpg")}
-            alt="Catherine AI — live digital human teacher"
-            fill
-            sizes="(max-width: 1024px) 80vw, 340px"
-            className="object-cover"
+          <video
+            src={withBasePath("/video/catherine-intro.mp4")}
+            poster={withBasePath("/catherine.jpg")}
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls
+            className="absolute inset-0 h-full w-full object-cover"
+            aria-label="Catherine AI — 真实生成的数字人讲课视频"
           />
 
-          {/* Pose-estimation overlay */}
-          <svg
-            viewBox="0 0 100 133"
-            preserveAspectRatio="none"
-            className="absolute inset-0 h-full w-full opacity-70"
-            aria-hidden
-          >
-            {poseLines.map(([a, b], i) => (
-              <line
-                key={i}
-                x1={poseKeypoints[a].x}
-                y1={poseKeypoints[a].y * 1.33}
-                x2={poseKeypoints[b].x}
-                y2={poseKeypoints[b].y * 1.33}
-                stroke="rgba(34,211,238,0.55)"
-                strokeWidth="0.35"
-              />
-            ))}
-            {poseKeypoints.map((p, i) => (
-              <circle
-                key={i}
-                cx={p.x}
-                cy={p.y * 1.33}
-                r="0.9"
-                fill="#22d3ee"
-                className="animate-pulse"
-              />
-            ))}
-          </svg>
-
           {/* Live badge */}
-          <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-void/70 px-3 py-1 text-[11px] font-medium text-slate-200 backdrop-blur-md">
+          <span className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-void/70 px-3 py-1 text-[11px] font-medium text-slate-200 backdrop-blur-md">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-            Digital Human · Live
+            Digital Human · 真实生成
           </span>
 
-          {/* Subtitle + waveform */}
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-10">
-            <div className="mb-2 flex items-end gap-[3px]" aria-hidden>
-              {[10, 16, 8, 18, 12, 20, 9, 14].map((h, i) => (
-                <span
-                  key={i}
-                  className="w-[3px] animate-pulse rounded-full bg-cyan-300"
-                  style={{ height: `${h}px`, animationDelay: `${i * 120}ms` }}
-                />
-              ))}
-            </div>
+          {/* Subtitle */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 pt-10">
             <p className="text-sm font-medium text-white">
-              “Hi! I&apos;m Catherine. Shall we learn English together?”
+              “Hello my friend! I&apos;m Catherine. Today we will travel to the
+              stars and learn together.”
             </p>
             <p className="mt-0.5 text-xs text-slate-400">
-              Speaking with Catherine&apos;s own cloned voice
+              这段视频由 Catherine 的一张照片自动生成 · 开启声音收听
             </p>
           </div>
         </div>
@@ -280,10 +222,10 @@ function DigitalHumanPanel() {
         {/* Capability chips */}
         <div className="flex flex-row flex-wrap justify-center gap-2.5 lg:flex-col lg:gap-3">
           {[
-            { icon: Mic, label: "Voice clone", detail: "98% voice match" },
-            { icon: PersonStanding, label: "Pose estimation", detail: "Natural gestures, live" },
-            { icon: AudioWaveform, label: "Lip sync", detail: "Speaks like on video" },
-            { icon: Camera, label: "One photo", detail: "That's all it takes" },
+            { icon: Camera, label: "只要一张照片", detail: "One photo is all it takes" },
+            { icon: AudioWaveform, label: "口型同步", detail: "AI 驱动的自然口型" },
+            { icon: PersonStanding, label: "表情神态", detail: "眨眼、微笑、头部微动" },
+            { icon: Mic, label: "声音", detail: "可切换音色 · 支持声音克隆" },
           ].map((chip) => (
             <div
               key={chip.label}
@@ -300,9 +242,8 @@ function DigitalHumanPanel() {
       </div>
 
       <p className="mt-6 max-w-lg text-center text-sm leading-relaxed text-slate-400">
-        Not a chatbot. One photo and five minutes of voice become a living
-        digital teacher — expressive, lip-synced, moving like Catherine
-        herself.
+        不是聊天机器人。一张照片就变成会开口讲课的数字老师 ——
+        上面这段视频，就是由 Catherine 的一张照片真实生成的。
       </p>
       <Link
         href="/studio/"

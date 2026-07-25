@@ -29,7 +29,12 @@ export const costumes: Record<string, Costume> = {
   captain: { key: "captain", label: "小队长", emoji: "⚓", color: "#f87171" },
 };
 
-type StepBase = { scene?: string; costume?: string };
+type StepBase = {
+  scene?: string;
+  costume?: string;
+  /** Pre-generated talking-head video of the teacher saying this line. */
+  video?: string;
+};
 
 export type LessonStep = StepBase &
   (
@@ -123,6 +128,21 @@ function animalQuiz(correctIdx: number): LessonStep {
   };
 }
 
+/**
+ * Lines that have a pre-generated talking-head video of Catherine.
+ * (Generated from a single photo via HeyGen; see public/video/lesson.)
+ */
+const alphabetVideos: Record<string, string> = {
+  intro: "/video/lesson/intro.mp4",
+  A: "/video/lesson/A.mp4",
+  E: "/video/lesson/E.mp4",
+  L: "/video/lesson/L.mp4",
+  quiz_E: "/video/lesson/quiz_E.mp4",
+  W: "/video/lesson/W.mp4",
+  Z: "/video/lesson/Z.mp4",
+  finale: "/video/lesson/finale.mp4",
+};
+
 export function alphabetLesson(): LessonStep[] {
   const steps: LessonStep[] = [
     {
@@ -132,6 +152,7 @@ export function alphabetLesson(): LessonStep[] {
       say: "Hello my friend! Today we travel through many worlds — the savanna, the forest, the deep sea, even the stars — and meet 26 animal friends. Are you ready? Let's go!",
       scene: "晴天 森林 大树",
       costume: "ranger",
+      video: alphabetVideos.intro,
     },
   ];
   animals.forEach(([letter, word, emoji, action, group], i) => {
@@ -145,9 +166,12 @@ export function alphabetLesson(): LessonStep[] {
       move: true,
       scene: worldGroups[group].scene,
       costume: worldGroups[group].costume,
+      video: alphabetVideos[letter],
     });
     if (letter === "E" || letter === "L" || letter === "T") {
-      steps.push(animalQuiz(i));
+      const quiz = animalQuiz(i);
+      if (letter === "E") quiz.video = alphabetVideos.quiz_E;
+      steps.push(quiz);
     }
   });
   steps.push({
@@ -155,6 +179,7 @@ export function alphabetLesson(): LessonStep[] {
     say: "Great job! You travelled the whole world and learned your A B Cs, from Antelope to Zebra! See you next time!",
     scene: "夜晚 星空 萤火虫",
     costume: "wizard",
+    video: alphabetVideos.finale,
   });
   return steps;
 }
