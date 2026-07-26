@@ -76,14 +76,16 @@ const skeletonPairs: [number, number][] = [
 /** A visible fallback used to verify the 3D rig before a teacher starts moving. */
 function makeTestPose(time: number): Point[] {
   const points = Array.from({ length: 33 }, () => ({ x: 0.5, y: 0.55, z: 0 }));
-  const wave = Math.sin(time / 240) * 0.16;
+  // Deliberately exaggerated so a creator can verify that the *3D rig*, not
+  // the 2D fallback puppet, is responding before granting camera access.
+  const wave = Math.sin(time / 210) * 0.32;
   points[L.nose] = { x: 0.5, y: 0.16, z: 0 };
   points[L.lShoulder] = { x: 0.4, y: 0.33, z: 0 };
   points[L.rShoulder] = { x: 0.6, y: 0.33, z: 0 };
   points[L.lElbow] = { x: 0.28, y: 0.43, z: 0 };
   points[L.lWrist] = { x: 0.2, y: 0.54, z: 0 };
-  points[L.rElbow] = { x: 0.7 + wave * 0.35, y: 0.2, z: -0.08 };
-  points[L.rWrist] = { x: 0.8 + wave, y: 0.08 + Math.abs(wave) * 0.25, z: -0.16 };
+  points[L.rElbow] = { x: 0.72 + wave * 0.45, y: 0.18 + wave * 0.22, z: -0.12 };
+  points[L.rWrist] = { x: 0.78 + wave, y: 0.035 + Math.abs(wave) * 0.38, z: -0.28 };
   points[L.lHip] = { x: 0.44, y: 0.58, z: 0 };
   points[L.rHip] = { x: 0.56, y: 0.58, z: 0 };
   points[L.lKnee] = { x: 0.43, y: 0.76, z: 0 };
@@ -182,23 +184,29 @@ export default function StoryStagePage() {
   themeRef.current = theme;
 
   /** Load the rigged 3D character on first use, then drive it from the pose. */
-  async function enable3D() {
-    if (use3DRef.current) return;
+  async function enable3D(): Promise<boolean> {
+    if (use3DRef.current && avatarRef.current) return true;
     setLoading3D(true);
+    setError(null);
     try {
       if (!avatarRef.current) {
         const canvas = avatar3DCanvas.current;
-        if (!canvas) return;
+        if (!canvas) throw new Error("3D stage canvas is unavailable");
         const { createAvatar3D } = await import("@/lib/avatar3d");
         const av = await createAvatar3D(canvas, withBasePath("/models3d/witch-rigged.glb"));
         av.resize(canvas.clientWidth || 640, canvas.clientHeight || 480);
+        av.render();
         avatarRef.current = av;
       }
       setUse3D(true);
       use3DRef.current = true;
+      return true;
     } catch (err) {
       console.error(err);
-      setError("3D 角色加载失败");
+      setUse3D(false);
+      use3DRef.current = false;
+      setError("真实 3D 角色没有加载成功；测试不会回退成 2D。请刷新后重试。");
+      return false;
     } finally {
       setLoading3D(false);
     }
@@ -216,7 +224,7 @@ export default function StoryStagePage() {
 
   async function toggleTestMotion() {
     const next = !testMotionRef.current;
-    if (next) await enable3D();
+    if (next && !(await enable3D())) return;
     testMotionRef.current = next;
     setTestMotion(next);
   }
@@ -304,7 +312,7 @@ export default function StoryStagePage() {
           }
 
           const pose = testMotionRef.current ? makeTestPose(t) : poseRef.current;
-          if (pose && !use3DRef.current) {
+          if (pose && !use3DRef.current && !testMotionRef.current) {
             ctx.beginPath();
             ctx.ellipse(w / 2, h * 0.94, w * 0.3, 16, 0, 0, Math.PI * 2);
             ctx.fillStyle = "rgba(2,6,23,0.35)";
@@ -317,7 +325,7 @@ export default function StoryStagePage() {
               drivenBonesRef.current = av.update(pose);
               av.render();
             }
-          } else {
+          } else if (!testMotionRef.current) {
             ctx.fillStyle = "rgba(255,255,255,0.75)";
             ctx.font = "600 15px sans-serif";
             ctx.textAlign = "center";
@@ -644,11 +652,11 @@ export default function StoryStagePage() {
             {testMotion ? "停止测试动作" : "测试 3D 动作"}
           </button>
 
-          {status === "running" && (
+          {(status === "running" || testMotion) && (
             <>
               <span className="flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-1.5 text-xs font-medium text-cyan-300">
                 <Activity className="h-3.5 w-3.5" />
-                {tracking ? `实时追踪中 · ${fps} FPS` : "请站到画面里…"}
+                {testMotion ? "真实 3D 测试动作中" : tracking ? `实时追踪中 · ${fps} FPS` : "请站到画面里…"}
               </span>
               <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs text-slate-400">
                 <PersonStanding className="h-3.5 w-3.5 text-violet-300" />
@@ -657,7 +665,7 @@ export default function StoryStagePage() {
               {use3D && (
                 <span className="flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-400/10 px-4 py-1.5 text-xs font-medium text-violet-200">
                   <Activity className="h-3.5 w-3.5" />
-                  3D 骨骼驱动 {drivenBones}/8
+                  真实 3D 骨骼驱动 {drivenBones}/8
                 </span>
               )}
             </>
