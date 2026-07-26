@@ -3,10 +3,10 @@
  * MediaPipe Pose landmarks, so the teacher's real movement animates a
  * generated 3D character.
  *
- * Approach: for each limb we know the bone's rest direction and the
- * direction implied by the captured landmarks; we rotate the bone by the
- * quaternion between them. This is deliberately simple — no IK solver —
- * which keeps it fast and stable enough for a live classroom puppet.
+ * Approach: project each captured limb onto the classroom screen and rotate
+ * the corresponding Mixamo joint around its local screen-facing axis. This
+ * deliberately favours an obvious, stable live result over fragile full-body
+ * IK: a teacher lifting an arm always makes the avatar lift that arm.
  */
 
 import * as THREE from "three";
@@ -62,7 +62,7 @@ const CHAIN: {
 
 export type Avatar3D = {
   /** Drive the character from one frame of pose landmarks. */
-  update(pose: Point[] | null | undefined): number;
+  update(pose: Point[] | null | undefined, testGesture?: boolean): number;
   /** Render one frame. */
   render(): void;
   resize(width: number, height: number): void;
@@ -111,8 +111,6 @@ export async function createAvatar3D(
   // Collect the bones we drive, remembering their rest rotations
   const bones = new Map<string, THREE.Bone>();
   const restRot = new Map<string, THREE.Quaternion>();
-  const restWorldRot = new Map<string, THREE.Quaternion>();
-  const restWorldDir = new Map<string, THREE.Vector3>();
   root.traverse((o) => {
     const b = o as THREE.Bone;
     if (b.isBone) {
@@ -121,8 +119,9 @@ export async function createAvatar3D(
     }
   });
 
-  // Read each limb's actual rest direction from the imported rig. This is
-  // more reliable than assuming a particular model's T-pose orientation.
+  // Store each imported limb's rest angle. We use the actual rig hierarchy
+  // rather than assuming every generated character uses the same T-pose.
+  const restAngles = new Map<string, number>();
   root.updateMatrixWorld(true);
   bones.forEach((bone, name) => {
     const child = bone.children.find((node) => (node as THREE.Bone).isBone) as
@@ -134,49 +133,88 @@ export async function createAvatar3D(
     bone.getWorldPosition(from);
     child.getWorldPosition(to);
     const direction = to.sub(from);
-    if (direction.lengthSq() > 1e-7) restWorldDir.set(name, direction.normalize());
-    restWorldRot.set(name, bone.getWorldQuaternion(new THREE.Quaternion()));
+    if (direction.lengthSq() > 1e-7) {
+      restAngles.set(name, Math.atan2(direction.y, direction.x));
+    }
   });
 
   const smoothing = new Map<string, THREE.Quaternion>();
 
-  function update(pose: Point[] | null | undefined) {
+  function update(pose: Point[] | null | undefined, testGesture = false) {
     if (!pose) return 0;
 
-    let driven = 0;
-    root.updateMatrixWorld(true);
+    // This is a direct skeletal proof, used only by the “Test 3D motion”
+    // button. It deliberately controls the actual shoulder and elbow bones
+    // instead of relying on pose retargeting, so a successful test can never
+    // be mistaken for the 2D canvas puppet.
+    if (testGesture) {
+      const wave = Math.sin(performance.now() / 220);
+      const setGestureBone = (name: string, z: number, x = 0) => {
+        const bone = bones.get(name);
+        const rest = restRot.get(name);
+        if (!bone || !rest) return false;
+        const target = rest.clone().multiply(
+          new THREE.Quaternion().setFromEuler(new THREE.Euler(x, 0, z, "XYZ"))
+        );
+        const prev = smoothing.get(name) ?? bone.quaternion.clone();
+        prev.slerp(target, 0.3);
+        smoothing.set(name, prev);
+        bone.quaternion.copy(prev);
+        return true;
+      };
 
+      let driven = 0;
+      // A broad, unmistakable greeting: shoulder raises, elbow waves, and
+      // the opposite arm counterbalances. These are all skinning bones in
+      // witch-rigged.glb, not a CSS or 2D animation.
+      driven += Number(setGestureBone(B.rArm, -1.15 + wave * 0.24, 0.34));
+      driven += Number(setGestureBone(B.rForeArm, 0.95 + wave * 0.72, -0.18));
+      driven += Number(setGestureBone(B.lArm, 0.22, -0.12));
+      driven += Number(setGestureBone(B.lForeArm, -0.18, 0.08));
+      const head = bones.get(B.head);
+      const restHead = restRot.get(B.head);
+      if (head && restHead) {
+        head.quaternion.copy(restHead).multiply(
+          new THREE.Quaternion().setFromEuler(new THREE.Euler(0, wave * 0.18, 0))
+        );
+        driven += 1;
+      }
+      root.updateMatrixWorld(true);
+      return driven;
+    }
+
+    let driven = 0;
     for (const link of CHAIN) {
       const bone = bones.get(link.bone);
       const rest = restRot.get(link.bone);
-      const restWorld = restWorldRot.get(link.bone);
-      const restDir = restWorldDir.get(link.bone);
-      if (!bone || !rest || !restWorld || !restDir) continue;
+      const restAngle = restAngles.get(link.bone);
+      if (!bone || !rest || restAngle === undefined) continue;
       const a = vec(pose, link.from);
       const b = vec(pose, link.to);
       if (!a || !b) continue;
 
       const dir = b.clone().sub(a);
       if (dir.lengthSq() < 1e-6) continue;
-      dir.normalize();
 
-      // First solve the desired world-space orientation. Then convert it to
-      // the bone's local space, respecting any transformed parent bone. The
-      // previous implementation skipped this conversion, so parent transforms
-      // could cancel the captured teacher motion.
-      const delta = new THREE.Quaternion().setFromUnitVectors(restDir, dir);
-      const targetWorld = restWorld.clone().premultiply(delta);
-      const parentWorld = bone.parent
-        ? bone.parent.getWorldQuaternion(new THREE.Quaternion())
-        : new THREE.Quaternion();
-      const target = parentWorld.invert().multiply(targetWorld);
+      // The camera view and the classroom stage both use a screen-facing
+      // plane. A local Z rotation is therefore the reliable axis for the
+      // imported Mixamo rig. Converting world quaternions here made parent
+      // transforms cancel each other and left the visible model frozen.
+      const capturedAngle = Math.atan2(dir.y, dir.x);
+      let deltaAngle = capturedAngle - restAngle;
+      deltaAngle = Math.atan2(Math.sin(deltaAngle), Math.cos(deltaAngle));
+      const target = rest.clone().multiply(
+        new THREE.Quaternion().setFromAxisAngle(
+          new THREE.Vector3(0, 0, 1),
+          THREE.MathUtils.clamp(deltaAngle, -2.35, 2.35)
+        )
+      );
 
       // Smooth so tracking jitter doesn't make the character twitch
       const prev = smoothing.get(link.bone) ?? bone.quaternion.clone();
       prev.slerp(target, 0.42);
       smoothing.set(link.bone, prev);
       bone.quaternion.copy(prev);
-      root.updateMatrixWorld(true);
       driven += 1;
     }
 
@@ -191,7 +229,7 @@ export async function createAvatar3D(
         new THREE.Vector3(0, 0, 1),
         THREE.MathUtils.clamp(tilt, -0.5, 0.5)
       );
-      spine.quaternion.copy(restSpine).premultiply(q);
+      spine.quaternion.copy(restSpine).multiply(q);
     }
 
     const nose = vec(pose, LM.nose);
@@ -204,8 +242,10 @@ export async function createAvatar3D(
       const q = new THREE.Quaternion().setFromEuler(
         new THREE.Euler(pitch, yaw, 0, "XYZ")
       );
-      head.quaternion.copy(restHead).premultiply(q);
+      head.quaternion.copy(restHead).multiply(q);
     }
+
+    root.updateMatrixWorld(true);
 
     return driven;
   }
