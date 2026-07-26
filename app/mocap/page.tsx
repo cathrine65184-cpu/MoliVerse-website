@@ -184,8 +184,14 @@ export default function StoryStagePage() {
   themeRef.current = theme;
 
   /** Load the rigged 3D character on first use, then drive it from the pose. */
-  async function enable3D(): Promise<boolean> {
-    if (use3DRef.current && avatarRef.current) return true;
+  async function enable3D(startDemo = true): Promise<boolean> {
+    if (use3DRef.current && avatarRef.current) {
+      if (startDemo) {
+        testMotionRef.current = true;
+        setTestMotion(true);
+      }
+      return true;
+    }
     setLoading3D(true);
     setError(null);
     try {
@@ -200,6 +206,13 @@ export default function StoryStagePage() {
       }
       setUse3D(true);
       use3DRef.current = true;
+      // A static character looks broken before camera permission is granted.
+      // Start an actual GLB-bone greeting immediately; live tracking takes
+      // over as soon as the teacher opens their camera.
+      if (startDemo) {
+        testMotionRef.current = true;
+        setTestMotion(true);
+      }
       return true;
     } catch (err) {
       console.error(err);
@@ -385,7 +398,9 @@ export default function StoryStagePage() {
       setStatus("running");
       // The main teaching experience is the rigged 3D character, so switch
       // to it automatically once camera permission has been granted.
-      void enable3D();
+      testMotionRef.current = false;
+      setTestMotion(false);
+      void enable3D(false);
       fpsCounter.current = { frames: 0, last: performance.now() };
       camLoop();
     } catch (err) {
