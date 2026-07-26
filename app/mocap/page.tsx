@@ -73,6 +73,26 @@ const skeletonPairs: [number, number][] = [
   [L.rKnee, L.rAnkle],
 ];
 
+/** A visible fallback used to verify the 3D rig before a teacher starts moving. */
+function makeTestPose(time: number): Point[] {
+  const points = Array.from({ length: 33 }, () => ({ x: 0.5, y: 0.55, z: 0 }));
+  const wave = Math.sin(time / 240) * 0.16;
+  points[L.nose] = { x: 0.5, y: 0.16, z: 0 };
+  points[L.lShoulder] = { x: 0.4, y: 0.33, z: 0 };
+  points[L.rShoulder] = { x: 0.6, y: 0.33, z: 0 };
+  points[L.lElbow] = { x: 0.28, y: 0.43, z: 0 };
+  points[L.lWrist] = { x: 0.2, y: 0.54, z: 0 };
+  points[L.rElbow] = { x: 0.7 + wave * 0.35, y: 0.2, z: -0.08 };
+  points[L.rWrist] = { x: 0.8 + wave, y: 0.08 + Math.abs(wave) * 0.25, z: -0.16 };
+  points[L.lHip] = { x: 0.44, y: 0.58, z: 0 };
+  points[L.rHip] = { x: 0.56, y: 0.58, z: 0 };
+  points[L.lKnee] = { x: 0.43, y: 0.76, z: 0 };
+  points[L.rKnee] = { x: 0.57, y: 0.76, z: 0 };
+  points[L.lAnkle] = { x: 0.42, y: 0.94, z: 0 };
+  points[L.rAnkle] = { x: 0.58, y: 0.94, z: 0 };
+  return points;
+}
+
 /* ---------- prompt → character theme ---------- */
 
 
@@ -148,6 +168,10 @@ export default function StoryStagePage() {
   const use3DRef = useRef(false);
   const avatarRef = useRef<Avatar3D | null>(null);
   const avatar3DCanvas = useRef<HTMLCanvasElement>(null);
+  const testMotionRef = useRef(false);
+  const drivenBonesRef = useRef(0);
+  const [testMotion, setTestMotion] = useState(false);
+  const [drivenBones, setDrivenBones] = useState(0);
   const [newBg, setNewBg] = useState("");
   const [newChar, setNewChar] = useState("");
   const [newPhrase, setNewPhrase] = useState("");
@@ -158,12 +182,8 @@ export default function StoryStagePage() {
   themeRef.current = theme;
 
   /** Load the rigged 3D character on first use, then drive it from the pose. */
-  async function toggle3D() {
-    if (use3D) {
-      setUse3D(false);
-      use3DRef.current = false;
-      return;
-    }
+  async function enable3D() {
+    if (use3DRef.current) return;
     setLoading3D(true);
     try {
       if (!avatarRef.current) {
@@ -182,6 +202,23 @@ export default function StoryStagePage() {
     } finally {
       setLoading3D(false);
     }
+  }
+
+  async function toggle3D() {
+    if (use3DRef.current) {
+      setUse3D(false);
+      use3DRef.current = false;
+      setDrivenBones(0);
+      return;
+    }
+    await enable3D();
+  }
+
+  async function toggleTestMotion() {
+    const next = !testMotionRef.current;
+    if (next) await enable3D();
+    testMotionRef.current = next;
+    setTestMotion(next);
   }
 
   function switchBg(desc: string) {
@@ -266,7 +303,7 @@ export default function StoryStagePage() {
             ctx.restore();
           }
 
-          const pose = poseRef.current;
+          const pose = testMotionRef.current ? makeTestPose(t) : poseRef.current;
           if (pose && !use3DRef.current) {
             ctx.beginPath();
             ctx.ellipse(w / 2, h * 0.94, w * 0.3, 16, 0, 0, Math.PI * 2);
@@ -277,7 +314,7 @@ export default function StoryStagePage() {
             // the 3D character renders on its own canvas layered above
             const av = avatarRef.current;
             if (av) {
-              av.update(pose);
+              drivenBonesRef.current = av.update(pose);
               av.render();
             }
           } else {
@@ -338,6 +375,9 @@ export default function StoryStagePage() {
       }
 
       setStatus("running");
+      // The main teaching experience is the rigged 3D character, so switch
+      // to it automatically once camera permission has been granted.
+      void enable3D();
       fpsCounter.current = { frames: 0, last: performance.now() };
       camLoop();
     } catch (err) {
@@ -371,6 +411,7 @@ export default function StoryStagePage() {
       const now = performance.now();
       if (now - counter.last >= 1000) {
         setFps(counter.frames);
+        setDrivenBones(drivenBonesRef.current);
         counter.frames = 0;
         counter.last = now;
       }
@@ -590,6 +631,19 @@ export default function StoryStagePage() {
             </button>
           )}
 
+          <button
+            onClick={toggleTestMotion}
+            disabled={loading3D}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all ${
+              testMotion
+                ? "border-amber-300/50 bg-amber-300/15 text-amber-100"
+                : "border-white/15 bg-white/[0.04] text-slate-300 hover:border-violet-400/50 hover:text-white"
+            }`}
+          >
+            <Activity className="h-4 w-4" />
+            {testMotion ? "停止测试动作" : "测试 3D 动作"}
+          </button>
+
           {status === "running" && (
             <>
               <span className="flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-1.5 text-xs font-medium text-cyan-300">
@@ -600,6 +654,12 @@ export default function StoryStagePage() {
                 <PersonStanding className="h-3.5 w-3.5 text-violet-300" />
                 33 个骨骼关键点
               </span>
+              {use3D && (
+                <span className="flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-400/10 px-4 py-1.5 text-xs font-medium text-violet-200">
+                  <Activity className="h-3.5 w-3.5" />
+                  3D 骨骼驱动 {drivenBones}/8
+                </span>
+              )}
             </>
           )}
           {error && <p className="text-xs text-amber-300">{error}</p>}
@@ -627,7 +687,7 @@ export default function StoryStagePage() {
                   ) : (
                     <span aria-hidden>{use3D ? "🧙‍♀️" : "🎭"}</span>
                   )}
-                  {use3D ? "3D 角色" : "2D 角色"}
+                  {use3D ? "真实 3D 分身" : "启用真实 3D 分身"}
                 </button>
                 <button
                   onClick={() => gotoScene(storyIdx, Math.max(0, sceneIdx - 1))}
@@ -695,10 +755,10 @@ export default function StoryStagePage() {
           <div className="glass-card overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] px-5 py-3">
               <p className="text-sm font-semibold text-white">
-                AI 生成的 3D 角色 <span className="text-slate-500">Text → 3D</span>
+                360° 角色预览 <span className="text-slate-500">Text → 3D</span>
               </p>
               <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
-                可拖动旋转 · 缩放
+                可拖动旋转 · 独立预览
               </span>
             </div>
             <model-viewer
@@ -736,7 +796,7 @@ export default function StoryStagePage() {
                   "② 角色设定 → 分身逐幕变身（✓ 已上线）",
                   "③ 摄像头骨骼流驱动角色（✓ 已上线）",
                   "④ 提示词 → 生成 3D 角色（✓ 已上线）",
-                  "⑤ 老师真实动作驱动 3D 骨骼（✓ 已上线）",
+                  "⑤ 主舞台：老师真实动作驱动 3D 骨骼（✓ 已上线）",
                 ].map((step) => (
                   <li key={step} className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2">
                     {step}
@@ -745,7 +805,7 @@ export default function StoryStagePage() {
               </ul>
             </div>
             <p className="text-[11px] leading-relaxed text-slate-600">
-              模型由 Tripo text-to-3D 生成，经压缩后约 735KB，可直接在网页实时渲染。
+              此区域用于看模型外观；真正跟随老师动作的是上方故事舞台的「真实 3D 分身」。
             </p>
           </div>
         </div>
