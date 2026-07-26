@@ -26,7 +26,7 @@ import {
 } from "@/lib/characterEngine";
 import type { Avatar3D } from "@/lib/avatar3d";
 
-type Point = { x: number; y: number; visibility?: number };
+type Point = { x: number; y: number; z?: number; visibility?: number };
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

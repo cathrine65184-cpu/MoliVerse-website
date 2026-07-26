@@ -4,7 +4,7 @@
  * Shared by the Story Stage, the teacher studio and the lesson theatre.
  */
 
-export type Point = { x: number; y: number; visibility?: number };
+export type Point = { x: number; y: number; z?: number; visibility?: number };
 
 /** MediaPipe Pose landmark indices. */
 export const L = {

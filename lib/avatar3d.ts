@@ -62,7 +62,7 @@ const CHAIN: {
 
 export type Avatar3D = {
   /** Drive the character from one frame of pose landmarks. */
-  update(pose: Point[] | null | undefined): void;
+  update(pose: Point[] | null | undefined): number;
   /** Render one frame. */
   render(): void;
   resize(width: number, height: number): void;
@@ -70,11 +70,13 @@ export type Avatar3D = {
   ready: boolean;
 };
 
-/** Landmark → world-ish vector. MediaPipe y grows downward; flip it. */
+/** Landmark → stage-world vector. MediaPipe y grows downward; flip it. */
 function vec(pose: Point[], i: number): THREE.Vector3 | null {
   const p = pose[i];
   if (!p) return null;
-  return new THREE.Vector3(-(p.x - 0.5), -(p.y - 0.5), 0);
+  // z is relative depth from MediaPipe. Keeping it gives arm gestures a
+  // visible forward/backward dimension rather than flattening every motion.
+  return new THREE.Vector3(-(p.x - 0.5), -(p.y - 0.5), -(p.z ?? 0) * 1.8);
 }
 
 export async function createAvatar3D(
@@ -109,6 +111,8 @@ export async function createAvatar3D(
   // Collect the bones we drive, remembering their rest rotations
   const bones = new Map<string, THREE.Bone>();
   const restRot = new Map<string, THREE.Quaternion>();
+  const restWorldRot = new Map<string, THREE.Quaternion>();
+  const restWorldDir = new Map<string, THREE.Vector3>();
   root.traverse((o) => {
     const b = o as THREE.Bone;
     if (b.isBone) {
@@ -117,16 +121,37 @@ export async function createAvatar3D(
     }
   });
 
+  // Read each limb's actual rest direction from the imported rig. This is
+  // more reliable than assuming a particular model's T-pose orientation.
+  root.updateMatrixWorld(true);
+  bones.forEach((bone, name) => {
+    const child = bone.children.find((node) => (node as THREE.Bone).isBone) as
+      | THREE.Bone
+      | undefined;
+    if (!child) return;
+    const from = new THREE.Vector3();
+    const to = new THREE.Vector3();
+    bone.getWorldPosition(from);
+    child.getWorldPosition(to);
+    const direction = to.sub(from);
+    if (direction.lengthSq() > 1e-7) restWorldDir.set(name, direction.normalize());
+    restWorldRot.set(name, bone.getWorldQuaternion(new THREE.Quaternion()));
+  });
+
   const smoothing = new Map<string, THREE.Quaternion>();
-  const tmpQuat = new THREE.Quaternion();
 
   function update(pose: Point[] | null | undefined) {
-    if (!pose) return;
+    if (!pose) return 0;
+
+    let driven = 0;
+    root.updateMatrixWorld(true);
 
     for (const link of CHAIN) {
       const bone = bones.get(link.bone);
       const rest = restRot.get(link.bone);
-      if (!bone || !rest) continue;
+      const restWorld = restWorldRot.get(link.bone);
+      const restDir = restWorldDir.get(link.bone);
+      if (!bone || !rest || !restWorld || !restDir) continue;
       const a = vec(pose, link.from);
       const b = vec(pose, link.to);
       if (!a || !b) continue;
@@ -135,16 +160,24 @@ export async function createAvatar3D(
       if (dir.lengthSq() < 1e-6) continue;
       dir.normalize();
 
-      // Rotation taking the bone's rest direction onto the observed one,
-      // expressed in the parent's space via the rest orientation.
-      tmpQuat.setFromUnitVectors(link.rest, dir);
-      const target = rest.clone().premultiply(tmpQuat);
+      // First solve the desired world-space orientation. Then convert it to
+      // the bone's local space, respecting any transformed parent bone. The
+      // previous implementation skipped this conversion, so parent transforms
+      // could cancel the captured teacher motion.
+      const delta = new THREE.Quaternion().setFromUnitVectors(restDir, dir);
+      const targetWorld = restWorld.clone().premultiply(delta);
+      const parentWorld = bone.parent
+        ? bone.parent.getWorldQuaternion(new THREE.Quaternion())
+        : new THREE.Quaternion();
+      const target = parentWorld.invert().multiply(targetWorld);
 
       // Smooth so tracking jitter doesn't make the character twitch
       const prev = smoothing.get(link.bone) ?? bone.quaternion.clone();
-      prev.slerp(target, 0.35);
+      prev.slerp(target, 0.42);
       smoothing.set(link.bone, prev);
       bone.quaternion.copy(prev);
+      root.updateMatrixWorld(true);
+      driven += 1;
     }
 
     // Lean the torso with the shoulders, and turn the head toward the nose
@@ -173,6 +206,8 @@ export async function createAvatar3D(
       );
       head.quaternion.copy(restHead).premultiply(q);
     }
+
+    return driven;
   }
 
   function render() {
