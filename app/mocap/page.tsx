@@ -241,7 +241,11 @@ export default function StoryStagePage() {
   /* ---------- stage render loop (always on) ---------- */
 
   useEffect(() => {
-    import("@google/model-viewer");
+    // The interactive preview is optional. A browser that cannot load this
+    // custom element must not take down the live MoCap classroom stage.
+    void import("@google/model-viewer").catch((err) => {
+      console.warn("3D preview unavailable; live motion stage remains active.", err);
+    });
 
     const stageLoop = () => {
       const canvas = stageCanvasRef.current;
