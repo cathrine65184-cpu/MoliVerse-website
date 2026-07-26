@@ -732,7 +732,7 @@ export default function StoryStagePage() {
                   "② 角色设定 → 分身逐幕变身（✓ 已上线）",
                   "③ 摄像头骨骼流驱动角色（✓ 已上线）",
                   "④ 提示词 → 生成 3D 角色（✓ 已上线）",
-                  "⑤ 3D 角色接入骨骼驱动（进行中）",
+                  "⑤ 老师真实动作驱动 3D 骨骼（✓ 已上线）",
                 ].map((step) => (
                   <li key={step} className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2">
                     {step}
