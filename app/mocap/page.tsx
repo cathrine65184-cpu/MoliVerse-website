@@ -621,22 +621,21 @@ export default function StoryStagePage() {
           <div className="glass-card overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] px-5 py-3">
               <p className="text-sm font-semibold text-white">
-                真 · 3D 角色舞台 <span className="text-slate-500">Real 3D stage</span>
+                AI 生成的 3D 角色 <span className="text-slate-500">Text → 3D</span>
               </p>
               <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
                 可拖动旋转 · 缩放
               </span>
             </div>
             <model-viewer
-              src={withBasePath("/models3d/fox.glb")}
-              alt="开源 3D 示例角色 — 奔跑的小狐狸"
+              src={withBasePath("/models3d/witch.glb")}
+              poster={withBasePath("/models3d/witch-preview.png")}
+              alt="由提示词生成的 3D 女巫老师角色"
               camera-controls=""
               auto-rotate=""
-              autoplay=""
               loading="eager"
-              animation-name="Run"
               shadow-intensity="1"
-              exposure="1.1"
+              exposure="1.15"
               style={{ width: "100%", height: "380px", backgroundColor: "transparent" }}
             />
           </div>
@@ -644,13 +643,13 @@ export default function StoryStagePage() {
           <div className="flex flex-col gap-4">
             <div className="glass-card p-5">
               <h3 className="font-display text-sm font-semibold text-white">
-                这就是最终形态的雏形
+                这个角色是「写出来」的
               </h3>
               <p className="mt-2 text-xs leading-relaxed text-slate-400">
-                左边是一个真实的 3D 模型，在你的浏览器里实时渲染 ——
-                拖动它、转动它、看它奔跑。接入 Tripo text-to-3D 生成 API
-                后，每一幕的角色设定将直接生成这样的专属 3D
-                角色，再由动作捕捉的骨骼数据驱动。
+                左边这位女巫老师，来自一句提示词：「a cute cartoon witch teacher
+                for children, full body, friendly smile」—— AI
+                直接生成了完整的 3D 模型，在你的浏览器里实时渲染。老师想要什么角色，
+                写一句话就有。
               </p>
             </div>
             <div className="glass-card p-5">
@@ -661,8 +660,9 @@ export default function StoryStagePage() {
                 {[
                   "① 场景描述 → 实时生成背景（✓ 已上线）",
                   "② 角色设定 → 分身逐幕变身（✓ 已上线）",
-                  "③ 摄像头骨骼流驱动角色（✓ 已验证）",
-                  "④ 提示词 → Tripo 生成逼真 3D（接入就绪）",
+                  "③ 摄像头骨骼流驱动角色（✓ 已上线）",
+                  "④ 提示词 → 生成 3D 角色（✓ 已上线）",
+                  "⑤ 3D 角色接入骨骼驱动（进行中）",
                 ].map((step) => (
                   <li key={step} className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2">
                     {step}
@@ -671,8 +671,7 @@ export default function StoryStagePage() {
               </ul>
             </div>
             <p className="text-[11px] leading-relaxed text-slate-600">
-              示例模型：Fox（glTF 开源样例，模型 CC0 · 动画 CC-BY 4.0 by
-              @tomkranis）。积分到账后将替换为 MoliVerse 专属生成角色。
+              模型由 Tripo text-to-3D 生成，经压缩后约 735KB，可直接在网页实时渲染。
             </p>
           </div>
         </div>
