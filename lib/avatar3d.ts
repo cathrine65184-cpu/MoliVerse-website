@@ -106,6 +106,17 @@ export async function createAvatar3D(
   const gltf = await new GLTFLoader().loadAsync(modelUrl);
   const root = gltf.scene;
   root.position.set(0, 0, 0);
+
+  // Face the camera. Generated characters do not agree on a forward axis —
+  // this one is authored facing +X, so it showed only its side. A human is
+  // wider across the shoulders than front-to-back, so the shorter horizontal
+  // extent of the bounding box is the facing axis; turn it toward +Z.
+  {
+    const box = new THREE.Box3().setFromObject(root);
+    const size = box.getSize(new THREE.Vector3());
+    if (size.x < size.z) root.rotation.y = -Math.PI / 2;
+  }
+
   scene.add(root);
 
   // Collect the bones we drive, remembering their rest rotations.
