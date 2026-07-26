@@ -322,7 +322,7 @@ export default function StoryStagePage() {
             // the 3D character renders on its own canvas layered above
             const av = avatarRef.current;
             if (av) {
-              drivenBonesRef.current = av.update(pose);
+              drivenBonesRef.current = av.update(pose, testMotionRef.current);
               av.render();
             }
           } else if (!testMotionRef.current) {

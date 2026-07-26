@@ -62,7 +62,7 @@ const CHAIN: {
 
 export type Avatar3D = {
   /** Drive the character from one frame of pose landmarks. */
-  update(pose: Point[] | null | undefined): number;
+  update(pose: Point[] | null | undefined, testGesture?: boolean): number;
   /** Render one frame. */
   render(): void;
   resize(width: number, height: number): void;
@@ -140,8 +140,48 @@ export async function createAvatar3D(
 
   const smoothing = new Map<string, THREE.Quaternion>();
 
-  function update(pose: Point[] | null | undefined) {
+  function update(pose: Point[] | null | undefined, testGesture = false) {
     if (!pose) return 0;
+
+    // This is a direct skeletal proof, used only by the “Test 3D motion”
+    // button. It deliberately controls the actual shoulder and elbow bones
+    // instead of relying on pose retargeting, so a successful test can never
+    // be mistaken for the 2D canvas puppet.
+    if (testGesture) {
+      const wave = Math.sin(performance.now() / 220);
+      const setGestureBone = (name: string, z: number, x = 0) => {
+        const bone = bones.get(name);
+        const rest = restRot.get(name);
+        if (!bone || !rest) return false;
+        const target = rest.clone().multiply(
+          new THREE.Quaternion().setFromEuler(new THREE.Euler(x, 0, z, "XYZ"))
+        );
+        const prev = smoothing.get(name) ?? bone.quaternion.clone();
+        prev.slerp(target, 0.3);
+        smoothing.set(name, prev);
+        bone.quaternion.copy(prev);
+        return true;
+      };
+
+      let driven = 0;
+      // A broad, unmistakable greeting: shoulder raises, elbow waves, and
+      // the opposite arm counterbalances. These are all skinning bones in
+      // witch-rigged.glb, not a CSS or 2D animation.
+      driven += Number(setGestureBone(B.rArm, -1.15 + wave * 0.24, 0.34));
+      driven += Number(setGestureBone(B.rForeArm, 0.95 + wave * 0.72, -0.18));
+      driven += Number(setGestureBone(B.lArm, 0.22, -0.12));
+      driven += Number(setGestureBone(B.lForeArm, -0.18, 0.08));
+      const head = bones.get(B.head);
+      const restHead = restRot.get(B.head);
+      if (head && restHead) {
+        head.quaternion.copy(restHead).multiply(
+          new THREE.Quaternion().setFromEuler(new THREE.Euler(0, wave * 0.18, 0))
+        );
+        driven += 1;
+      }
+      root.updateMatrixWorld(true);
+      return driven;
+    }
 
     let driven = 0;
     for (const link of CHAIN) {
