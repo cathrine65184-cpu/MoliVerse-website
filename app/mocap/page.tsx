@@ -24,6 +24,7 @@ import {
   parseTheme,
   drawPuppet,
 } from "@/lib/characterEngine";
+import type { Avatar3D } from "@/lib/avatar3d";
 
 type Point = { x: number; y: number; visibility?: number };
 
@@ -142,6 +143,11 @@ export default function StoryStagePage() {
   const [storyIdx, setStoryIdx] = useState(0);
   const [sceneIdx, setSceneIdx] = useState(0);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [use3D, setUse3D] = useState(false);
+  const [loading3D, setLoading3D] = useState(false);
+  const use3DRef = useRef(false);
+  const avatarRef = useRef<Avatar3D | null>(null);
+  const avatar3DCanvas = useRef<HTMLCanvasElement>(null);
   const [newBg, setNewBg] = useState("");
   const [newChar, setNewChar] = useState("");
   const [newPhrase, setNewPhrase] = useState("");
@@ -150,6 +156,33 @@ export default function StoryStagePage() {
   const scene = story.scenes[sceneIdx];
   const theme = parseTheme(prompt);
   themeRef.current = theme;
+
+  /** Load the rigged 3D character on first use, then drive it from the pose. */
+  async function toggle3D() {
+    if (use3D) {
+      setUse3D(false);
+      use3DRef.current = false;
+      return;
+    }
+    setLoading3D(true);
+    try {
+      if (!avatarRef.current) {
+        const canvas = avatar3DCanvas.current;
+        if (!canvas) return;
+        const { createAvatar3D } = await import("@/lib/avatar3d");
+        const av = await createAvatar3D(canvas, withBasePath("/models3d/witch-rigged.glb"));
+        av.resize(canvas.clientWidth || 640, canvas.clientHeight || 480);
+        avatarRef.current = av;
+      }
+      setUse3D(true);
+      use3DRef.current = true;
+    } catch (err) {
+      console.error(err);
+      setError("3D 角色加载失败");
+    } finally {
+      setLoading3D(false);
+    }
+  }
 
   function switchBg(desc: string) {
     const ref = bgRef.current;
@@ -230,12 +263,19 @@ export default function StoryStagePage() {
           }
 
           const pose = poseRef.current;
-          if (pose) {
+          if (pose && !use3DRef.current) {
             ctx.beginPath();
             ctx.ellipse(w / 2, h * 0.94, w * 0.3, 16, 0, 0, Math.PI * 2);
             ctx.fillStyle = "rgba(2,6,23,0.35)";
             ctx.fill();
             drawPuppet(ctx, w, h, pose, themeRef.current);
+          } else if (pose && use3DRef.current) {
+            // the 3D character renders on its own canvas layered above
+            const av = avatarRef.current;
+            if (av) {
+              av.update(pose);
+              av.render();
+            }
           } else {
             ctx.fillStyle = "rgba(255,255,255,0.75)";
             ctx.font = "600 15px sans-serif";
@@ -570,6 +610,22 @@ export default function StoryStagePage() {
               </p>
               <div className="flex items-center gap-1.5">
                 <button
+                  onClick={toggle3D}
+                  disabled={loading3D}
+                  className={`mr-1 flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+                    use3D
+                      ? "border-violet-400/50 bg-violet-400/15 text-white"
+                      : "border-white/10 text-slate-400 hover:border-white/30 hover:text-white"
+                  }`}
+                >
+                  {loading3D ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <span aria-hidden>{use3D ? "🧙‍♀️" : "🎭"}</span>
+                  )}
+                  {use3D ? "3D 角色" : "2D 角色"}
+                </button>
+                <button
                   onClick={() => gotoScene(storyIdx, Math.max(0, sceneIdx - 1))}
                   disabled={sceneIdx === 0}
                   aria-label="上一幕"
@@ -589,7 +645,21 @@ export default function StoryStagePage() {
                 </button>
               </div>
             </div>
-            <canvas ref={stageCanvasRef} className="aspect-[4/3] w-full" />
+            <div className="relative">
+              <canvas ref={stageCanvasRef} className="aspect-[4/3] w-full" />
+              {/* 3D character layer — driven by the same pose stream */}
+              <canvas
+                ref={avatar3DCanvas}
+                className={`absolute inset-0 h-full w-full transition-opacity duration-300 ${
+                  use3D ? "opacity-100" : "pointer-events-none opacity-0"
+                }`}
+              />
+              {use3D && (
+                <span className="pointer-events-none absolute left-3 top-3 rounded-full border border-violet-400/30 bg-void/70 px-3 py-1 text-[11px] font-medium text-violet-200 backdrop-blur-md">
+                  AI 生成的 3D 角色 · 由你的动作驱动
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-3 border-t border-white/[0.08] px-5 py-3.5">
               <button
                 onClick={speakPhrase}
