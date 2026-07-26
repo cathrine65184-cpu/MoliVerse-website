@@ -108,20 +108,33 @@ export async function createAvatar3D(
   root.position.set(0, 0, 0);
   scene.add(root);
 
-  // Collect the bones we drive, remembering their rest rotations
-  const bones = new Map<string, THREE.Bone>();
-  const restRot = new Map<string, THREE.Quaternion>();
+  // Collect the bones we drive, remembering their rest rotations.
+  //
+  // GLTFLoader sanitises node names: a rig authored as "mixamorig:Hips"
+  // arrives as "mixamorigHips". Looking bones up by their authored name
+  // therefore misses every joint and the character never moves, so index
+  // everything under a normalised key and resolve through it.
+  const normName = (name: string) => name.toLowerCase().replace(/[\s:_.-]/g, "");
+  const boneStore = new Map<string, THREE.Bone>();
+  const restStore = new Map<string, THREE.Quaternion>();
+  const bones = {
+    get: (name: string) => boneStore.get(normName(name)),
+    forEach: (fn: (bone: THREE.Bone, name: string) => void) =>
+      boneStore.forEach((bone) => fn(bone, bone.name)),
+  };
+  const restRot = { get: (name: string) => restStore.get(normName(name)) };
   root.traverse((o) => {
     const b = o as THREE.Bone;
     if (b.isBone) {
-      bones.set(b.name, b);
-      restRot.set(b.name, b.quaternion.clone());
+      boneStore.set(normName(b.name), b);
+      restStore.set(normName(b.name), b.quaternion.clone());
     }
   });
 
   // Store each imported limb's rest angle. We use the actual rig hierarchy
   // rather than assuming every generated character uses the same T-pose.
-  const restAngles = new Map<string, number>();
+  const restAngleStore = new Map<string, number>();
+  const restAngles = { get: (name: string) => restAngleStore.get(normName(name)) };
   root.updateMatrixWorld(true);
   bones.forEach((bone, name) => {
     const child = bone.children.find((node) => (node as THREE.Bone).isBone) as
@@ -134,7 +147,7 @@ export async function createAvatar3D(
     child.getWorldPosition(to);
     const direction = to.sub(from);
     if (direction.lengthSq() > 1e-7) {
-      restAngles.set(name, Math.atan2(direction.y, direction.x));
+      restAngleStore.set(normName(name), Math.atan2(direction.y, direction.x));
     }
   });
 
