@@ -9,7 +9,6 @@ import { withBasePath } from "@/lib/paths";
 const links = [
   { label: "What is MoliVerse", href: "/#what" },
   { label: "How It Works", href: "/#how" },
-  { label: "Human + AI", href: "/#human-ai" },
   { label: "Studio", href: "/studio/" },
   { label: "Story Stage", href: "/mocap/" },
   { label: "Workshops", href: "/#workshops" },

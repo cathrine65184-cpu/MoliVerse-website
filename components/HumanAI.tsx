@@ -17,8 +17,9 @@ import {
 } from "lucide-react";
 import { withBasePath } from "@/lib/paths";
 import Globe from "./Globe";
+import SectionHeading from "./ui/SectionHeading";
 
-const PANELS = 6;
+const PANELS = 5;
 
 /* ---------- shared bits ---------- */
 
@@ -51,35 +52,6 @@ function CatherinePhoto({
       height={size}
       className={`object-cover ${className}`}
     />
-  );
-}
-
-/* ---------- panel 0 · intro ---------- */
-
-function IntroPanel() {
-  return (
-    <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-violet-300">
-          Human + AI
-        </span>
-        <span className="inline-flex items-center rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-200">
-          Beta · 技术预览
-        </span>
-      </div>
-      <h2 className="mt-6 font-display text-3xl font-semibold tracking-tight text-white sm:text-5xl">
-        A universe built by language educators everywhere.
-      </h2>
-      <p className="mt-6 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
-        Great teachers have always inspired learners. Now, AI helps them share
-        their knowledge, personality, and teaching style with children around
-        the world.
-      </p>
-      <p className="mt-10 flex items-center gap-2 text-sm text-slate-500">
-        Keep scrolling to follow the journey
-        <ArrowRight className="h-4 w-4 animate-pulse" />
-      </p>
-    </div>
   );
 }
 
@@ -385,37 +357,45 @@ export default function HumanAI() {
   const x = useTransform(scrollYProgress, [0, 1], ["0vw", `-${(PANELS - 1) * 100}vw`]);
 
   return (
-    <section id="human-ai" ref={trackRef} className="relative" style={{ height: `${PANELS * 100}vh` }}>
-      <div className="sticky top-0 flex h-screen items-center overflow-hidden">
-        {/* Ambient glows travel with the stage */}
-        <div className="pointer-events-none absolute left-[10%] top-[12%] h-[28rem] w-[28rem] rounded-full bg-violet-600/[0.08] blur-[130px]" />
-        <div className="pointer-events-none absolute bottom-[8%] right-[8%] h-[24rem] w-[24rem] rounded-full bg-amber-500/[0.05] blur-[120px]" />
+    <section id="how" className="relative scroll-mt-24">
+      <div className="mx-auto max-w-5xl px-6 pb-4 pt-28 sm:pt-36">
+        <SectionHeading
+          eyebrow="How It Works"
+          title="A real teacher becomes an AI mentor."
+        />
+      </div>
 
-        <motion.div style={{ x }} className="flex">
-          {[
-            <IntroPanel key="intro" />,
-            <TeacherPanel key="teacher" />,
-            <CreatePanel key="create" />,
-            <DigitalHumanPanel key="digital" />,
-            <ConnectionPanel key="connection" />,
-            <NetworkPanel key="network" />,
-          ].map((panel, i) => (
-            <div
-              key={i}
-              className="flex h-screen w-screen shrink-0 items-center justify-center px-6 py-16"
-            >
-              {panel}
+      <div ref={trackRef} className="relative" style={{ height: `${PANELS * 100}vh` }}>
+        <div className="sticky top-0 flex h-screen items-center overflow-hidden">
+          {/* Ambient glows travel with the stage */}
+          <div className="pointer-events-none absolute left-[10%] top-[12%] h-[28rem] w-[28rem] rounded-full bg-violet-600/[0.08] blur-[130px]" />
+          <div className="pointer-events-none absolute bottom-[8%] right-[8%] h-[24rem] w-[24rem] rounded-full bg-amber-500/[0.05] blur-[120px]" />
+
+          <motion.div style={{ x }} className="flex">
+            {[
+              <TeacherPanel key="teacher" />,
+              <CreatePanel key="create" />,
+              <DigitalHumanPanel key="digital" />,
+              <ConnectionPanel key="connection" />,
+              <NetworkPanel key="network" />,
+            ].map((panel, i) => (
+              <div
+                key={i}
+                className="flex h-screen w-screen shrink-0 items-center justify-center px-6 py-16"
+              >
+                {panel}
+              </div>
+            ))}
+          </motion.div>
+
+          {/* Journey progress */}
+          <div className="absolute inset-x-0 bottom-6 mx-auto w-48">
+            <div className="h-0.5 overflow-hidden rounded-full bg-white/10">
+              <motion.div
+                style={{ scaleX: scrollYProgress }}
+                className="h-full origin-left bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-300"
+              />
             </div>
-          ))}
-        </motion.div>
-
-        {/* Journey progress */}
-        <div className="absolute inset-x-0 bottom-6 mx-auto w-48">
-          <div className="h-0.5 overflow-hidden rounded-full bg-white/10">
-            <motion.div
-              style={{ scaleX: scrollYProgress }}
-              className="h-full origin-left bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-300"
-            />
           </div>
         </div>
       </div>

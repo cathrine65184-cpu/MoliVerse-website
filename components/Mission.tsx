@@ -42,7 +42,8 @@ export default function Mission() {
             In some places, classrooms overflow with resources. In others, a
             good language teacher is impossible to find — or to afford. AI
             alone doesn&apos;t close that gap: knowledge still needs a human
-            guide. MoliVerse exists to connect the two worlds.
+            guide. MoliVerse connects the two, building a universe that
+            belongs to every child, not only those born near great schools.
           </p>
         </Reveal>
 

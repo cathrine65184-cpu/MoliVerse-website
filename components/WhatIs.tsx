@@ -1,22 +1,25 @@
-import { BookOpen, Compass, ScrollText, Swords, Globe2, GraduationCap } from "lucide-react";
+import { MessagesSquare, ScrollText, Sparkles } from "lucide-react";
 import Reveal from "./ui/Reveal";
 import SectionHeading from "./ui/SectionHeading";
 
-const shifts = [
+const pieces = [
   {
-    from: { icon: GraduationCap, label: "Lessons" },
-    to: { icon: ScrollText, label: "Stories" },
-    description: "Instead of sitting through lessons, you step into living narratives that unfold around you.",
+    icon: MessagesSquare,
+    title: "AI Characters",
+    description:
+      "NPCs who talk back, remember you, and speak at your level — a conversation, not a script.",
   },
   {
-    from: { icon: BookOpen, label: "Exercises" },
-    to: { icon: Swords, label: "Quests" },
-    description: "Instead of repeating drills, you complete quests where language is the key to progress.",
+    icon: ScrollText,
+    title: "Interactive Stories",
+    description:
+      "Every choice moves the plot forward. Language is the key to what happens next, not a worksheet.",
   },
   {
-    from: { icon: Compass, label: "Textbooks" },
-    to: { icon: Globe2, label: "Worlds" },
-    description: "Instead of turning pages, you explore worlds where every place speaks the language you're learning.",
+    icon: Sparkles,
+    title: "Teacher Avatars",
+    description:
+      "Real teachers become 3D characters who move and speak inside the story — a familiar face, right there with you.",
   },
 ];
 
@@ -24,33 +27,28 @@ export default function WhatIs() {
   return (
     <section id="what" className="relative scroll-mt-24 px-6 py-28 sm:py-36">
       <div className="mx-auto max-w-5xl">
-        <SectionHeading eyebrow="What is MoliVerse" title="Stop studying a language. Start living in one." />
+        <SectionHeading eyebrow="What is MoliVerse" title="Three pieces. One living lesson." />
 
         <Reveal delay={0.1} className="mx-auto mt-8 max-w-2xl text-center">
           <p className="text-base leading-relaxed text-slate-400 sm:text-lg">
-            Traditional language learning teaches you words. MoliVerse lets you
-            live inside another language — where every conversation, choice,
-            and discovery moves your story forward.
+            MoliVerse turns a language lesson into a story you step inside —
+            built from AI characters, branching plots, and your own teacher
+            reimagined as a character who moves and speaks right beside you.
           </p>
         </Reveal>
 
         <div className="mt-16 grid gap-6 md:grid-cols-3">
-          {shifts.map((shift, i) => (
-            <Reveal key={shift.to.label} delay={0.1 + i * 0.1}>
+          {pieces.map((piece, i) => (
+            <Reveal key={piece.title} delay={0.1 + i * 0.1}>
               <div className="glass-card group h-full p-8 transition-all duration-300 hover:border-violet-400/30 hover:bg-white/[0.05]">
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-2 text-sm text-slate-500">
-                    <shift.from.icon className="h-4 w-4" />
-                    {shift.from.label}
-                  </span>
-                  <span className="text-violet-400">→</span>
-                  <span className="flex items-center gap-2 text-sm font-semibold text-white">
-                    <shift.to.icon className="h-4 w-4 text-violet-300" />
-                    {shift.to.label}
-                  </span>
-                </div>
-                <p className="mt-5 text-sm leading-relaxed text-slate-400">
-                  {shift.description}
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-violet-300">
+                  <piece.icon className="h-5 w-5" strokeWidth={1.8} />
+                </span>
+                <h3 className="mt-5 font-display text-lg font-semibold text-white">
+                  {piece.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                  {piece.description}
                 </p>
               </div>
             </Reveal>
