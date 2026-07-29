@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  ArrowRight,
   AudioLines,
   Camera,
   Check,
@@ -235,6 +236,19 @@ export default function StudioPage() {
             上传一张照片和一段声音，亲手创建你的数字人分身。所有处理都在你的浏览器里真实运行
             —— 人脸关键点检测、录音、开口说话，数据不会离开你的电脑。
           </p>
+
+          <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] px-4 py-3">
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+            <p className="text-xs leading-relaxed text-amber-100">
+              这是效果预览 —— 不会保存，也不会生成真实的讲课视频。
+              <Link
+                href="/account/"
+                className="ml-1 font-semibold text-amber-200 underline underline-offset-2 hover:text-white"
+              >
+                登录后可保存并生成真实数字人视频 →
+              </Link>
+            </p>
+          </div>
         </div>
 
         <div className="mt-12 grid gap-8 lg:grid-cols-[360px,1fr]">
@@ -530,6 +544,24 @@ export default function StudioPage() {
                     </span>
                   )}
                 </div>
+              </div>
+            )}
+
+            {created && (
+              <div className="glass-card border-emerald-400/20 bg-emerald-400/[0.04] p-6 text-center">
+                <p className="font-display text-base font-semibold text-white">
+                  喜欢这个效果？登录后生成真实版本，永久保存到你的账号。
+                </p>
+                <p className="mt-2 text-sm text-slate-400">
+                  真实讲课视频、声音克隆、课程绑定 —— 都在登录后的 Teacher Studio 里完成。
+                </p>
+                <Link
+                  href="/account/"
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-3 text-sm font-semibold text-white transition-all hover:opacity-90"
+                >
+                  登录保存我的数字人
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             )}
 
