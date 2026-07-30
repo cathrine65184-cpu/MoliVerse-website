@@ -95,7 +95,7 @@ export default function Workshops() {
             className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-7 py-3.5 text-sm font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,0.6)] transition-all hover:shadow-[0_0_56px_-8px_rgba(139,92,246,0.8)]"
           >
             <Compass className="h-4 w-4" />
-            Join the Adventure · 预约免费工坊
+            Join the Adventure
           </a>
           <p className="text-xs text-slate-500">
             Free trial workshops, small groups — email us your child&apos;s age, language, and city.

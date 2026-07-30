@@ -19,14 +19,14 @@ export type Costume = {
 };
 
 export const costumes: Record<string, Costume> = {
-  explorer: { key: "explorer", label: "草原探险家", emoji: "🧭", color: "#fbbf24" },
-  ranger: { key: "ranger", label: "森林向导", emoji: "🌲", color: "#4ade80" },
-  wizard: { key: "wizard", label: "星夜魔法师", emoji: "🧙‍♀️", color: "#a78bfa" },
-  diver: { key: "diver", label: "深海潜水员", emoji: "🤿", color: "#22d3ee" },
-  snowhero: { key: "snowhero", label: "雪地向导", emoji: "⛄", color: "#93c5fd" },
-  astronaut: { key: "astronaut", label: "星际宇航员", emoji: "🚀", color: "#e2e8f0" },
-  storyteller: { key: "storyteller", label: "城市故事家", emoji: "✨", color: "#f9a8d4" },
-  captain: { key: "captain", label: "小队长", emoji: "⚓", color: "#f87171" },
+  explorer: { key: "explorer", label: "Savanna explorer", emoji: "🧭", color: "#fbbf24" },
+  ranger: { key: "ranger", label: "Forest guide", emoji: "🌲", color: "#4ade80" },
+  wizard: { key: "wizard", label: "Starlight wizard", emoji: "🧙‍♀️", color: "#a78bfa" },
+  diver: { key: "diver", label: "Deep-sea diver", emoji: "🤿", color: "#22d3ee" },
+  snowhero: { key: "snowhero", label: "Snow guide", emoji: "⛄", color: "#93c5fd" },
+  astronaut: { key: "astronaut", label: "Space explorer", emoji: "🚀", color: "#e2e8f0" },
+  storyteller: { key: "storyteller", label: "City storyteller", emoji: "✨", color: "#f9a8d4" },
+  captain: { key: "captain", label: "Team captain", emoji: "⚓", color: "#f87171" },
 };
 
 type StepBase = {

@@ -51,68 +51,68 @@ export type Theme = {
 export const themes: (Theme & { match: string[] })[] = [
   {
     match: ["女巫", "巫婆", "witch"],
-    label: "女巫", emoji: "🧙‍♀️",
+    label: "Witch", emoji: "🧙‍♀️",
     primary: "#a78bfa", dark: "#7c3aed", belly: "#ddd6fe",
     headwear: "witch", extras: ["wand"],
   },
   {
     match: ["公主", "princess", "女王", "queen"],
-    label: "公主", emoji: "👸",
+    label: "Princess", emoji: "👸",
     primary: "#f9a8d4", dark: "#ec4899", belly: "#fce7f3",
     headwear: "crown", extras: ["wand"],
   },
   {
     match: ["巫师", "魔法师", "wizard", "mage"],
-    label: "魔法师", emoji: "🪄",
+    label: "Wizard", emoji: "🪄",
     primary: "#93c5fd", dark: "#3b82f6", belly: "#dbeafe",
     headwear: "wizard", extras: ["wand"],
   },
   {
     match: ["机器人", "robot", "机甲"],
-    label: "机器人", emoji: "🤖",
+    label: "Robot", emoji: "🤖",
     primary: "#94a3b8", dark: "#475569", belly: "#cbd5e1",
     headwear: "robot", extras: ["antenna"],
   },
   {
     match: ["宇航员", "太空", "astronaut", "space"],
-    label: "宇航员", emoji: "🧑‍🚀",
+    label: "Astronaut", emoji: "🧑‍🚀",
     primary: "#e2e8f0", dark: "#94a3b8", belly: "#f8fafc",
     headwear: "space", extras: [],
   },
   {
     match: ["猫", "小猫", "cat", "kitty"],
-    label: "小猫", emoji: "🐱",
+    label: "Kitten", emoji: "🐱",
     primary: "#fbbf24", dark: "#d97706", belly: "#fef3c7",
     headwear: "catEars", extras: ["whiskers", "tail"],
   },
   {
     match: ["仙女", "精灵", "fairy", "elf"],
-    label: "仙女", emoji: "🧚",
+    label: "Fairy", emoji: "🧚",
     primary: "#5eead4", dark: "#14b8a6", belly: "#ccfbf1",
     headwear: "crown", extras: ["wings", "wand"],
   },
   {
     match: ["恐龙", "龙", "dragon", "dino"],
-    label: "小恐龙", emoji: "🦖",
+    label: "Little dinosaur", emoji: "🦖",
     primary: "#86efac", dark: "#16a34a", belly: "#fef9c3",
     headwear: "horns", extras: ["tail"],
   },
   {
     match: ["海盗", "pirate"],
-    label: "海盗", emoji: "🏴‍☠️",
+    label: "Pirate", emoji: "🏴‍☠️",
     primary: "#fca5a5", dark: "#dc2626", belly: "#fee2e2",
     headwear: "bandana", extras: ["eyepatch"],
   },
   {
     match: ["超人", "英雄", "hero", "superhero"],
-    label: "超级英雄", emoji: "🦸",
+    label: "Superhero", emoji: "🦸",
     primary: "#60a5fa", dark: "#2563eb", belly: "#fde047",
     headwear: null, extras: ["cape"],
   },
 ];
 
 export const defaultTheme: Theme = {
-  label: "小萌", emoji: "🌱",
+  label: "Moli", emoji: "🌱",
   primary: "#9ccc8f", dark: "#7fb573", belly: "#f6d98a",
   headwear: null, extras: [],
 };

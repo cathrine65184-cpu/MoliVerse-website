@@ -23,8 +23,8 @@ export default function LearnPage() {
 
   async function reportCourse(course: Course) {
     if (!me) return router.push("/account/");
-    if (!confirm(`举报课程「${course.title}」？我们会尽快审核。`)) return;
-    await fileReport(me.id, "course", course.id, "课程内容举报");
+    if (!confirm(`Report “${course.title}”? We will review it as soon as possible.`)) return;
+    await fileReport(me.id, "course", course.id, "Course content report");
     setReported((s) => new Set(s).add(course.id));
   }
 
@@ -65,7 +65,7 @@ export default function LearnPage() {
   }
 
   function askForAdult(course: Course) {
-    setFamilyNotice(`想让 ${course.profiles?.name ?? "这位教育者"} 亲自回应？请邀请家长或监护人一起查看「For Families」，由成年人决定是否联系教育者。`);
+    setFamilyNotice(`Would you like ${course.profiles?.name ?? "this educator"} to respond personally? Ask a parent or guardian to use the Family area and decide whether to make contact.`);
     window.setTimeout(() => setFamilyNotice(null), 5500);
   }
 
@@ -82,16 +82,16 @@ export default function LearnPage() {
             href={me ? (me.role === "teacher" ? "/teach/" : "/account/") : "/account/"}
             className="text-sm text-slate-400 transition-colors hover:text-white"
           >
-            {me ? `${me.name} · 我的账号` : "登录 / 注册"}
+            {me ? `${me.name} · My account` : "Sign in / Create account"}
           </Link>
         </div>
 
-        <h1 className="mt-6 font-display text-3xl font-semibold text-white">今天，想探索哪个世界？</h1>
+        <h1 className="mt-6 font-display text-3xl font-semibold text-white">Which world would you like to explore today?</h1>
         <p className="mt-1 text-sm text-slate-500">
-          由真实语言教育者设计的文化旅程。遇见 AI Mentor，在故事里自然开口。
+          Cultural journeys created by real language educators. Meet an AI Mentor and start speaking naturally inside the story.
         </p>
         <p className="mt-3 rounded-xl border border-amber-300/15 bg-amber-300/[0.05] px-4 py-2.5 text-xs leading-relaxed text-amber-100">
-          为了让孩子安全探索，MoliVerse 不提供孩子与教育者的开放私信。AI Mentor 负责旅程中的日常互动；需要真人回应时，请和家长或监护人一起发起。
+          To keep children safe, MoliVerse never offers open child-to-educator messages. An AI Mentor guides everyday exploration; requests for a real educator response begin with a parent or guardian.
         </p>
         {familyNotice && <p className="mt-3 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-2.5 text-xs text-cyan-100">{familyNotice}</p>}
 
@@ -101,20 +101,20 @@ export default function LearnPage() {
           </div>
         ) : courses.length === 0 ? (
           <div className="glass-card mt-10 p-10 text-center">
-            <p className="text-slate-400">新的学习旅程正在被教育者创造。</p>
+            <p className="text-slate-400">New learning journeys are being created by educators.</p>
             <p className="mt-2 text-sm text-slate-600">
-              你是语言教育者？
+              Are you a language educator?
               <Link href="/account/" className="text-violet-300 hover:text-violet-200">
-                注册教育者账号
+                Create an educator account
               </Link>
-              ，创造第一个孩子会记得的世界。
+              and create the first world a child will remember.
             </p>
             <Link
-              href="/lesson/"
+              href="/explore/"
               className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white"
             >
               <Play className="h-4 w-4 fill-white" />
-              先体验 3 分钟示范旅程
+              Start a demo journey with a parent
             </Link>
           </div>
         ) : (
@@ -147,14 +147,14 @@ export default function LearnPage() {
                         )}
                       </p>
                       <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
-                        <span className="text-slate-400">{teacher?.name ?? "老师"}</span>
+                        <span className="text-slate-400">{teacher?.name ?? "Educator"}</span>
                         {teacher?.verified && (
                           <span
-                            title="已实名核验"
+                            title="Identity verified"
                             className="inline-flex items-center gap-0.5 rounded-full bg-sky-400/15 px-1.5 py-0.5 text-[10px] font-medium text-sky-300"
                           >
                             <ShieldCheck className="h-3 w-3" />
-                            已核验
+                            Verified
                           </span>
                         )}
                         {teacher?.language ? `· ${teacher.language}` : ""}
@@ -184,13 +184,13 @@ export default function LearnPage() {
                       )}
                       {audio && (
                         <div className="mt-3">
-                          <p className="mb-1 text-xs text-slate-500">🎧 老师的声音示范</p>
+                          <p className="mb-1 text-xs text-slate-500">🎧 Educator voice sample</p>
                           <audio controls src={audio.url} className="h-9 w-full max-w-sm" />
                         </div>
                       )}
                       {video && (
                         <div className="mt-3">
-                          <p className="mb-1 text-xs text-slate-500">🎬 课程视频</p>
+                          <p className="mb-1 text-xs text-slate-500">🎬 Journey video</p>
                           <video
                             controls
                             src={video.url}
@@ -223,14 +223,14 @@ export default function LearnPage() {
                       className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-1.5 text-xs font-semibold text-white shadow-[0_0_24px_-8px_rgba(139,92,246,0.7)] transition-all hover:opacity-90"
                     >
                       <Play className="h-3.5 w-3.5 fill-white" />
-                      进入旅程
+                      Enter journey
                     </Link>
                     <Link
                       href={`/ask/?c=${course.id}`}
                       className="flex items-center gap-1.5 rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-1.5 text-xs font-semibold text-cyan-300 transition-all hover:border-cyan-400/50 hover:text-cyan-200"
                     >
                       <Bot className="h-3.5 w-3.5" />
-                      遇见 AI Mentor
+                      Meet AI Mentor
                     </Link>
                     <button
                       onClick={() => toggleLike(course)}
@@ -248,7 +248,7 @@ export default function LearnPage() {
                       className="flex items-center gap-1.5 rounded-full border border-amber-300/25 bg-amber-300/[0.06] px-4 py-1.5 text-xs font-medium text-amber-100 transition-all hover:border-amber-300/45"
                     >
                       <UsersRound className="h-3.5 w-3.5" />
-                      与家长一起请求真人回应
+                      Request a human response with a parent
                     </button>
                     <button
                       onClick={() => reportCourse(course)}
@@ -256,7 +256,7 @@ export default function LearnPage() {
                       className="ml-auto flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs text-slate-500 transition-all hover:border-amber-400/30 hover:text-amber-300 disabled:opacity-50"
                     >
                       <Flag className="h-3 w-3" />
-                      {reported.has(course.id) ? "已举报" : "举报"}
+                      {reported.has(course.id) ? "Reported" : "Report"}
                     </button>
                   </div>
                 </div>

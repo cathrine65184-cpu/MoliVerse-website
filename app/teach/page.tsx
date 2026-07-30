@@ -30,7 +30,7 @@ import { extractText, isExtractable } from "@/lib/extractText";
 import { loadJourneyMeta, saveJourneyMeta } from "@/lib/journey";
 
 const kindIcon = { image: Camera, audio: Mic, video: Film, doc: FileText };
-const kindLabel = { image: "图片", audio: "音频", video: "视频", doc: "课件" };
+const kindLabel = { image: "Image", audio: "Audio", video: "Video", doc: "Teaching material" };
 
 export default function TeachPage() {
   const [me, setMe] = useState<Profile | null>(null);
@@ -111,7 +111,7 @@ export default function TeachPage() {
     setSubmittingVerif(false);
     if (!error) {
       setVerifStatus("pending");
-      setNotice("实名核验申请已提交，我们会尽快审核。");
+      setNotice("Your verification request has been submitted for review.");
       setTimeout(() => setNotice(null), 3000);
     }
   }
@@ -121,7 +121,7 @@ export default function TeachPage() {
     setSavingProfile(true);
     await supabase.from("profiles").update({ bio, language }).eq("id", me.id);
     setSavingProfile(false);
-    setNotice("资料已保存 ✓");
+    setNotice("Profile saved ✓");
     setTimeout(() => setNotice(null), 2500);
   }
 
@@ -132,7 +132,7 @@ export default function TeachPage() {
       await supabase.from("profiles").update({ avatar_url: url }).eq("id", me.id);
       setMe({ ...me, avatar_url: url });
     } catch {
-      setNotice("头像上传失败，请重试");
+      setNotice("Avatar upload failed. Please try again.");
     }
   }
 
@@ -146,7 +146,7 @@ export default function TeachPage() {
       language: newLang.trim(),
     }).select().single();
     if (error || !data) {
-      setNotice("旅程创建失败，请重试");
+      setNotice("We could not create this journey. Please try again.");
       setCreating(false);
       return;
     }
@@ -158,7 +158,7 @@ export default function TeachPage() {
         humanMoment: newHumanMoment.trim(),
       });
     } catch {
-      setNotice("旅程已创建，但世界信息尚未保存；请稍后重新编辑。 ");
+      setNotice("The journey was created, but world details were not saved. Please edit it again shortly.");
     }
     setNewTitle("");
     setNewDesc("");
@@ -196,12 +196,12 @@ export default function TeachPage() {
       }
       setNotice(
         learned > 0
-          ? `已读取 ${learned} 份课件内容，AI 生成课程时会用上`
-          : "文件已上传（图片/视频不含可读文字，不进入知识库）"
+          ? `Read ${learned} teaching resources. Your AI Mentor will use them when creating the journey.`
+          : "Files uploaded. Images and videos without readable text are not added to the knowledge base."
       );
       refresh(me);
     } catch {
-      setNotice("上传失败（单个文件最大 50MB），请重试");
+      setNotice("Upload failed (50MB maximum per file). Please try again.");
     } finally {
       setUploadingTo(null);
     }
@@ -224,12 +224,12 @@ export default function TeachPage() {
   if (!me || me.role !== "teacher") {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
-        <p className="text-slate-400">这里是教育者工作台，需要用教育者账号登录。</p>
+        <p className="text-slate-400">This is the educator workspace. Please sign in with an educator account.</p>
         <Link
           href="/account/"
           className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-2.5 text-sm font-semibold text-white"
         >
-          去登录 / 注册
+          Sign in / Create account
         </Link>
       </main>
     );
@@ -248,15 +248,15 @@ export default function TeachPage() {
             href="/account/"
             className="text-sm text-slate-400 transition-colors hover:text-white"
           >
-            我的账号
+            My account
           </Link>
         </div>
 
         <h1 className="mt-6 font-display text-3xl font-semibold text-white">
-          教育者工作台
+          Educator workspace
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          你好，{me.name} — 在这里创造你的 AI Mentor、学习旅程和与孩子的真实连接。
+          Hello, {me.name} — create your AI Mentor, learning journeys, and meaningful connections with children here.
         </p>
         {notice && (
           <p className="mt-3 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-300">
@@ -266,12 +266,12 @@ export default function TeachPage() {
 
         {/* Profile */}
         <div className="glass-card mt-8 p-6">
-          <h2 className="font-display text-base font-semibold text-white">个人资料</h2>
+          <h2 className="font-display text-base font-semibold text-white">Your profile</h2>
           <div className="mt-4 flex flex-col gap-4 sm:flex-row">
             <label className="group relative h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
               {me.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={me.avatar_url} alt="头像" className="h-full w-full object-cover" />
+                <img src={me.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
               ) : (
                 <span className="flex h-full items-center justify-center text-2xl font-bold text-slate-500">
                   {me.name.slice(0, 1)}
@@ -291,14 +291,14 @@ export default function TeachPage() {
               <input
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                placeholder="你教的语言/学科，如：法语 · 德语"
+                placeholder="Language or subject you teach, for example French · German"
                 className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
               />
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 rows={2}
-                placeholder="简介：教学风格、经历、想对学生说的话…"
+                placeholder="Your teaching style, experience, and what you want learners to know…"
                 className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
               />
               <button
@@ -306,7 +306,7 @@ export default function TeachPage() {
                 disabled={savingProfile}
                 className="self-start rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2 text-xs font-semibold text-white transition-all enabled:hover:opacity-90 disabled:opacity-50"
               >
-                {savingProfile ? "保存中…" : "保存资料"}
+                {savingProfile ? "Saving…" : "Save profile"}
               </button>
             </div>
           </div>
@@ -330,17 +330,17 @@ export default function TeachPage() {
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
-              Mentor Studio · 创造你的 AI Mentor
+              Mentor Studio · Create your AI Mentor
               <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-2 py-0.5 text-[10px] font-medium text-amber-200">
                 Beta
               </span>
             </h2>
             <p className="mt-1 text-sm text-slate-400">
-              把你的教学风格、文化视角与真实声音，变成一个长期陪伴孩子探索世界的 Mentor。
+              Turn your teaching style, cultural perspective, and real voice into a Mentor that can accompany children as they explore.
             </p>
           </div>
           <span className="shrink-0 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2.5 text-xs font-semibold text-white transition-all group-hover:opacity-90">
-            开始创作 →
+            Start creating →
           </span>
         </Link>
 
@@ -348,37 +348,36 @@ export default function TeachPage() {
         <div className="glass-card mt-5 p-6">
           <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
             <ShieldCheck className="h-4 w-4 text-sky-300" />
-            实名核验
+            Identity verification
             {verifStatus === "approved" && (
               <span className="rounded-full bg-sky-400/15 px-2 py-0.5 text-xs font-medium text-sky-300">
-                已核验 ✓
+                Verified ✓
               </span>
             )}
             {verifStatus === "pending" && (
               <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-xs font-medium text-amber-300">
-                审核中
+                Under review
               </span>
             )}
           </h2>
           {verifStatus === "approved" ? (
             <p className="mt-3 text-sm text-slate-400">
-              你已通过实名核验，课程和资料上会显示蓝色「已核验」徽章，家长和学生更信任你。
+              Your identity is verified. A blue Verified badge appears on your journeys and resources so families can trust who is behind them.
             </p>
           ) : verifStatus === "pending" ? (
             <p className="mt-3 text-sm text-slate-400">
-              申请已提交，我们会通过视频等方式与你核实身份后开通「已核验」徽章。感谢你为孩子的安全把关。
+              Your request is submitted. We will confirm your identity by video or another appropriate method before enabling your Verified badge. Thank you for helping protect children.
             </p>
           ) : (
             <>
               <p className="mt-3 text-sm text-slate-400">
-                为保护孩子，与学生私信、发布课程前建议完成实名核验。提交真实姓名即可，
-                我们会**线下**与你核实（不会在平台存储证件照片）。
+                To help protect children, we recommend identity verification before publishing. Submit your legal name and we will verify it outside the platform; we do not store identity-document photos.
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <input
                   value={realName}
                   onChange={(e) => setRealName(e.target.value)}
-                  placeholder="你的真实姓名"
+                  placeholder="Your legal name"
                   className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-sky-400/50"
                 />
                 <button
@@ -386,7 +385,7 @@ export default function TeachPage() {
                   disabled={submittingVerif || !realName.trim()}
                   className="rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 px-5 py-2.5 text-sm font-semibold text-white transition-all enabled:hover:opacity-90 disabled:opacity-40"
                 >
-                  {submittingVerif ? "提交中…" : "申请核验"}
+                  {submittingVerif ? "Submitting…" : "Request verification"}
                 </button>
               </div>
             </>
@@ -397,11 +396,11 @@ export default function TeachPage() {
         <div className="glass-card mt-5 p-6">
           <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
             <MessageCircle className="h-4 w-4 text-cyan-300" />
-            学生私信（{convos.length}）
+            Family requests ({convos.length})
           </h2>
           {convos.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">
-              还没有家庭发起真人回应请求。MoliVerse 不开放孩子与教育者的直接私信。
+              No family has requested a human response yet. MoliVerse does not allow direct child-to-educator messaging.
             </p>
           ) : (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -419,7 +418,7 @@ export default function TeachPage() {
                       c.student?.name?.slice(0, 1) ?? "?"
                     )}
                   </span>
-                  {c.student?.name ?? "学生"}
+                  {c.student?.name ?? "Learner"}
                 </Link>
               ))}
             </div>
@@ -430,19 +429,19 @@ export default function TeachPage() {
         <div className="glass-card mt-5 p-6">
           <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
             <Plus className="h-4 w-4 text-violet-300" />
-            创建一段学习旅程
+            Create a learning journey
           </h2>
           <div className="mt-4 grid gap-2.5 sm:grid-cols-[1fr,180px]">
             <input
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="旅程标题，如：巴黎夜市里的一封信"
+              placeholder="Journey title, for example A Letter in the Paris Night Market"
               className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
             />
             <input
               value={newLang}
               onChange={(e) => setNewLang(e.target.value)}
-              placeholder="语言，如 德语"
+              placeholder="Language, for example German"
               className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
             />
           </div>
@@ -450,20 +449,20 @@ export default function TeachPage() {
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
             rows={2}
-              placeholder="旅程介绍：孩子将进入什么文化情境、自然学会什么表达、适合几岁…"
+              placeholder="Journey introduction: Which cultural world will children enter, what will they naturally learn, and for which ages?"
             className="mt-2.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
           />
           <div className="mt-2.5 grid gap-2.5 sm:grid-cols-2">
             <input
               value={newWorld}
               onChange={(e) => setNewWorld(e.target.value)}
-              placeholder="文化世界，如 Paris Night Market"
+              placeholder="Cultural world, for example Paris Night Market"
               className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
             />
             <input
               value={newAge}
               onChange={(e) => setNewAge(e.target.value)}
-              placeholder="适合年龄，如 6–10"
+              placeholder="Suggested ages, for example 6–10"
               className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
             />
           </div>
@@ -471,14 +470,14 @@ export default function TeachPage() {
             value={newQuestion}
             onChange={(e) => setNewQuestion(e.target.value)}
             rows={2}
-            placeholder="故事问题：孩子为什么想进入这里？如：我们能在夜市帮 Camille 找回一封信吗？"
+            placeholder="Story question: Why does a child want to enter this world? For example: Can we help Camille find a letter at the night market?"
             className="mt-2.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
           />
           <textarea
             value={newHumanMoment}
             onChange={(e) => setNewHumanMoment(e.target.value)}
             rows={2}
-            placeholder="真人出现的时刻：例如孩子完成作品或需要鼓励时，我会亲自回应。"
+            placeholder="Human moment: for example, I will respond personally when a child completes a creation or needs encouragement."
             className="mt-2.5 w-full rounded-xl border border-amber-300/15 bg-amber-300/[0.03] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-amber-300/40"
           />
           <button
@@ -486,14 +485,14 @@ export default function TeachPage() {
             disabled={creating || !newTitle.trim()}
             className="mt-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-2.5 text-sm font-semibold text-white transition-all enabled:hover:opacity-90 disabled:opacity-40"
           >
-            {creating ? "创造中…" : "创建学习旅程"}
+            {creating ? "Creating…" : "Create learning journey"}
           </button>
         </div>
 
         {/* Course list */}
         <h2 className="mt-8 flex items-center gap-2 font-display text-base font-semibold text-white">
           <BookOpen className="h-4 w-4 text-cyan-300" />
-          我的学习旅程（{courses.length}）
+          My learning journeys ({courses.length})
         </h2>
         <div className="mt-4 flex flex-col gap-4">
           {courses.map((course) => (
@@ -516,12 +515,12 @@ export default function TeachPage() {
                     </div>
                   )}
                   <p className="mt-1 text-xs text-slate-600">
-                    ❤️ {course.likes?.length ?? 0} 名学生喜欢
+                    ❤️ {course.likes?.length ?? 0} learners liked this
                   </p>
                 </div>
                 <button
                   onClick={() => removeCourse(course.id)}
-                  aria-label="删除课程"
+                  aria-label="Delete journey"
                   className="text-slate-600 transition-colors hover:text-rose-400"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -550,12 +549,12 @@ export default function TeachPage() {
                   {uploadingTo === course.id ? (
                     <>
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      上传中…
+                      Uploading…
                     </>
                   ) : (
                     <>
                       <Upload className="h-3.5 w-3.5" />
-                      上传照片 / 声音 / 视频 / 课件
+                      Upload photo / voice / video / teaching material
                     </>
                   )}
                   <input
@@ -574,7 +573,7 @@ export default function TeachPage() {
                   className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2 text-xs font-semibold text-white transition-all hover:opacity-90"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
-                  预览孩子体验
+                  Preview learner experience
                 </a>
 
                 <button
@@ -586,17 +585,17 @@ export default function TeachPage() {
                     }
                     window.open(`/lesson/?c=${course.id}`, "_blank", "noopener");
                   }}
-                  title="清除缓存并让 AI 重新编课（改了内容后用）"
+                  title="Clear the cached lesson and ask AI to rebuild it after changes"
                   className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-400 transition-all hover:border-white/25 hover:text-white"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
-                  重新编排旅程
+                  Rebuild journey
                 </button>
               </div>
             </div>
           ))}
           {courses.length === 0 && (
-            <p className="text-sm text-slate-600">还没有学习旅程 — 从一个孩子真正想探索的文化问题开始。</p>
+            <p className="text-sm text-slate-600">No learning journeys yet — start with a cultural question a child truly wants to explore.</p>
           )}
         </div>
       </div>

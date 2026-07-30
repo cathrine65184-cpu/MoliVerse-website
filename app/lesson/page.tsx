@@ -92,11 +92,11 @@ function LessonInner() {
   const stageRef = useRef<HTMLCanvasElement>(null);
   const stageRaf = useRef(0);
   const bgRef = useRef<{ curr: BgSpec; prev: BgSpec | null; switchedAt: number }>({
-    curr: parseBg("晴天 森林 大树"),
+    curr: parseBg("sunny forest trees"),
     prev: null,
     switchedAt: 0,
   });
-  const sceneNameRef = useRef("晴天 森林 大树");
+  const sceneNameRef = useRef("sunny forest trees");
 
   // Motion detection
   const [camOn, setCamOn] = useState(false);
@@ -273,7 +273,7 @@ function LessonInner() {
             ctx.ellipse(w / 2, h * 0.95, w * 0.24, 14, 0, 0, Math.PI * 2);
             ctx.fillStyle = "rgba(2,6,23,0.3)";
             ctx.fill();
-            drawPuppet(ctx, w, h, pose, parseTheme(p!.character || "森林向导"));
+            drawPuppet(ctx, w, h, pose, parseTheme(p!.character || "Forest guide"));
             ctx.restore();
           }
         }
@@ -465,8 +465,8 @@ function LessonInner() {
       stopCamera();
       setCamError(
         err instanceof DOMException && err.name === "NotAllowedError"
-          ? "摄像头未授权 — 点「允许」后重试"
-          : "摄像头启动失败"
+          ? "Camera access was not granted — choose Allow and try again."
+          : "Camera could not start."
       );
     } finally {
       setCamLoading(false);
@@ -627,14 +627,14 @@ function LessonInner() {
         {generating ? (
           <>
             <p className="font-display text-lg font-semibold text-white">
-              AI 老师正在为你备课…
+              Your AI Mentor is preparing your journey…
             </p>
             <p className="max-w-xs text-sm text-slate-400">
-              正在阅读这门课的内容，编写专属剧情课堂（约 10–20 秒，之后就秒开）
+              Reading this journey and shaping a story just for you (about 10–20 seconds, then it will open instantly).
             </p>
           </>
         ) : (
-          <p className="text-sm text-slate-500">正在加载课堂…</p>
+          <p className="text-sm text-slate-500">Loading your journey…</p>
         )}
       </div>
     );
@@ -660,7 +660,7 @@ function LessonInner() {
             className="flex items-center gap-1 rounded-full bg-black/30 px-3 py-1.5 text-sm text-slate-200 backdrop-blur transition-colors hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
-            退出课堂
+            Leave journey
           </Link>
           <div className="flex items-center gap-2">
             {stars > 0 && (
@@ -679,7 +679,7 @@ function LessonInner() {
                   }`}
                 >
                   {auto ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-                  {auto ? "自动上课中" : "手动模式"}
+                  {auto ? "Guided mode" : "Manual mode"}
                 </button>
                 <button
                   onClick={camOn ? stopCamera : startCamera}
@@ -697,7 +697,7 @@ function LessonInner() {
                   ) : (
                     <Camera className="h-3.5 w-3.5" />
                   )}
-                  动作
+                  Movement
                 </button>
               </>
             )}
@@ -771,10 +771,10 @@ function LessonInner() {
             <p className="text-sm font-semibold text-white">{teacher.name}</p>
             {teacher.verified && <ShieldCheck className="h-3.5 w-3.5 text-sky-300" />}
             <span className="text-xs text-slate-300">
-              · 化身{" "}
+              · character{" "}
               <span style={{ color: costume.color }}>
                 {hasCharacter
-                  ? parseTheme(persona!.character || "森林向导").label
+                  ? parseTheme(persona!.character || "Forest guide").label
                   : costume.label}
               </span>
             </span>
@@ -801,13 +801,13 @@ function LessonInner() {
                 {lessonTitle}
               </h1>
               <p className="max-w-sm rounded-2xl bg-black/35 px-5 py-3 text-sm text-slate-200 backdrop-blur">
-                跟随 {teacher.name} 进入一个文化世界。故事里的每一次选择，都让下一次相遇更有意义。
+                Follow {teacher.name} into a cultural world. Every choice in the story makes your next visit more meaningful.
               </p>
               {journey?.world && (
                 <div className="max-w-sm rounded-2xl border border-violet-300/20 bg-violet-500/[0.10] px-4 py-3 text-left text-sm backdrop-blur">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200">Today’s world · {journey.world}</p>
                   {journey.storyQuestion && <p className="mt-1 text-slate-100">{journey.storyQuestion}</p>}
-                  {journey.humanMoment && <p className="mt-2 text-xs leading-relaxed text-slate-300">真人时刻：{journey.humanMoment}</p>}
+                  {journey.humanMoment && <p className="mt-2 text-xs leading-relaxed text-slate-300">Human moment: {journey.humanMoment}</p>}
                 </div>
               )}
               <button
@@ -822,7 +822,7 @@ function LessonInner() {
                 className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-500 px-8 py-4 text-base font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,0.8)] transition-all hover:shadow-[0_0_56px_-8px_rgba(139,92,246,1)]"
               >
                 <Play className="h-5 w-5 fill-white" />
-                进入旅程
+                Enter journey
               </button>
             </div>
           ) : isFinale ? (
@@ -830,7 +830,7 @@ function LessonInner() {
               <PartyPopper className="h-14 w-14 text-amber-300" />
               <h2 className="font-display text-3xl font-semibold text-white drop-shadow">Great Job! 🎉</h2>
               <p className="rounded-2xl bg-black/35 px-5 py-2 text-slate-200 backdrop-blur">
-                这段旅程完成啦!{stars > 0 ? ` 你解开了 ${stars} 个小发现 ✨` : ""}
+                This journey is complete!{stars > 0 ? ` You unlocked ${stars} little discoveries ✨` : ""}
               </p>
               {memory && (
                 <div className="max-w-md rounded-2xl border border-violet-300/25 bg-violet-500/[0.10] px-5 py-4 text-left backdrop-blur">
@@ -845,13 +845,13 @@ function LessonInner() {
                   className="flex items-center gap-2 rounded-xl border border-white/20 bg-black/30 px-6 py-3 text-sm font-semibold text-slate-200 backdrop-blur transition-all hover:border-white/40"
                 >
                   <RotateCcw className="h-4 w-4" />
-                  再上一次
+                  Start again
                 </button>
                 <Link
                   href="/learn/"
                   className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3 text-sm font-semibold text-white"
                 >
-                  继续探索
+                  Keep exploring
                 </Link>
               </div>
             </div>
@@ -890,7 +890,7 @@ function LessonInner() {
                   )}
                   <span className="mt-1 flex items-center gap-1 text-xs text-white/70">
                     <Volume2 className="h-3.5 w-3.5" />
-                    点一下再听
+                    Tap to hear it again
                   </span>
                 </button>
               )}
@@ -908,9 +908,9 @@ function LessonInner() {
               {step.t === "audio" && (
                 <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-3xl bg-black/40 p-6 text-center backdrop-blur">
                   <span className="text-5xl">🎧</span>
-                  <p className="font-semibold text-white">{teacher.name} 老师的真实声音</p>
+                  <p className="font-semibold text-white">{teacher.name}’s real voice</p>
                   <audio controls src={step.url} className="w-full" onEnded={onMediaEnded} />
-                  <p className="text-xs text-slate-400">听完自动继续</p>
+                  <p className="text-xs text-slate-400">The journey continues when it ends</p>
                 </div>
               )}
 
@@ -928,7 +928,7 @@ function LessonInner() {
               {step.t === "quiz" && (
                 <div className="flex w-full max-w-md flex-col items-center gap-4">
                   <span className="rounded-full bg-violet-500/90 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-lg">
-                    Quiz Time · 小考验
+                    Quiz time
                   </span>
                   <p className="rounded-2xl bg-black/40 px-5 py-2 text-center text-lg font-semibold text-white backdrop-blur">
                     {step.question}
@@ -949,7 +949,7 @@ function LessonInner() {
                     ))}
                   </div>
                   {quizFeedback === "right" && (
-                    <p className="font-semibold text-emerald-300 drop-shadow">✓ 答对啦! +1 ⭐</p>
+                    <p className="font-semibold text-emerald-300 drop-shadow">✓ That’s right! +1 ⭐</p>
                   )}
                 </div>
               )}
@@ -960,10 +960,10 @@ function LessonInner() {
                   <p className="text-xl font-semibold text-white">{step.prompt}</p>
                   {camOn ? (
                     moveDone ? (
-                      <p className="text-lg font-semibold text-emerald-300">🎉 你做到了! +1 ⭐</p>
+                      <p className="text-lg font-semibold text-emerald-300">🎉 You did it! +1 ⭐</p>
                     ) : (
                       <div className="w-full">
-                        <p className="mb-2 text-xs text-cyan-300">动起来,充满能量条!</p>
+                        <p className="mb-2 text-xs text-cyan-300">Move to fill the energy bar!</p>
                         <div className="h-3 overflow-hidden rounded-full bg-white/15">
                           <div
                             className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all"
@@ -980,7 +980,7 @@ function LessonInner() {
                       }}
                       className="rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 px-6 py-2.5 text-sm font-semibold text-white"
                     >
-                      我做到了! ✓
+                      I did it! ✓
                     </button>
                   )}
                 </div>
@@ -990,7 +990,7 @@ function LessonInner() {
               {step.t === "card" && step.move && camOn && !moveDone && (
                 <div className="w-full max-w-sm">
                   <p className="mb-1 text-center text-xs text-cyan-200 drop-shadow">
-                    跟着做动作,能量条充满自动过关!
+                    Follow the movement. Fill the energy bar to continue!
                   </p>
                   <div className="h-2.5 overflow-hidden rounded-full bg-white/15">
                     <div
@@ -1001,7 +1001,7 @@ function LessonInner() {
                 </div>
               )}
               {step.t === "card" && step.move && camOn && moveDone && (
-                <p className="text-sm font-semibold text-emerald-300 drop-shadow">🎉 动作完成! +1 ⭐</p>
+                <p className="text-sm font-semibold text-emerald-300 drop-shadow">🎉 Movement complete! +1 ⭐</p>
               )}
             </div>
           ) : null}
@@ -1024,7 +1024,7 @@ function LessonInner() {
                 <button
                   onClick={() => goto(Math.max(0, index - 1))}
                   disabled={index === 0}
-                  aria-label="上一步"
+                  aria-label="Previous step"
                   className="rounded-full bg-black/30 p-2 text-slate-300 backdrop-blur transition-all enabled:hover:text-white disabled:opacity-30"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -1034,7 +1034,7 @@ function LessonInner() {
                 </span>
                 <button
                   onClick={() => goto(Math.min(total - 1, index + 1))}
-                  aria-label="下一步"
+                  aria-label="Next step"
                   className="rounded-full bg-black/30 p-2 text-slate-300 backdrop-blur transition-all hover:text-white"
                 >
                   <ArrowRight className="h-4 w-4" />

@@ -21,9 +21,9 @@ type Turn = { role: "user" | "assistant"; content: string };
 
 /** Openers that work whether or not the teacher uploaded material. */
 const STARTERS = [
-  "这节课主要学什么？",
-  "帮我用今天的词造个句子",
-  "这些单词怎么读？",
+  "What is this journey about?",
+  "Can you help me make a sentence with today’s words?",
+  "How do I pronounce these words?",
 ];
 
 function AskMentor() {
@@ -90,7 +90,7 @@ function AskMentor() {
         body: {
           question: q,
           history,
-          teacherName: course.profiles?.name ?? "老师",
+          teacherName: course.profiles?.name ?? "Educator",
           teacherBio: course.profiles?.bio ?? "",
           language: course.language || course.profiles?.language || "",
           courseTitle: course.title,
@@ -101,7 +101,7 @@ function AskMentor() {
       if (err || !answer) throw new Error("no answer");
       setTurns((t) => [...t, { role: "assistant", content: answer }]);
     } catch {
-      setError("Mentor 暂时没能回答。需要真人回应时，请和家长或监护人一起查看家庭说明。 ");
+      setError("Your Mentor could not answer right now. If you need a real educator response, ask a parent or guardian to review the family information with you.");
     } finally {
       setSending(false);
     }
@@ -121,9 +121,9 @@ function AskMentor() {
   if (!course) {
     return (
       <div className="glass-card mt-10 p-10 text-center">
-        <p className="text-slate-400">找不到这段学习旅程。</p>
+        <p className="text-slate-400">We could not find this learning journey.</p>
         <Link href="/learn/" className="mt-3 inline-block text-sm text-violet-300 hover:text-violet-200">
-          ← 回到探索页
+          ← Back to exploration
         </Link>
       </div>
     );
@@ -162,19 +162,19 @@ function AskMentor() {
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-display text-base font-semibold text-white">
-            {teacher?.name ?? "教育者"} 的 AI Mentor
+            {teacher?.name ?? "Educator"}’s AI Mentor
             {teacher?.verified && (
               <span className="ml-2 inline-flex items-center gap-0.5 rounded-full bg-sky-400/15 px-1.5 py-0.5 text-[10px] font-medium text-sky-300">
                 <ShieldCheck className="h-3 w-3" />
-                已核验
+                Verified
               </span>
             )}
           </p>
           <p className="mt-0.5 text-xs text-slate-500">
-            关于《{course.title}》
+            About “{course.title}”
             {knowledgeFiles > 0
-              ? ` · 已读过教育者提供的 ${knowledgeFiles} 份资料`
-              : " · 教育者还没添加资料，只能做常识性回答"}
+              ? ` · Has read ${knowledgeFiles} educator-provided resources`
+              : " · No educator resources have been added yet, so answers are limited to general knowledge"}
           </p>
         </div>
         <Link
@@ -182,7 +182,7 @@ function AskMentor() {
           className="flex items-center gap-1.5 rounded-full border border-white/10 px-4 py-1.5 text-xs text-slate-400 transition-all hover:border-cyan-400/30 hover:text-cyan-300"
         >
           <MessageCircle className="h-3.5 w-3.5" />
-          家庭说明
+          Family information
         </Link>
       </div>
 
@@ -192,7 +192,7 @@ function AskMentor() {
           <div className="glass-card p-6 text-center">
             <Sparkles className="mx-auto h-6 w-6 text-violet-300" />
             <p className="mt-3 text-sm text-slate-300">
-              有什么想问的？Mentor 会根据教育者提供的资料来回答。
+              What would you like to ask? Your Mentor answers using resources shared by the educator.
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               {STARTERS.map((s) => (
@@ -233,7 +233,7 @@ function AskMentor() {
               <Bot className="h-3.5 w-3.5" />
             </span>
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-xs">正在想…</span>
+            <span className="text-xs">Thinking…</span>
           </div>
         )}
         {error && <p className="text-xs text-amber-300">{error}</p>}
@@ -251,7 +251,7 @@ function AskMentor() {
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="问点什么…"
+          placeholder="Ask something…"
           className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400/50"
         />
         <button
@@ -264,9 +264,9 @@ function AskMentor() {
       </form>
 
       <p className="mt-3 text-[11px] leading-relaxed text-slate-600">
-        这是 AI Mentor，不是教育者本人。它依据教育者提供的内容作答，可能出错；需要真人回应时，请和家长或监护人一起前往
+        This is an AI Mentor, not the educator themselves. It answers using educator-provided material and can make mistakes. For a real educator response, visit
         <Link href="/families/" className="text-slate-500 underline underline-offset-2 hover:text-slate-300">
-          家庭说明
+          Family information
         </Link>
         。
       </p>
@@ -280,7 +280,7 @@ export default function AskPage() {
       <div className="pointer-events-none absolute left-1/2 top-0 h-[30rem] w-[44rem] max-w-full -translate-x-1/2 rounded-full bg-violet-600/[0.08] blur-[130px]" />
       <div className="relative mx-auto max-w-3xl px-6 pb-24 pt-14">
         <Link href="/learn/" className="text-sm text-slate-400 transition-colors hover:text-white">
-          ← 探索页
+          ← Explore journeys
         </Link>
         <Suspense
           fallback={

@@ -170,7 +170,7 @@ function DigitalHumanPanel() {
             playsInline
             controls
             className="absolute inset-0 h-full w-full object-cover"
-            aria-label="Catherine AI — 真实生成的数字人讲课视频"
+            aria-label="Catherine AI — generated digital mentor teaching video"
           />
 
           {/* Live badge */}
@@ -185,7 +185,7 @@ function DigitalHumanPanel() {
               “Hello! I&apos;m Catherine. Shall we explore a world together?”
             </p>
             <p className="mt-0.5 text-xs text-slate-400">
-              教育者可以选择加入照片、声音或视频，让 Mentor 更有辨识度
+              Educators can add a photo, voice, or video to make their Mentor feel recognisable.
             </p>
           </div>
         </div>
@@ -193,10 +193,10 @@ function DigitalHumanPanel() {
         {/* Capability chips */}
         <div className="flex flex-row flex-wrap justify-center gap-2.5 lg:flex-col lg:gap-3">
           {[
-            { icon: Camera, label: "只要一张照片", detail: "One photo is all it takes" },
-            { icon: AudioWaveform, label: "口型同步", detail: "AI 驱动的自然口型" },
-            { icon: PersonStanding, label: "表情神态", detail: "眨眼、微笑、头部微动" },
-            { icon: Mic, label: "声音", detail: "可切换音色 · 支持声音克隆" },
+            { icon: Camera, label: "One photo", detail: "One photo is all it takes" },
+            { icon: AudioWaveform, label: "Natural lip sync", detail: "AI-driven speech movement" },
+            { icon: PersonStanding, label: "Expression", detail: "Blinking, smiling, subtle movement" },
+            { icon: Mic, label: "Voice", detail: "Voice choice and optional voice cloning" },
           ].map((chip) => (
             <div
               key={chip.label}
@@ -213,7 +213,7 @@ function DigitalHumanPanel() {
       </div>
 
       <p className="mt-6 max-w-lg text-center text-sm leading-relaxed text-slate-400">
-        不是聊天机器人，也不要求每位教育者制作数字人。照片、声音与视频是表达方式；真正的核心是教育者的文化视角与教学关系。
+        This is not just a chatbot, and no educator has to make a digital human. Photo, voice, and video are optional ways to express what matters most: an educator&apos;s cultural perspective and teaching relationship.
       </p>
       <Link
         href="/teach/"

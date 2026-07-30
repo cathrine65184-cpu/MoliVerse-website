@@ -55,7 +55,7 @@ export default function Navbar() {
           className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_0_24px_-8px_rgba(139,92,246,0.6)] transition-all hover:opacity-90"
         >
           <UserRound className="h-4 w-4" />
-          <span className="hidden sm:inline">登录 / Sign In</span>
+          <span className="hidden sm:inline">Sign in</span>
         </Link>
       </nav>
     </motion.header>

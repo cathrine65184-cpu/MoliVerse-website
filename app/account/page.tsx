@@ -31,11 +31,11 @@ export default function AccountPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        if (!name.trim()) throw new Error("请填写名字");
+        if (!name.trim()) throw new Error("Please enter your name.");
         const { data, error: err } = await supabase.auth.signUp({ email, password });
         if (err) throw err;
         const uid = data.user?.id;
-        if (!uid) throw new Error("注册失败，请重试");
+        if (!uid) throw new Error("We could not create your account. Please try again.");
         const { error: perr } = await supabase.from("profiles").insert({
           id: uid,
           role,
@@ -53,11 +53,11 @@ export default function AccountPage() {
       const msg = err instanceof Error ? err.message : String(err);
       setError(
         msg.includes("already registered")
-          ? "这个邮箱已注册过，请切换到登录"
+          ? "This email already has an account. Please sign in instead."
           : msg.includes("Invalid login")
-            ? "邮箱或密码不对"
+            ? "Your email or password is incorrect."
             : msg.includes("at least 6")
-              ? "密码至少 6 位"
+              ? "Your password must be at least 6 characters."
               : msg
       );
     } finally {
@@ -96,7 +96,7 @@ export default function AccountPage() {
             <div>
               <p className="font-display text-lg font-semibold text-white">{me.name}</p>
               <p className="text-sm text-slate-400">
-                {me.role === "teacher" ? "🎓 教育者账号" : "🌱 学习者账号"}
+                {me.role === "teacher" ? "🎓 Educator account" : "🌱 Learner account"}
               </p>
             </div>
             <div className="flex flex-wrap justify-center gap-3 pt-2">
@@ -104,25 +104,25 @@ export default function AccountPage() {
                 href={me.role === "teacher" ? "/teach/" : "/learn/"}
                 className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90"
               >
-                {me.role === "teacher" ? "进入教育者工作台" : "探索学习旅程"}
+                {me.role === "teacher" ? "Open educator workspace" : "Explore learning journeys"}
               </Link>
-              {me.role === "teacher" && <Link href="/chat/" className="rounded-xl border border-white/10 bg-white/[0.04] px-6 py-2.5 text-sm font-semibold text-slate-200 transition-all hover:border-white/25">教育者会话</Link>}
+              {me.role === "teacher" && <Link href="/chat/" className="rounded-xl border border-white/10 bg-white/[0.04] px-6 py-2.5 text-sm font-semibold text-slate-200 transition-all hover:border-white/25">Educator conversations</Link>}
             </div>
             <button
               onClick={signOut}
               className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 transition-colors hover:text-rose-300"
             >
               <LogOut className="h-3.5 w-3.5" />
-              退出登录
+              Sign out
             </button>
           </div>
         ) : (
           <div className="glass-card mt-10 p-8">
             <h1 className="font-display text-2xl font-semibold text-white">
-              {mode === "signup" ? "加入 MoliVerse" : "欢迎回来"}
+              {mode === "signup" ? "Join MoliVerse" : "Welcome back"}
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              {mode === "signup" ? "创建账号，30 秒搞定" : "登录你的账号"}
+              {mode === "signup" ? "Create your account in under a minute." : "Sign in to your account."}
             </p>
 
             {mode === "signup" && (
@@ -137,8 +137,8 @@ export default function AccountPage() {
                   }`}
                 >
                   <School className="h-5 w-5" />
-                  <span className="text-sm font-medium">我是学习者</span>
-                  <span className="text-[11px] text-slate-500">探索世界 · 进入故事 · 问 Mentor</span>
+                  <span className="text-sm font-medium">I’m a learner</span>
+                  <span className="text-[11px] text-slate-500">Explore worlds · enter stories · meet a Mentor</span>
                 </button>
                 <button
                   type="button"
@@ -150,8 +150,8 @@ export default function AccountPage() {
                   }`}
                 >
                   <GraduationCap className="h-5 w-5" />
-                  <span className="text-sm font-medium">我是教育者</span>
-                  <span className="text-[11px] text-slate-500">创建 Mentor · 世界 · 学习旅程</span>
+                  <span className="text-sm font-medium">I’m an educator</span>
+                  <span className="text-[11px] text-slate-500">Create Mentors · worlds · learning journeys</span>
                 </button>
               </div>
             )}
@@ -161,7 +161,7 @@ export default function AccountPage() {
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder={role === "teacher" ? "你的名字（如 Catherine）" : "你的昵称"}
+                  placeholder={role === "teacher" ? "Your name (for example, Catherine)" : "Your explorer name"}
                   className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400/50"
                 />
               )}
@@ -169,7 +169,7 @@ export default function AccountPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="邮箱"
+                placeholder="Email address"
                 autoComplete="email"
                 className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400/50"
               />
@@ -177,7 +177,7 @@ export default function AccountPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="密码（至少 6 位）"
+                placeholder="Password (at least 6 characters)"
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400/50"
               />
@@ -194,9 +194,9 @@ export default function AccountPage() {
                 )}
                 {mode === "signup"
                   ? role === "teacher"
-                    ? "创建教育者账号"
-                    : "创建学生账号"
-                  : "登录"}
+                    ? "Create educator account"
+                    : "Create learner account"
+                  : "Sign in"}
               </button>
             </form>
 
@@ -207,13 +207,13 @@ export default function AccountPage() {
               }}
               className="mt-4 w-full text-center text-xs text-slate-500 transition-colors hover:text-white"
             >
-              {mode === "signup" ? "已有账号？点这里登录" : "没有账号？点这里注册"}
+              {mode === "signup" ? "Already have an account? Sign in" : "New to MoliVerse? Create an account"}
             </button>
           </div>
         )}
 
         <p className="mt-6 text-center text-[11px] leading-relaxed text-slate-600">
-          账号数据存储于 Supabase 云端数据库，密码加密保存。未成年人请在家长或监护人知情下使用；MoliVerse 不提供孩子与教育者的开放私信。
+          Account data is stored securely in Supabase and passwords are encrypted. Children should use MoliVerse with a parent or guardian’s knowledge; MoliVerse never offers an open child-to-educator inbox.
         </p>
       </div>
     </main>
