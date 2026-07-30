@@ -105,34 +105,34 @@ type Story = { title: string; emoji: string; lang: string; scenes: Scene[] };
 
 const presetStories: Story[] = [
   {
-    title: "后羿射日 · 德语数字",
+    title: "Hou Yi Shoots the Suns · German numbers",
     emoji: "🏹",
     lang: "de-DE",
     scenes: [
-      { bg: "慕尼黑城市广场 晴天 太阳", char: "魔法师", phrase: "Hallo! Willkommen in München!", note: "你好！欢迎来到慕尼黑！" },
-      { bg: "九个太阳 燃烧的天空 沙漠", char: "超级英雄", phrase: "Eins, zwei, drei … neun Sonnen!", note: "一、二、三……九个太阳！" },
-      { bg: "夜晚 星空 山", char: "女巫", phrase: "Wie viele Sonnen bleiben? Sechs!", note: "还剩几个太阳？六个！" },
-      { bg: "夕阳 城市", char: "公主", phrase: "Nur eine Sonne. Wunderbar!", note: "只留一个太阳，太棒了！" },
+      { bg: "Munich city square sunny sun", char: "wizard", phrase: "Hallo! Willkommen in München!", note: "Hello! Welcome to Munich!" },
+      { bg: "nine suns burning sky desert", char: "superhero", phrase: "Eins, zwei, drei … neun Sonnen!", note: "One, two, three … nine suns!" },
+      { bg: "night sky mountains", char: "witch", phrase: "Wie viele Sonnen bleiben? Sechs!", note: "How many suns remain? Six!" },
+      { bg: "sunset city", char: "princess", phrase: "Nur eine Sonne. Wunderbar!", note: "Only one sun remains. Wonderful!" },
     ],
   },
   {
-    title: "小红帽 · 法语森林",
+    title: "Little Red Riding Hood · French forest",
     emoji: "🧺",
     lang: "fr-FR",
     scenes: [
-      { bg: "晴天 森林 大树", char: "小猫", phrase: "Bonjour ! On va dans la forêt !", note: "早上好！我们去森林咯！" },
-      { bg: "夜晚 森林 萤火虫 星星", char: "女巫", phrase: "Qui est là ? C'est le loup !", note: "是谁在那里？是大灰狼！" },
-      { bg: "城堡 黄昏", char: "公主", phrase: "Comme tu as de grandes oreilles !", note: "你的耳朵好大呀！" },
+      { bg: "sunny forest trees", char: "kitty", phrase: "Bonjour ! On va dans la forêt !", note: "Hello! We are going into the forest!" },
+      { bg: "night forest fireflies stars", char: "witch", phrase: "Qui est là ? C'est le loup !", note: "Who is there? It is the wolf!" },
+      { bg: "castle dusk", char: "princess", phrase: "Comme tu as de grandes oreilles !", note: "What big ears you have!" },
     ],
   },
   {
-    title: "星空足球 · 西语篇",
+    title: "Starlight football · Spanish",
     emoji: "⚽",
     lang: "es-ES",
     scenes: [
-      { bg: "夜晚 足球场 星空", char: "超级英雄", phrase: "¡Hola! ¡Bienvenidos al estadio!", note: "欢迎来到星空球场！" },
-      { bg: "足球场 晴天 太阳", char: "小恐龙", phrase: "¡Gol! ¡Uno, dos, tres!", note: "进球啦！一、二、三！" },
-      { bg: "海底 泡泡 鱼", char: "仙女", phrase: "¡El balón está en el mar!", note: "球掉进大海里啦！" },
+      { bg: "night football field stars", char: "superhero", phrase: "¡Hola! ¡Bienvenidos al estadio!", note: "Welcome to the starlight stadium!" },
+      { bg: "football field sunny sun", char: "dinosaur", phrase: "¡Gol! ¡Uno, dos, tres!", note: "Goal! One, two, three!" },
+      { bg: "underwater bubbles fish", char: "fairy", phrase: "¡El balón está en el mar!", note: "The ball is in the sea!" },
     ],
   },
 ];
@@ -218,7 +218,7 @@ export default function StoryStagePage() {
       console.error(err);
       setUse3D(false);
       use3DRef.current = false;
-      setError("真实 3D 角色没有加载成功；测试不会回退成 2D。请刷新后重试。");
+      setError("The real 3D character did not load. This experience will not fall back to 2D; please refresh and try again.");
       return false;
     } finally {
       setLoading3D(false);
@@ -266,7 +266,7 @@ export default function StoryStagePage() {
         bg: newBg.trim(),
         char: newChar.trim(),
         phrase: newPhrase.trim() || "…",
-        note: "自定义场景",
+        note: "Custom scene",
       },
     ];
     const next = stories.map((s, i) =>
@@ -344,7 +344,7 @@ export default function StoryStagePage() {
             ctx.textAlign = "center";
             ctx.shadowColor = "rgba(0,0,0,0.6)";
             ctx.shadowBlur = 8;
-            ctx.fillText("启动摄像头，让你的角色站上这个舞台", w / 2, h * 0.5);
+            ctx.fillText("Start the camera and bring your character onto the stage", w / 2, h * 0.5);
             ctx.shadowBlur = 0;
           }
         }
@@ -409,8 +409,8 @@ export default function StoryStagePage() {
       setStatus("error");
       setError(
         err instanceof DOMException && err.name === "NotAllowedError"
-          ? "无法访问摄像头 — 请在浏览器弹窗里点“允许”后重试"
-          : "启动失败，请检查摄像头并重试"
+          ? "Camera access was not granted — choose Allow in your browser and try again."
+          : "Camera could not start. Check your camera and try again."
       );
     }
   }
@@ -496,18 +496,17 @@ export default function StoryStagePage() {
         <div className="mt-6 max-w-2xl">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-cyan-300">
-              Story Stage · 沉浸式故事剧场
+              Story Stage · Immersive story theatre
             </span>
             <span className="inline-flex items-center rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-200">
-              Beta · 技术预览
+              Beta · Technical preview
             </span>
           </div>
           <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             Step inside the story.
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-400 sm:text-base">
-            老师选好故事，数字分身按每一幕的设定自动变身，背景根据场景描述实时生成
-            —— 摄像头捕捉老师的每个动作，孩子看到的是角色在故事世界里讲课。
+            An educator chooses a story. Their digital character transforms scene by scene while the background responds to each setting. The camera captures real movement, so children see the character teach inside the story world.
           </p>
         </div>
 
@@ -515,7 +514,7 @@ export default function StoryStagePage() {
         <div className="glass-card mt-8 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-white">
             <BookOpen className="h-4 w-4 text-cyan-300" />
-            选择故事 · Live story
+            Choose a story · Live story
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {stories.map((s, i) => (
@@ -546,7 +545,7 @@ export default function StoryStagePage() {
                     : "border-white/10 bg-white/[0.03] text-slate-500 hover:border-white/25 hover:text-white"
                 }`}
               >
-                第{i + 1}幕 · {sc.bg.split(" ")[0]}
+                Scene {i + 1} · {sc.bg.split(" ")[0]}
               </button>
             ))}
             <button
@@ -554,7 +553,7 @@ export default function StoryStagePage() {
               className="flex items-center gap-1 rounded-lg border border-dashed border-white/20 px-3 py-1.5 text-xs text-slate-400 transition-all hover:border-cyan-400/40 hover:text-cyan-300"
             >
               <Plus className="h-3 w-3" />
-              加一幕
+              Add a scene
             </button>
           </div>
 
@@ -563,27 +562,27 @@ export default function StoryStagePage() {
               <input
                 value={newBg}
                 onChange={(e) => setNewBg(e.target.value)}
-                placeholder="场景背景描述：如 雪山 夜晚 星空"
+                placeholder="Scene background, for example snowy mountain night sky"
                 className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white outline-none placeholder:text-slate-600 focus:border-cyan-400/50"
               />
               <input
                 value={newChar}
                 onChange={(e) => setNewChar(e.target.value)}
-                placeholder="这一幕的角色：如 女巫"
+                placeholder="Character for this scene, for example witch"
                 className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white outline-none placeholder:text-slate-600 focus:border-cyan-400/50"
               />
               <div className="flex gap-2">
                 <input
                   value={newPhrase}
                   onChange={(e) => setNewPhrase(e.target.value)}
-                  placeholder="这一幕的台词"
+                  placeholder="Line for this scene"
                   className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white outline-none placeholder:text-slate-600 focus:border-cyan-400/50"
                 />
                 <button
                   onClick={addScene}
                   className="rounded-lg bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-2 text-xs font-semibold text-white"
                 >
-                  添加
+                  Add
                 </button>
               </div>
             </div>
@@ -594,13 +593,13 @@ export default function StoryStagePage() {
         <div className="glass-card mt-4 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-white">
             <Wand2 className="h-4 w-4 text-violet-300" />
-            本幕角色 · 随时换装
+            This scene’s character · change anytime
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <input
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="输入关键词：女巫 / 公主 / 机器人 / 任何角色…"
+              placeholder="Enter keywords: witch / princess / robot / any character…"
               className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400/50"
             />
             <span className="flex items-center gap-2 rounded-full border border-violet-300/25 bg-violet-400/10 px-4 py-2 text-sm text-violet-200">
@@ -635,12 +634,12 @@ export default function StoryStagePage() {
               {status === "loading" ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  正在启动 AI 引擎…
+                  Starting the AI engine…
                 </>
               ) : (
                 <>
                   <Camera className="h-4 w-4" />
-                  启动摄像头，走进故事
+                  Start camera and enter the story
                 </>
               )}
             </button>
@@ -650,7 +649,7 @@ export default function StoryStagePage() {
               className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-6 py-3 text-sm font-semibold text-slate-200 transition-all hover:border-white/30"
             >
               <CameraOff className="h-4 w-4" />
-              停止
+              Stop
             </button>
           )}
 
@@ -664,23 +663,23 @@ export default function StoryStagePage() {
             }`}
           >
             <Activity className="h-4 w-4" />
-            {testMotion ? "停止测试动作" : "测试 3D 动作"}
+            {testMotion ? "Stop test motion" : "Test 3D movement"}
           </button>
 
           {(status === "running" || testMotion) && (
             <>
               <span className="flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-1.5 text-xs font-medium text-cyan-300">
                 <Activity className="h-3.5 w-3.5" />
-                {testMotion ? "真实 3D 测试动作中" : tracking ? `实时追踪中 · ${fps} FPS` : "请站到画面里…"}
+                {testMotion ? "Testing real 3D movement" : tracking ? `Tracking live · ${fps} FPS` : "Step into the frame…"}
               </span>
               <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs text-slate-400">
                 <PersonStanding className="h-3.5 w-3.5 text-violet-300" />
-                33 个骨骼关键点
+                33 pose landmarks
               </span>
               {use3D && (
                 <span className="flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-400/10 px-4 py-1.5 text-xs font-medium text-violet-200">
                   <Activity className="h-3.5 w-3.5" />
-                  真实 3D 骨骼驱动 {drivenBones}/8
+                  Real 3D skeleton driven {drivenBones}/8
                 </span>
               )}
             </>
@@ -693,7 +692,7 @@ export default function StoryStagePage() {
           <div className="glass-card overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] px-5 py-3">
               <p className="text-sm font-semibold text-white">
-                {story.emoji} 第{sceneIdx + 1}幕 · {scene.bg}
+                {story.emoji} Scene {sceneIdx + 1} · {scene.bg}
               </p>
               <div className="flex items-center gap-1.5">
                 <button
@@ -710,12 +709,12 @@ export default function StoryStagePage() {
                   ) : (
                     <span aria-hidden>{use3D ? "🧙‍♀️" : "🎭"}</span>
                   )}
-                  {use3D ? "真实 3D 分身" : "启用真实 3D 分身"}
+                  {use3D ? "Real 3D twin" : "Enable real 3D twin"}
                 </button>
                 <button
                   onClick={() => gotoScene(storyIdx, Math.max(0, sceneIdx - 1))}
                   disabled={sceneIdx === 0}
-                  aria-label="上一幕"
+                  aria-label="Previous scene"
                   className="rounded-lg border border-white/10 p-1.5 text-slate-400 transition-all enabled:hover:border-white/30 enabled:hover:text-white disabled:opacity-30"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -725,7 +724,7 @@ export default function StoryStagePage() {
                     gotoScene(storyIdx, Math.min(story.scenes.length - 1, sceneIdx + 1))
                   }
                   disabled={sceneIdx === story.scenes.length - 1}
-                  aria-label="下一幕"
+                  aria-label="Next scene"
                   className="rounded-lg border border-white/10 p-1.5 text-slate-400 transition-all enabled:hover:border-white/30 enabled:hover:text-white disabled:opacity-30"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -743,14 +742,14 @@ export default function StoryStagePage() {
               />
               {use3D && (
                 <span className="pointer-events-none absolute left-3 top-3 rounded-full border border-violet-400/30 bg-void/70 px-3 py-1 text-[11px] font-medium text-violet-200 backdrop-blur-md">
-                  AI 生成的 3D 角色 · 由你的动作驱动
+                  AI-generated 3D character · driven by your movement
                 </span>
               )}
             </div>
             <div className="flex items-center gap-3 border-t border-white/[0.08] px-5 py-3.5">
               <button
                 onClick={speakPhrase}
-                aria-label="朗读台词"
+                aria-label="Read line aloud"
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 text-white transition-all hover:opacity-90"
               >
                 <Volume2 className="h-4 w-4" />
@@ -764,7 +763,7 @@ export default function StoryStagePage() {
 
           <div className="glass-card h-fit overflow-hidden">
             <div className="flex items-center justify-between border-b border-white/[0.08] px-4 py-2.5">
-              <p className="text-xs font-semibold text-white">老师 · 动作捕捉</p>
+              <p className="text-xs font-semibold text-white">Educator · motion capture</p>
               <span className="text-[10px] text-slate-500">Markerless</span>
             </div>
             <canvas ref={camCanvasRef} className="aspect-[4/3] w-full bg-black/40" />
@@ -778,16 +777,16 @@ export default function StoryStagePage() {
           <div className="glass-card overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] px-5 py-3">
               <p className="text-sm font-semibold text-white">
-                360° 角色预览 <span className="text-slate-500">Text → 3D</span>
+                360° character preview <span className="text-slate-500">Text → 3D</span>
               </p>
               <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
-                可拖动旋转 · 独立预览
+                Drag to rotate · separate preview
               </span>
             </div>
             <model-viewer
               src={withBasePath("/models3d/witch.glb")}
               poster={withBasePath("/models3d/witch-preview.png")}
-              alt="由提示词生成的 3D 女巫老师角色"
+              alt="A 3D witch educator character generated from a prompt"
               camera-controls=""
               auto-rotate=""
               loading="eager"
@@ -800,26 +799,24 @@ export default function StoryStagePage() {
           <div className="flex flex-col gap-4">
             <div className="glass-card p-5">
               <h3 className="font-display text-sm font-semibold text-white">
-                这个角色是「写出来」的
+                This character was written into being
               </h3>
               <p className="mt-2 text-xs leading-relaxed text-slate-400">
-                左边这位女巫老师，来自一句提示词：「a cute cartoon witch teacher
-                for children, full body, friendly smile」—— AI
-                直接生成了完整的 3D 模型，在你的浏览器里实时渲染。老师想要什么角色，
-                写一句话就有。
+                The witch educator on the left began with one prompt: “a cute cartoon witch teacher
+                for children, full body, friendly smile”. AI generated a complete 3D model and it renders live in your browser. An educator can imagine any character and create it with a sentence.
               </p>
             </div>
             <div className="glass-card p-5">
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                生产管线 · Pipeline
+                Production pipeline
               </p>
               <ul className="mt-3 space-y-2 text-xs text-slate-300">
                 {[
-                  "① 场景描述 → 实时生成背景（✓ 已上线）",
-                  "② 角色设定 → 分身逐幕变身（✓ 已上线）",
-                  "③ 摄像头骨骼流驱动角色（✓ 已上线）",
-                  "④ 提示词 → 生成 3D 角色（✓ 已上线）",
-                  "⑤ 主舞台：老师真实动作驱动 3D 骨骼（✓ 已上线）",
+                  "① Scene description → real-time background (✓ live)",
+                  "② Character setting → twin transforms scene by scene (✓ live)",
+                  "③ Camera pose stream drives character (✓ live)",
+                  "④ Prompt → 3D character generation (✓ live)",
+                  "⑤ Main stage: real educator movement drives 3D bones (✓ live)",
                 ].map((step) => (
                   <li key={step} className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2">
                     {step}
@@ -828,7 +825,7 @@ export default function StoryStagePage() {
               </ul>
             </div>
             <p className="text-[11px] leading-relaxed text-slate-600">
-              此区域用于看模型外观；真正跟随老师动作的是上方故事舞台的「真实 3D 分身」。
+              This area previews the model’s appearance. The real 3D twin on the story stage above is what follows the educator’s movement.
             </p>
           </div>
         </div>
@@ -837,16 +834,16 @@ export default function StoryStagePage() {
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           {[
             {
-              title: "身临其境",
-              text: "背景随故事流转，角色随剧情变身 — 孩子不是在看课，而是活在故事里。",
+              title: "Immersive",
+              text: "Backgrounds move with the story and characters transform with the plot — children are not watching a lesson; they are living in a story.",
             },
             {
-              title: "老师即演员",
-              text: "普通摄像头替代穿戴式动捕设备，讲课的每个手势实时变成角色动画。",
+              title: "The educator becomes the performer",
+              text: "An ordinary camera replaces wearable motion-capture equipment, turning each teaching gesture into live character animation.",
             },
             {
-              title: "通往生成式世界",
-              text: "接入图像与 3D 生成 API 后，场景与角色将升级为电影级画面，管线已就绪。",
+              title: "A path to generative worlds",
+              text: "With image and 3D generation APIs, scenes and characters can grow into cinematic worlds. The pipeline is ready.",
             },
           ].map((item) => (
             <div key={item.title} className="glass-card p-5">
@@ -857,9 +854,7 @@ export default function StoryStagePage() {
         </div>
 
         <p className="mt-8 text-xs leading-relaxed text-slate-600">
-          隐私说明：视频流和骨骼数据全部只在你的浏览器本地处理，不会上传到任何服务器。AI
-          引擎（MediaPipe Pose）由 MoliVerse 自托管。当前背景与角色为程序化实时生成；逼真的
-          AI 图像背景与 text-to-3D 角色将通过合作 API 在下一阶段接入。
+          Privacy note: video and pose data are processed locally in your browser and are never uploaded. The AI engine (MediaPipe Pose) is hosted by MoliVerse. Current scenes and characters are generated procedurally in real time; richer AI image backgrounds and text-to-3D characters can be connected through partner APIs in a future phase.
         </p>
       </div>
     </main>
