@@ -7,7 +7,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Bot, Loader2, MessageCircle, Send, ShieldCheck, Sparkles } from "lucide-react";
+import { Bot, Heart, Loader2, LockKeyhole, MessageCircle, Send, ShieldCheck, Sparkles } from "lucide-react";
 import {
   supabase,
   buildKnowledgeBase,
@@ -15,6 +15,7 @@ import {
   type CourseFile,
   type Profile,
 } from "@/lib/supabase";
+import { activeExplorerId, checkExplorerAccess } from "@/lib/family";
 
 type Turn = { role: "user" | "assistant"; content: string };
 
@@ -37,6 +38,7 @@ function AskMentor() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [access, setAccess] = useState<"checking" | "active" | "needs-family">("checking");
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,6 +61,17 @@ function AskMentor() {
       cancelled = true;
     };
   }, [courseId]);
+
+  useEffect(() => {
+    const explorerId = activeExplorerId();
+    if (!explorerId) {
+      setAccess("needs-family");
+      return;
+    }
+    checkExplorerAccess(explorerId).then(({ data }) => {
+      setAccess(data?.status === "active" && data.preferences?.ai_mentor_enabled ? "active" : "needs-family");
+    });
+  }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -113,6 +126,22 @@ function AskMentor() {
           ← 回到探索页
         </Link>
       </div>
+    );
+  }
+
+  if (access === "checking") {
+    return <div className="mt-24 flex justify-center text-slate-500"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  }
+
+  if (access !== "active") {
+    return (
+      <section className="glass-card mt-10 p-8 text-center sm:p-10">
+        <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-violet-400/20 bg-violet-400/10 text-violet-200"><LockKeyhole className="h-5 w-5" /></span>
+        <h1 className="mt-5 font-display text-2xl font-semibold text-white">Invite a grown-up before meeting this Mentor.</h1>
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-400">A parent or guardian chooses whether AI conversations, saved memories, voice practice, and requests for human support are right for this Explorer.</p>
+        <Link href={`/explore/${courseId ? `?c=${courseId}` : ""}`} className="mt-7 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white"><Heart className="h-4 w-4" />Ask a grown-up to activate</Link>
+        <p className="mt-4 text-xs text-slate-600">Already activated? Return to the Explorer setup page on this device and it will unlock automatically.</p>
+      </section>
     );
   }
 
