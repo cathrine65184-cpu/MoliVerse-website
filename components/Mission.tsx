@@ -14,14 +14,14 @@ const pillars = [
     icon: Sprout,
     title: "Fair for Creators",
     description:
-      "Teacher-creators earn a real, if modest, income from every world they build. Part side income, part volunteering — the kind of work university students are proud to do.",
+      "Teacher-creators can earn from every learning journey they design. Sustainable support for educators makes more culturally grounded worlds possible.",
     accent: "text-emerald-300",
   },
   {
     icon: Globe2,
     title: "Open to Everywhere",
     description:
-      "Courses come from creators across the globe — localized, personal, rooted in real cultures — and reach children wherever they are, in whatever they dream of learning.",
+      "Journeys come from creators across the globe — localized, personal, rooted in real cultures — and reach children wherever they are, in whatever they dream of understanding.",
     accent: "text-cyan-300",
   },
 ];

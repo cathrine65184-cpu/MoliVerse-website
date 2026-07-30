@@ -96,7 +96,7 @@ export default function AccountPage() {
             <div>
               <p className="font-display text-lg font-semibold text-white">{me.name}</p>
               <p className="text-sm text-slate-400">
-                {me.role === "teacher" ? "🎓 教育者账号" : "🌱 学生账号"}
+                {me.role === "teacher" ? "🎓 教育者账号" : "🌱 学习者账号"}
               </p>
             </div>
             <div className="flex flex-wrap justify-center gap-3 pt-2">
@@ -104,14 +104,9 @@ export default function AccountPage() {
                 href={me.role === "teacher" ? "/teach/" : "/learn/"}
                 className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90"
               >
-                {me.role === "teacher" ? "进入我的教师后台" : "去课程广场"}
+                {me.role === "teacher" ? "进入教育者工作台" : "探索学习旅程"}
               </Link>
-              <Link
-                href="/chat/"
-                className="rounded-xl border border-white/10 bg-white/[0.04] px-6 py-2.5 text-sm font-semibold text-slate-200 transition-all hover:border-white/25"
-              >
-                我的私信
-              </Link>
+              {me.role === "teacher" && <Link href="/chat/" className="rounded-xl border border-white/10 bg-white/[0.04] px-6 py-2.5 text-sm font-semibold text-slate-200 transition-all hover:border-white/25">教育者会话</Link>}
             </div>
             <button
               onClick={signOut}
@@ -142,8 +137,8 @@ export default function AccountPage() {
                   }`}
                 >
                   <School className="h-5 w-5" />
-                  <span className="text-sm font-medium">我是学生</span>
-                  <span className="text-[11px] text-slate-500">找老师 · 上课 · 提问</span>
+                  <span className="text-sm font-medium">我是学习者</span>
+                  <span className="text-[11px] text-slate-500">探索世界 · 进入故事 · 问 Mentor</span>
                 </button>
                 <button
                   type="button"
@@ -156,7 +151,7 @@ export default function AccountPage() {
                 >
                   <GraduationCap className="h-5 w-5" />
                   <span className="text-sm font-medium">我是教育者</span>
-                  <span className="text-[11px] text-slate-500">开课 · 上传素材 · 答疑</span>
+                  <span className="text-[11px] text-slate-500">创建 Mentor · 世界 · 学习旅程</span>
                 </button>
               </div>
             )}
@@ -218,7 +213,7 @@ export default function AccountPage() {
         )}
 
         <p className="mt-6 text-center text-[11px] leading-relaxed text-slate-600">
-          账号数据存储于 Supabase 云端数据库，密码加密保存，访问权限由服务器端安全规则控制。
+          账号数据存储于 Supabase 云端数据库，密码加密保存。未成年人请在家长或监护人知情下使用；MoliVerse 不提供孩子与教育者的开放私信。
         </p>
       </div>
     </main>

@@ -88,7 +88,7 @@ function AskMentor() {
       if (err || !answer) throw new Error("no answer");
       setTurns((t) => [...t, { role: "assistant", content: answer }]);
     } catch {
-      setError("分身暂时没能回答，请稍后再试，或直接私信老师本人。");
+      setError("Mentor 暂时没能回答。需要真人回应时，请和家长或监护人一起查看家庭说明。 ");
     } finally {
       setSending(false);
     }
@@ -108,9 +108,9 @@ function AskMentor() {
   if (!course) {
     return (
       <div className="glass-card mt-10 p-10 text-center">
-        <p className="text-slate-400">找不到这门课。</p>
+        <p className="text-slate-400">找不到这段学习旅程。</p>
         <Link href="/learn/" className="mt-3 inline-block text-sm text-violet-300 hover:text-violet-200">
-          ← 回到课程广场
+          ← 回到探索页
         </Link>
       </div>
     );
@@ -133,7 +133,7 @@ function AskMentor() {
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-display text-base font-semibold text-white">
-            {teacher?.name ?? "老师"} 的 AI 分身
+            {teacher?.name ?? "教育者"} 的 AI Mentor
             {teacher?.verified && (
               <span className="ml-2 inline-flex items-center gap-0.5 rounded-full bg-sky-400/15 px-1.5 py-0.5 text-[10px] font-medium text-sky-300">
                 <ShieldCheck className="h-3 w-3" />
@@ -144,16 +144,16 @@ function AskMentor() {
           <p className="mt-0.5 text-xs text-slate-500">
             关于《{course.title}》
             {knowledgeFiles > 0
-              ? ` · 已读过老师上传的 ${knowledgeFiles} 份课件`
-              : " · 老师还没上传课件，只能做常识性回答"}
+              ? ` · 已读过教育者提供的 ${knowledgeFiles} 份资料`
+              : " · 教育者还没添加资料，只能做常识性回答"}
           </p>
         </div>
         <Link
-          href="/learn/"
+          href="/families/"
           className="flex items-center gap-1.5 rounded-full border border-white/10 px-4 py-1.5 text-xs text-slate-400 transition-all hover:border-cyan-400/30 hover:text-cyan-300"
         >
           <MessageCircle className="h-3.5 w-3.5" />
-          找真人老师
+          家庭说明
         </Link>
       </div>
 
@@ -163,7 +163,7 @@ function AskMentor() {
           <div className="glass-card p-6 text-center">
             <Sparkles className="mx-auto h-6 w-6 text-violet-300" />
             <p className="mt-3 text-sm text-slate-300">
-              有什么想问的？分身会根据老师的课件来回答。
+              有什么想问的？Mentor 会根据教育者提供的资料来回答。
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               {STARTERS.map((s) => (
@@ -235,9 +235,9 @@ function AskMentor() {
       </form>
 
       <p className="mt-3 text-[11px] leading-relaxed text-slate-600">
-        这是 AI 分身，不是老师本人。它依据老师上传的课件作答，可能出错；涉及课程安排、费用或需要真人回应的事，请
-        <Link href="/learn/" className="text-slate-500 underline underline-offset-2 hover:text-slate-300">
-          私信老师本人
+        这是 AI Mentor，不是教育者本人。它依据教育者提供的内容作答，可能出错；需要真人回应时，请和家长或监护人一起前往
+        <Link href="/families/" className="text-slate-500 underline underline-offset-2 hover:text-slate-300">
+          家庭说明
         </Link>
         。
       </p>
@@ -251,7 +251,7 @@ export default function AskPage() {
       <div className="pointer-events-none absolute left-1/2 top-0 h-[30rem] w-[44rem] max-w-full -translate-x-1/2 rounded-full bg-violet-600/[0.08] blur-[130px]" />
       <div className="relative mx-auto max-w-3xl px-6 pb-24 pt-14">
         <Link href="/learn/" className="text-sm text-slate-400 transition-colors hover:text-white">
-          ← 课程广场
+          ← 探索页
         </Link>
         <Suspense
           fallback={

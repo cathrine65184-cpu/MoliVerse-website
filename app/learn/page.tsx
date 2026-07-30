@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bot, Flag, FileText, Heart, Loader2, MessageCircle, Play, ShieldCheck } from "lucide-react";
+import { Bot, Flag, FileText, Heart, Loader2, Play, ShieldCheck, UsersRound } from "lucide-react";
 import {
   supabase,
   getMyProfile,
@@ -11,14 +11,15 @@ import {
   type Course,
   type Profile,
 } from "@/lib/supabase";
+import { loadJourneyMeta } from "@/lib/journey";
 
 export default function LearnPage() {
   const router = useRouter();
   const [me, setMe] = useState<Profile | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [reported, setReported] = useState<Set<string>>(new Set());
+  const [familyNotice, setFamilyNotice] = useState<string | null>(null);
 
   async function reportCourse(course: Course) {
     if (!me) return router.push("/account/");
@@ -32,7 +33,14 @@ export default function LearnPage() {
       .from("courses")
       .select("*, profiles!courses_teacher_id_fkey(*), course_files(*), likes(student_id)")
       .order("created_at", { ascending: false });
-    setCourses((data as Course[]) ?? []);
+    const raw = (data as Course[]) ?? [];
+    const enriched = await Promise.all(
+      raw.map(async (course) => ({
+        ...course,
+        journey: await loadJourneyMeta(course.teacher_id, course.id),
+      }))
+    );
+    setCourses(enriched);
   }
 
   useEffect(() => {
@@ -56,28 +64,9 @@ export default function LearnPage() {
     refresh();
   }
 
-  async function messageTeacher(course: Course) {
-    if (!me) return router.push("/account/");
-    if (me.role !== "student") return;
-    setBusyId(course.id);
-    // Find or create the conversation with this teacher
-    const { data: existing } = await supabase
-      .from("conversations")
-      .select("id")
-      .eq("student_id", me.id)
-      .eq("teacher_id", course.teacher_id)
-      .maybeSingle();
-    let convId = existing?.id;
-    if (!convId) {
-      const { data: created } = await supabase
-        .from("conversations")
-        .insert({ student_id: me.id, teacher_id: course.teacher_id })
-        .select("id")
-        .single();
-      convId = created?.id;
-    }
-    setBusyId(null);
-    if (convId) router.push(`/chat/?c=${convId}`);
+  function askForAdult(course: Course) {
+    setFamilyNotice(`想让 ${course.profiles?.name ?? "这位教育者"} 亲自回应？请邀请家长或监护人一起查看「For Families」，由成年人决定是否联系教育者。`);
+    window.setTimeout(() => setFamilyNotice(null), 5500);
   }
 
   return (
@@ -101,6 +90,10 @@ export default function LearnPage() {
         <p className="mt-1 text-sm text-slate-500">
           由真实语言教育者设计的文化旅程。遇见 AI Mentor，在故事里自然开口。
         </p>
+        <p className="mt-3 rounded-xl border border-amber-300/15 bg-amber-300/[0.05] px-4 py-2.5 text-xs leading-relaxed text-amber-100">
+          为了让孩子安全探索，MoliVerse 不提供孩子与教育者的开放私信。AI Mentor 负责旅程中的日常互动；需要真人回应时，请和家长或监护人一起发起。
+        </p>
+        {familyNotice && <p className="mt-3 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-2.5 text-xs text-cyan-100">{familyNotice}</p>}
 
         {loading ? (
           <div className="mt-20 flex justify-center text-slate-500">
@@ -116,6 +109,13 @@ export default function LearnPage() {
               </Link>
               ，创造第一个孩子会记得的世界。
             </p>
+            <Link
+              href="/lesson/"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white"
+            >
+              <Play className="h-4 w-4 fill-white" />
+              先体验 3 分钟示范旅程
+            </Link>
           </div>
         ) : (
           <div className="mt-8 flex flex-col gap-5">
@@ -163,6 +163,16 @@ export default function LearnPage() {
                       <p className="mt-2 text-sm leading-relaxed text-slate-300">
                         {course.description}
                       </p>
+                      {course.journey && (
+                        <div className="mt-3 rounded-xl border border-white/[0.08] bg-white/[0.025] p-3 text-xs leading-relaxed text-slate-400">
+                          {course.journey.world && <p><span className="text-violet-200">World · </span>{course.journey.world}</p>}
+                          {course.journey.storyQuestion && <p className="mt-1 text-slate-300">“{course.journey.storyQuestion}”</p>}
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {course.journey.ageRange && <span className="rounded-full border border-white/10 px-2 py-0.5">Ages {course.journey.ageRange}</span>}
+                            {course.journey.humanMoment && <span className="rounded-full border border-amber-300/20 bg-amber-300/5 px-2 py-0.5 text-amber-100">Human moment included</span>}
+                          </div>
+                        </div>
+                      )}
 
                       {image && (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -233,20 +243,13 @@ export default function LearnPage() {
                       <Heart className={`h-3.5 w-3.5 ${liked ? "fill-rose-400 text-rose-400" : ""}`} />
                       {course.likes?.length ?? 0}
                     </button>
-                    {(!me || me.role === "student") && (
-                      <button
-                        onClick={() => messageTeacher(course)}
-                        disabled={busyId === course.id}
-                        className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-1.5 text-xs font-semibold text-white transition-all enabled:hover:opacity-90 disabled:opacity-50"
-                      >
-                        {busyId === course.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <MessageCircle className="h-3.5 w-3.5" />
-                        )}
-                        联系{teacher?.name ?? "教育者"}
-                      </button>
-                    )}
+                    <button
+                      onClick={() => askForAdult(course)}
+                      className="flex items-center gap-1.5 rounded-full border border-amber-300/25 bg-amber-300/[0.06] px-4 py-1.5 text-xs font-medium text-amber-100 transition-all hover:border-amber-300/45"
+                    >
+                      <UsersRound className="h-3.5 w-3.5" />
+                      与家长一起请求真人回应
+                    </button>
                     <button
                       onClick={() => reportCourse(course)}
                       disabled={reported.has(course.id)}

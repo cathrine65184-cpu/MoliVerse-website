@@ -215,8 +215,8 @@ function ChatInner() {
           <p className="px-4 py-6 text-xs leading-relaxed text-slate-600">
             还没有会话。
             {me.role === "student"
-              ? "去课程广场找一位老师，点「私信老师」开始提问。"
-              : "学生私信你之后会出现在这里。"}
+              ? "目前不会创建新的孩子与教育者私信。需要真人回应时，请与家长或监护人一起发起。"
+              : "当家庭发起经同意的真人回应请求后，会话会出现在这里。"}
           </p>
         ) : (
           <ul>

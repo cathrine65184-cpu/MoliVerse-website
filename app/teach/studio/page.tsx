@@ -558,6 +558,18 @@ export default function TeacherStudioPage() {
         <div className="mt-10 grid gap-6 lg:grid-cols-[1fr,420px]">
           {/* ---------- left: builder ---------- */}
           <div className="flex flex-col gap-5">
+            <div className="glass-card border-cyan-400/20 p-6">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">01</span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-display text-base font-semibold text-white">先创造一段孩子愿意进入的旅程</h2>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-400">从一个文化世界、一个故事问题和一个真人会出现的时刻开始。照片、声音与动作都是可选的表达层。</p>
+                  <Link href="/teach/" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-2 text-xs font-semibold text-white">
+                    去创建第一段学习旅程 <ArrowLeft className="h-3.5 w-3.5 rotate-180" />
+                  </Link>
+                </div>
+              </div>
+            </div>
             {/* photo */}
             <div className="glass-card p-6">
               <div className="flex items-center gap-3">
@@ -566,7 +578,7 @@ export default function TeacherStudioPage() {
                 </span>
                 <div className="flex-1">
                   <h2 className="font-display text-base font-semibold text-white">
-                    01 · Mentor 形象
+                    可选 · Mentor 形象
                   </h2>
                   <p className="text-xs text-slate-500">让孩子看见故事背后的真实教育者</p>
                 </div>
@@ -632,7 +644,7 @@ export default function TeacherStudioPage() {
                 </span>
                 <div className="flex-1">
                   <h2 className="font-display text-base font-semibold text-white">
-                    02 · 你的声音
+                    可选 · 你的声音
                   </h2>
                   <p className="text-xs text-slate-500">
                     录一段你的声音（建议 30 秒以上），让孩子听见熟悉、真实的引导
@@ -694,7 +706,7 @@ export default function TeacherStudioPage() {
                 </span>
                 <div className="flex-1">
                   <h2 className="font-display text-base font-semibold text-white">
-                    03 · 角色与表达方式
+                    可选 · 角色与表达方式
                   </h2>
                   <p className="text-xs text-slate-500">
                     选择孩子会在故事里遇见的角色，再录下你的动作，让表达不只发生在文字里
@@ -766,7 +778,7 @@ export default function TeacherStudioPage() {
                 </span>
                 <div>
                   <h2 className="font-display text-base font-semibold text-white">
-                    04 · 你的教学 DNA
+                    教学 DNA
                   </h2>
                   <p className="text-xs text-slate-500">这让 AI 保留你的方式，而不是变成另一个通用聊天机器人</p>
                 </div>
@@ -824,7 +836,7 @@ export default function TeacherStudioPage() {
                   <HeartHandshake className="h-4 w-4" />
                 </span>
                 <div>
-                  <h2 className="font-display text-base font-semibold text-white">05 · 人类出现的时刻</h2>
+                  <h2 className="font-display text-base font-semibold text-white">真人出现的时刻</h2>
                   <p className="text-xs text-slate-500">AI 负责日常陪伴；你在真正重要的时刻出现。</p>
                 </div>
               </div>
@@ -845,7 +857,7 @@ export default function TeacherStudioPage() {
                 </span>
                 <div className="flex-1">
                   <h2 className="font-display text-base font-semibold text-white">
-                    06 · 生成会说话的 Mentor
+                    可选 · 生成会说话的 Mentor
                   </h2>
                   <p className="text-xs text-slate-500">
                     用你的照片和开场白，生成一段孩子在旅程起点会遇见的真实欢迎

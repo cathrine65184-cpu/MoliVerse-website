@@ -1,25 +1,25 @@
-import { MessagesSquare, ScrollText, Sparkles } from "lucide-react";
+import { HeartHandshake, MapPinned, Sparkles } from "lucide-react";
 import Reveal from "./ui/Reveal";
 import SectionHeading from "./ui/SectionHeading";
 
 const pieces = [
   {
-    icon: MessagesSquare,
-    title: "AI Characters",
+    icon: MapPinned,
+    title: "Cultural Worlds",
     description:
-      "NPCs who talk back, remember you, and speak at your level — a conversation, not a script.",
-  },
-  {
-    icon: ScrollText,
-    title: "Interactive Stories",
-    description:
-      "Every choice moves the plot forward. Language is the key to what happens next, not a worksheet.",
+      "A night market, a football pitch, a folktale — language begins with a place a child genuinely wants to understand.",
   },
   {
     icon: Sparkles,
-    title: "Teacher Avatars",
+    title: "Educator-Made Mentors",
     description:
-      "Real teachers become 3D characters who move and speak inside the story — a familiar face, right there with you.",
+      "Language educators bring their voice, teaching approach, and cultural perspective into an AI Mentor — not a generic bot.",
+  },
+  {
+    icon: HeartHandshake,
+    title: "Human Moments",
+    description:
+      "AI carries everyday exploration. When a child needs encouragement, insight, or a real reply, the educator steps in.",
   },
 ];
 
@@ -27,13 +27,11 @@ export default function WhatIs() {
   return (
     <section id="what" className="relative scroll-mt-24 px-6 py-28 sm:py-36">
       <div className="mx-auto max-w-5xl">
-        <SectionHeading eyebrow="What is MoliVerse" title="Three pieces. One living lesson." />
+        <SectionHeading eyebrow="What is MoliVerse" title="Not more lessons. A world worth returning to." />
 
         <Reveal delay={0.1} className="mx-auto mt-8 max-w-2xl text-center">
           <p className="text-base leading-relaxed text-slate-400 sm:text-lg">
-            MoliVerse turns a language lesson into a story you step inside —
-            built from AI characters, branching plots, and your own teacher
-            reimagined as a character who moves and speaks right beside you.
+            MoliVerse turns curiosity into a cultural journey. Every experience connects story, language, relationship, and a memory children can carry forward.
           </p>
         </Reveal>
 

@@ -34,6 +34,8 @@ import { generatedLessons } from "@/lib/generatedLessons";
 import { type BgSpec, parseBg, drawBackground } from "@/lib/sceneEngine";
 import { parseTheme, drawPuppet, L, type Point as CPoint } from "@/lib/characterEngine";
 import { loadPersona, type Persona } from "@/lib/persona";
+import { loadSharedMemory, saveSharedMemory, type SharedMemory } from "@/lib/memory";
+import { loadJourneyMeta, type JourneyMeta } from "@/lib/journey";
 
 /** Joints stored per motion frame — must match the studio's packing. */
 const MOTION_JOINTS = [
@@ -68,6 +70,8 @@ function LessonInner() {
   );
   const [voiceLang, setVoiceLang] = useState("en-GB");
   const [lessonTitle, setLessonTitle] = useState("Animal Alphabet Adventure");
+  const [memory, setMemory] = useState<SharedMemory | null>(null);
+  const [journey, setJourney] = useState<JourneyMeta | null>(null);
   const [generating, setGenerating] = useState(false);
 
   // Player state
@@ -114,6 +118,7 @@ function LessonInner() {
 
   const step = steps?.[index];
   const total = steps?.length ?? 0;
+  const isFinale = step?.t === "finale";
   const costume = costumes[step?.costume ?? "ranger"] ?? costumes.ranger;
 
   const stepVideo = step?.video;
@@ -161,7 +166,10 @@ function LessonInner() {
         verified: !!c.profiles?.verified,
       });
       // Their story character + captured motion, if they built one
-      if (c.teacher_id) loadPersona(c.teacher_id).then((p) => !cancelled && setPersona(p));
+      if (c.teacher_id) {
+        loadPersona(c.teacher_id).then((p) => !cancelled && setPersona(p));
+        loadJourneyMeta(c.teacher_id, c.id).then((j) => !cancelled && setJourney(j));
+      }
       setVoiceLang(langCode(c.language));
       setLessonTitle(c.title);
       // 1) Baked-in AI lesson (instant)
@@ -595,6 +603,21 @@ function LessonInner() {
     narrate(0);
   }
 
+  useEffect(() => {
+    const journeyId = courseId ?? "moli-demo";
+    if (!started || !isFinale) return;
+    const existing = loadSharedMemory(journeyId);
+    const next = existing ?? {
+      journeyId,
+      journeyTitle: lessonTitle,
+      mentorName: teacher.name,
+      phrase: step?.say || "We explored something new together.",
+      createdAt: new Date().toISOString(),
+    };
+    if (!existing) saveSharedMemory(next);
+    setMemory(next);
+  }, [courseId, isFinale, lessonTitle, started, step?.say, teacher.name]);
+
   /* ---------- render ---------- */
 
   if (!steps) {
@@ -617,7 +640,6 @@ function LessonInner() {
     );
   }
 
-  const isFinale = step?.t === "finale";
   const moveEnabled = step && (step.t === "move" || (step.t === "card" && step.move));
 
   return (
@@ -779,9 +801,15 @@ function LessonInner() {
                 {lessonTitle}
               </h1>
               <p className="max-w-sm rounded-2xl bg-black/35 px-5 py-3 text-sm text-slate-200 backdrop-blur">
-                {teacher.name} 老师的数字分身将带你穿越一个个世界上这堂课 ——
-                全程自动进行,像真的老师在直播。开摄像头还能检测你有没有跟着动!
+                跟随 {teacher.name} 进入一个文化世界。故事里的每一次选择，都让下一次相遇更有意义。
               </p>
+              {journey?.world && (
+                <div className="max-w-sm rounded-2xl border border-violet-300/20 bg-violet-500/[0.10] px-4 py-3 text-left text-sm backdrop-blur">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-200">Today’s world · {journey.world}</p>
+                  {journey.storyQuestion && <p className="mt-1 text-slate-100">{journey.storyQuestion}</p>}
+                  {journey.humanMoment && <p className="mt-2 text-xs leading-relaxed text-slate-300">真人时刻：{journey.humanMoment}</p>}
+                </div>
+              )}
               <button
                 onClick={() => {
                   // Unlock speech within the user gesture (Safari/Chrome autoplay).
@@ -794,7 +822,7 @@ function LessonInner() {
                 className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-500 px-8 py-4 text-base font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,0.8)] transition-all hover:shadow-[0_0_56px_-8px_rgba(139,92,246,1)]"
               >
                 <Play className="h-5 w-5 fill-white" />
-                开始上课
+                进入旅程
               </button>
             </div>
           ) : isFinale ? (
@@ -802,8 +830,15 @@ function LessonInner() {
               <PartyPopper className="h-14 w-14 text-amber-300" />
               <h2 className="font-display text-3xl font-semibold text-white drop-shadow">Great Job! 🎉</h2>
               <p className="rounded-2xl bg-black/35 px-5 py-2 text-slate-200 backdrop-blur">
-                这节课完成啦!{stars > 0 ? ` 你赢得了 ${stars} 颗星星 ⭐` : ""}
+                这段旅程完成啦!{stars > 0 ? ` 你解开了 ${stars} 个小发现 ✨` : ""}
               </p>
+              {memory && (
+                <div className="max-w-md rounded-2xl border border-violet-300/25 bg-violet-500/[0.10] px-5 py-4 text-left backdrop-blur">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-200">Our shared memory</p>
+                  <p className="mt-2 text-sm font-medium text-white">You and {memory.mentorName} explored “{memory.journeyTitle}”.</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-300">“{memory.phrase}”</p>
+                </div>
+              )}
               <div className="flex gap-3">
                 <button
                   onClick={restart}
@@ -816,7 +851,7 @@ function LessonInner() {
                   href="/learn/"
                   className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3 text-sm font-semibold text-white"
                 >
-                  回课程广场
+                  继续探索
                 </Link>
               </div>
             </div>
@@ -1012,7 +1047,7 @@ function LessonInner() {
         <video ref={videoRef} className="hidden" playsInline muted />
 
         <p className="mt-3 text-center text-[11px] text-slate-400/80 drop-shadow">
-          Live 课堂 · 内容由老师上传的课件自动生成,数字分身自动授课,无需老师同步录制
+          Educator-designed journey · AI supports everyday exploration · Humans appear when it matters
         </p>
       </div>
     </>

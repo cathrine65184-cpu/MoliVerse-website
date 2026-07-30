@@ -27,6 +27,7 @@ import {
   type Profile,
 } from "@/lib/supabase";
 import { extractText, isExtractable } from "@/lib/extractText";
+import { loadJourneyMeta, saveJourneyMeta } from "@/lib/journey";
 
 const kindIcon = { image: Camera, audio: Mic, video: Film, doc: FileText };
 const kindLabel = { image: "图片", audio: "音频", video: "视频", doc: "课件" };
@@ -42,6 +43,10 @@ export default function TeachPage() {
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newLang, setNewLang] = useState("");
+  const [newWorld, setNewWorld] = useState("");
+  const [newQuestion, setNewQuestion] = useState("");
+  const [newAge, setNewAge] = useState("6–10");
+  const [newHumanMoment, setNewHumanMoment] = useState("");
   const [creating, setCreating] = useState(false);
   const [uploadingTo, setUploadingTo] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -61,7 +66,14 @@ export default function TeachPage() {
         .select("*, student:profiles!conversations_student_id_fkey(*)")
         .eq("teacher_id", profile.id),
     ]);
-    setCourses((cs as Course[]) ?? []);
+    const rawCourses = (cs as Course[]) ?? [];
+    const enriched = await Promise.all(
+      rawCourses.map(async (course) => ({
+        ...course,
+        journey: await loadJourneyMeta(profile.id, course.id),
+      }))
+    );
+    setCourses(enriched);
     setConvos((cv as unknown as Conversation[]) ?? []);
   }, []);
 
@@ -127,15 +139,34 @@ export default function TeachPage() {
   async function createCourse() {
     if (!me || !newTitle.trim()) return;
     setCreating(true);
-    await supabase.from("courses").insert({
+    const { data, error } = await supabase.from("courses").insert({
       teacher_id: me.id,
       title: newTitle.trim(),
       description: newDesc.trim(),
       language: newLang.trim(),
-    });
+    }).select().single();
+    if (error || !data) {
+      setNotice("旅程创建失败，请重试");
+      setCreating(false);
+      return;
+    }
+    try {
+      await saveJourneyMeta(me.id, data.id, {
+        world: newWorld.trim(),
+        storyQuestion: newQuestion.trim(),
+        ageRange: newAge.trim(),
+        humanMoment: newHumanMoment.trim(),
+      });
+    } catch {
+      setNotice("旅程已创建，但世界信息尚未保存；请稍后重新编辑。 ");
+    }
     setNewTitle("");
     setNewDesc("");
     setNewLang("");
+    setNewWorld("");
+    setNewQuestion("");
+    setNewAge("6–10");
+    setNewHumanMoment("");
     setCreating(false);
     refresh(me);
   }
@@ -370,7 +401,7 @@ export default function TeachPage() {
           </h2>
           {convos.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">
-              还没有学生给你发私信 — 学生在课程广场点"私信老师"后会出现在这里。
+              还没有家庭发起真人回应请求。MoliVerse 不开放孩子与教育者的直接私信。
             </p>
           ) : (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -395,7 +426,7 @@ export default function TeachPage() {
           )}
         </div>
 
-        {/* New course */}
+        {/* New journey */}
         <div className="glass-card mt-5 p-6">
           <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
             <Plus className="h-4 w-4 text-violet-300" />
@@ -421,6 +452,34 @@ export default function TeachPage() {
             rows={2}
               placeholder="旅程介绍：孩子将进入什么文化情境、自然学会什么表达、适合几岁…"
             className="mt-2.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
+          />
+          <div className="mt-2.5 grid gap-2.5 sm:grid-cols-2">
+            <input
+              value={newWorld}
+              onChange={(e) => setNewWorld(e.target.value)}
+              placeholder="文化世界，如 Paris Night Market"
+              className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
+            />
+            <input
+              value={newAge}
+              onChange={(e) => setNewAge(e.target.value)}
+              placeholder="适合年龄，如 6–10"
+              className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
+            />
+          </div>
+          <textarea
+            value={newQuestion}
+            onChange={(e) => setNewQuestion(e.target.value)}
+            rows={2}
+            placeholder="故事问题：孩子为什么想进入这里？如：我们能在夜市帮 Camille 找回一封信吗？"
+            className="mt-2.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
+          />
+          <textarea
+            value={newHumanMoment}
+            onChange={(e) => setNewHumanMoment(e.target.value)}
+            rows={2}
+            placeholder="真人出现的时刻：例如孩子完成作品或需要鼓励时，我会亲自回应。"
+            className="mt-2.5 w-full rounded-xl border border-amber-300/15 bg-amber-300/[0.03] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-amber-300/40"
           />
           <button
             onClick={createCourse}
@@ -450,6 +509,12 @@ export default function TeachPage() {
                     )}
                   </p>
                   <p className="mt-1 text-sm text-slate-400">{course.description}</p>
+                  {course.journey && (
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                      {course.journey.world && <span className="rounded-full border border-violet-400/25 bg-violet-400/10 px-2.5 py-1 text-violet-200">🌍 {course.journey.world}</span>}
+                      {course.journey.ageRange && <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-slate-400">Ages {course.journey.ageRange}</span>}
+                    </div>
+                  )}
                   <p className="mt-1 text-xs text-slate-600">
                     ❤️ {course.likes?.length ?? 0} 名学生喜欢
                   </p>

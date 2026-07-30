@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { JourneyMeta } from "./journey";
 
 // The anon key is designed to be public — access control lives in
 // Postgres Row Level Security policies on the server.
@@ -78,6 +79,7 @@ export type Course = {
   profiles?: Profile;
   course_files?: CourseFile[];
   likes?: { student_id: string }[];
+  journey?: JourneyMeta | null;
 };
 
 export type CourseFile = {

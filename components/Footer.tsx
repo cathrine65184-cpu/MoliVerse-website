@@ -1,10 +1,9 @@
 import Image from "next/image";
-import { Github, Linkedin, Mail } from "lucide-react";
+import { Heart, Mail } from "lucide-react";
 import { withBasePath } from "@/lib/paths";
 
 const socials = [
-  { icon: Github, label: "GitHub", href: "https://github.com" },
-  { icon: Linkedin, label: "LinkedIn", href: "https://linkedin.com" },
+  { icon: Heart, label: "For Families", href: "/families/" },
   { icon: Mail, label: "Contact", href: "mailto:cathrine65184@gmail.com" },
 ];
 
@@ -27,7 +26,7 @@ export default function Footer() {
               MoliVerse
             </span>
           </div>
-          <p className="text-sm text-slate-500">AI × RPG × Language Learning</p>
+          <p className="text-sm text-slate-500">Language · Culture · Story · Human connection</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -35,8 +34,8 @@ export default function Footer() {
             <a
               key={social.label}
               href={social.href}
-              target={social.href.startsWith("mailto") ? undefined : "_blank"}
-              rel="noopener noreferrer"
+              target={social.href.startsWith("http") ? "_blank" : undefined}
+              rel={social.href.startsWith("http") ? "noopener noreferrer" : undefined}
               aria-label={social.label}
               className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-slate-400 transition-all hover:border-white/20 hover:text-white"
             >

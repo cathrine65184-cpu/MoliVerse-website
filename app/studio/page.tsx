@@ -223,18 +223,17 @@ export default function StudioPage() {
         <div className="mt-6 max-w-2xl">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-violet-300">
-              Mentor Studio · 数字人工作室
+              Mentor Lab · 技术体验
             </span>
             <span className="inline-flex items-center rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-200">
               Beta · 技术预览
             </span>
           </div>
           <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            Create your own AI mentor.
+            Try an optional Mentor expression.
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-400 sm:text-base">
-            上传一张照片和一段声音，亲手创建你的数字人分身。所有处理都在你的浏览器里真实运行
-            —— 人脸关键点检测、录音、开口说话，数据不会离开你的电脑。
+            这是一个本地技术体验：上传照片、录一段声音，看看 Mentor 的表达层可以是什么样子。真正创建 Mentor、文化世界与学习旅程，请前往教育者工作台。
           </p>
 
           <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] px-4 py-3">

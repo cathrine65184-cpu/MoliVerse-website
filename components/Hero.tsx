@@ -51,7 +51,7 @@ export default function Hero() {
           Learn Languages.
           <br />
           <span className="animate-shimmer bg-gradient-to-r from-indigo-300 via-violet-300 via-50% to-cyan-300 bg-[length:200%_auto] bg-clip-text text-transparent">
-            Live Stories.
+            Build Memories.
           </span>
         </motion.h1>
 
@@ -62,8 +62,7 @@ export default function Hero() {
           custom={0.24}
           className="mt-8 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg"
         >
-          MoliVerse helps language educators turn their teaching identity into
-          AI mentors, cultural worlds, and living stories children genuinely want to return to.
+          A living language universe built by educators: children enter cultural stories with AI Mentors, and return because the world remembers what matters to them.
         </motion.p>
 
         <motion.div
@@ -77,7 +76,7 @@ export default function Hero() {
             href="/learn/"
             className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-7 py-3.5 text-sm font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,0.6)] transition-all hover:shadow-[0_0_56px_-8px_rgba(139,92,246,0.8)]"
           >
-            Explore worlds
+            Explore a journey
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
           <Link
@@ -85,7 +84,7 @@ export default function Hero() {
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-7 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur-sm transition-all hover:border-white/25 hover:bg-white/[0.08]"
           >
             <Sparkles className="h-4 w-4" />
-            Create as an educator
+            I’m an educator
           </Link>
         </motion.div>
       </div>

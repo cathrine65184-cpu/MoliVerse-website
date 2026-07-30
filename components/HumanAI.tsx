@@ -95,7 +95,7 @@ function TeacherPanel() {
 
 /* ---------- panel 2 · create the ai mentor ---------- */
 
-const uploads = ["One photo", "5 min of voice", "Lessons & stories", "Teaching style"];
+const uploads = ["Teaching approach", "Cultural world", "Story question", "Human moment"];
 
 function CreatePanel() {
   return (
@@ -144,7 +144,7 @@ function CreatePanel() {
       </div>
 
       <p className="mt-10 text-center font-display text-lg font-medium text-white sm:text-xl">
-        Your face. Your voice.{" "}
+        Your teaching identity. Your cultural world.{" "}
         <span className="text-gradient">Your AI mentor.</span>
       </p>
     </div>
@@ -156,7 +156,7 @@ function CreatePanel() {
 function DigitalHumanPanel() {
   return (
     <div className="flex flex-col items-center">
-      <StepLabel number="03" label="The Digital Human" />
+      <StepLabel number="03" label="Optional Expression Layer" />
 
       <div className="flex flex-col items-center gap-5 lg:flex-row lg:items-center lg:gap-8">
         {/* Live digital-human frame — a real generated talking video */}
@@ -176,17 +176,16 @@ function DigitalHumanPanel() {
           {/* Live badge */}
           <span className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-void/70 px-3 py-1 text-[11px] font-medium text-slate-200 backdrop-blur-md">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-            Digital Human · 真实生成
+            Optional Mentor expression
           </span>
 
           {/* Subtitle */}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 pt-10">
             <p className="text-sm font-medium text-white">
-              “Hello my friend! I&apos;m Catherine. Today we will travel to the
-              stars and learn together.”
+              “Hello! I&apos;m Catherine. Shall we explore a world together?”
             </p>
             <p className="mt-0.5 text-xs text-slate-400">
-              这段视频由 Catherine 的一张照片自动生成 · 开启声音收听
+              教育者可以选择加入照片、声音或视频，让 Mentor 更有辨识度
             </p>
           </div>
         </div>
@@ -214,14 +213,13 @@ function DigitalHumanPanel() {
       </div>
 
       <p className="mt-6 max-w-lg text-center text-sm leading-relaxed text-slate-400">
-        不是聊天机器人。一张照片就变成会开口讲课的数字老师 ——
-        上面这段视频，就是由 Catherine 的一张照片真实生成的。
+        不是聊天机器人，也不要求每位教育者制作数字人。照片、声音与视频是表达方式；真正的核心是教育者的文化视角与教学关系。
       </p>
       <Link
-        href="/studio/"
+        href="/teach/"
         className="group mt-4 flex items-center gap-2 text-sm font-medium text-cyan-300 transition-colors hover:text-cyan-200"
       >
-        Create your own in the Mentor Studio
+        Start with a learning journey
         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
       </Link>
     </div>
@@ -361,7 +359,7 @@ export default function HumanAI() {
       <div className="mx-auto max-w-5xl px-6 pb-4 pt-28 sm:pt-36">
         <SectionHeading
           eyebrow="How It Works"
-          title="A real teacher becomes an AI mentor."
+          title="An educator creates a Mentor. A child enters a world."
         />
       </div>
 
