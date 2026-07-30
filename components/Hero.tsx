@@ -1,7 +1,8 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Github } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Sparkles } from "lucide-react";
 import Starfield from "./Starfield";
 
 const fadeUp = {
@@ -36,7 +37,7 @@ export default function Hero() {
         >
           <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
           <span className="text-xs font-medium tracking-wide text-slate-300">
-            An AI-powered RPG language universe — for every child, everywhere
+            Built by language educators, for curious children everywhere
           </span>
         </motion.div>
 
@@ -61,9 +62,8 @@ export default function Hero() {
           custom={0.24}
           className="mt-8 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg"
         >
-          MoliVerse is an AI-powered language learning platform that connects
-          children with personalized AI language mentors, making high-quality
-          language education more accessible, engaging, and affordable.
+          MoliVerse helps language educators turn their teaching identity into
+          AI mentors, cultural worlds, and living stories children genuinely want to return to.
         </motion.p>
 
         <motion.div
@@ -73,22 +73,20 @@ export default function Hero() {
           custom={0.36}
           className="mt-10 flex flex-col items-center gap-4 sm:flex-row"
         >
-          <a
-            href="#what"
+          <Link
+            href="/learn/"
             className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-7 py-3.5 text-sm font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,0.6)] transition-all hover:shadow-[0_0_56px_-8px_rgba(139,92,246,0.8)]"
           >
-            Explore MoliVerse
+            Explore worlds
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </a>
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
+          </Link>
+          <Link
+            href="/teach/studio/"
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-7 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur-sm transition-all hover:border-white/25 hover:bg-white/[0.08]"
           >
-            <Github className="h-4 w-4" />
-            GitHub
-          </a>
+            <Sparkles className="h-4 w-4" />
+            Create as an educator
+          </Link>
         </motion.div>
       </div>
     </section>

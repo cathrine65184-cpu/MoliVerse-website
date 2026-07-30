@@ -26,6 +26,7 @@ import {
   type Conversation,
   type Profile,
 } from "@/lib/supabase";
+import { extractText, isExtractable } from "@/lib/extractText";
 
 const kindIcon = { image: Camera, audio: Mic, video: Film, doc: FileText };
 const kindLabel = { image: "图片", audio: "音频", video: "视频", doc: "课件" };
@@ -143,15 +144,30 @@ export default function TeachPage() {
     if (!files || !me) return;
     setUploadingTo(courseId);
     try {
+      let learned = 0;
       for (const file of Array.from(files)) {
+        // Read the document before uploading it — this is what turns a stored
+        // file into something the AI can actually teach from.
+        const text = isExtractable(file) ? await extractText(file) : "";
         const url = await uploadToMedia(me.id, file);
-        await supabase.from("course_files").insert({
-          course_id: courseId,
-          kind: fileKind(file),
-          name: file.name,
-          url,
-        });
+        const row = { course_id: courseId, kind: fileKind(file), name: file.name, url };
+
+        const { error } = await supabase.from("course_files").insert({ ...row, text });
+        if (error) {
+          // The site deploys on push while the knowledge.sql migration is run
+          // by hand, so the two can land out of order. Rather than break
+          // uploading outright, store the file without its text — it just
+          // won't reach the AI until the column exists.
+          await supabase.from("course_files").insert(row);
+        } else if (text) {
+          learned += 1;
+        }
       }
+      setNotice(
+        learned > 0
+          ? `已读取 ${learned} 份课件内容，AI 生成课程时会用上`
+          : "文件已上传（图片/视频不含可读文字，不进入知识库）"
+      );
       refresh(me);
     } catch {
       setNotice("上传失败（单个文件最大 50MB），请重试");
@@ -177,7 +193,7 @@ export default function TeachPage() {
   if (!me || me.role !== "teacher") {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
-        <p className="text-slate-400">这里是教育者后台，需要用教育者账号登录。</p>
+        <p className="text-slate-400">这里是教育者工作台，需要用教育者账号登录。</p>
         <Link
           href="/account/"
           className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-2.5 text-sm font-semibold text-white"
@@ -206,10 +222,10 @@ export default function TeachPage() {
         </div>
 
         <h1 className="mt-6 font-display text-3xl font-semibold text-white">
-          教育者后台
+          教育者工作台
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          你好，{me.name} 老师 — 在这里管理你的资料、课程和学生私信
+          你好，{me.name} — 在这里创造你的 AI Mentor、学习旅程和与孩子的真实连接。
         </p>
         {notice && (
           <p className="mt-3 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-300">
@@ -283,17 +299,17 @@ export default function TeachPage() {
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
-              我的数字人工作室
+              Mentor Studio · 创造你的 AI Mentor
               <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-2 py-0.5 text-[10px] font-medium text-amber-200">
                 Beta
               </span>
             </h2>
             <p className="mt-1 text-sm text-slate-400">
-              上传照片、录声音、设定人设 —— 实时预览你的数字分身在课堂世界里的样子
+              把你的教学风格、文化视角与真实声音，变成一个长期陪伴孩子探索世界的 Mentor。
             </p>
           </div>
           <span className="shrink-0 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2.5 text-xs font-semibold text-white transition-all group-hover:opacity-90">
-            打造分身 →
+            开始创作 →
           </span>
         </Link>
 
@@ -383,13 +399,13 @@ export default function TeachPage() {
         <div className="glass-card mt-5 p-6">
           <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
             <Plus className="h-4 w-4 text-violet-300" />
-            创建新课程
+            创建一段学习旅程
           </h2>
           <div className="mt-4 grid gap-2.5 sm:grid-cols-[1fr,180px]">
             <input
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="课程标题，如：后羿射日学德语数字"
+              placeholder="旅程标题，如：巴黎夜市里的一封信"
               className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
             />
             <input
@@ -403,7 +419,7 @@ export default function TeachPage() {
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
             rows={2}
-            placeholder="课程介绍：故事背景、学什么、适合几岁…"
+              placeholder="旅程介绍：孩子将进入什么文化情境、自然学会什么表达、适合几岁…"
             className="mt-2.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
           />
           <button
@@ -411,14 +427,14 @@ export default function TeachPage() {
             disabled={creating || !newTitle.trim()}
             className="mt-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-2.5 text-sm font-semibold text-white transition-all enabled:hover:opacity-90 disabled:opacity-40"
           >
-            {creating ? "创建中…" : "创建课程"}
+            {creating ? "创造中…" : "创建学习旅程"}
           </button>
         </div>
 
         {/* Course list */}
         <h2 className="mt-8 flex items-center gap-2 font-display text-base font-semibold text-white">
           <BookOpen className="h-4 w-4 text-cyan-300" />
-          我的课程（{courses.length}）
+          我的学习旅程（{courses.length}）
         </h2>
         <div className="mt-4 flex flex-col gap-4">
           {courses.map((course) => (
@@ -493,7 +509,7 @@ export default function TeachPage() {
                   className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2 text-xs font-semibold text-white transition-all hover:opacity-90"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
-                  预览 AI 课堂
+                  预览孩子体验
                 </a>
 
                 <button
@@ -509,13 +525,13 @@ export default function TeachPage() {
                   className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-400 transition-all hover:border-white/25 hover:text-white"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
-                  重新生成
+                  重新编排旅程
                 </button>
               </div>
             </div>
           ))}
           {courses.length === 0 && (
-            <p className="text-sm text-slate-600">还没有课程 — 在上面创建第一门课吧。</p>
+            <p className="text-sm text-slate-600">还没有学习旅程 — 从一个孩子真正想探索的文化问题开始。</p>
           )}
         </div>
       </div>

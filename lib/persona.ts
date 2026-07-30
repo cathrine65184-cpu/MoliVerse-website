@@ -18,6 +18,12 @@ export type Persona = {
   greeting: string;
   style: string;
   subject: string;
+  /** The cultural place or theme the mentor invites children into. */
+  world: string;
+  /** The educator's distinctive way of creating learning experiences. */
+  teachingApproach: string;
+  /** The meaningful moment at which the human educator steps in. */
+  humanMoment: string;
   /** Character the teacher becomes inside stories (prompt for parseTheme). */
   character: string;
   /** Short loop of the teacher's own captured movement, driving the character. */
@@ -33,6 +39,9 @@ export const emptyPersona: Persona = {
   greeting: "",
   style: "",
   subject: "",
+  world: "",
+  teachingApproach: "",
+  humanMoment: "",
   character: "",
   motion: null,
   talkingUrl: null,

@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Camera,
   Check,
+  HeartHandshake,
   Loader2,
   Mic,
   PersonStanding,
@@ -151,6 +152,11 @@ export default function TeacherStudioPage() {
             `Hi! I'm ${p.name}. Shall we learn together?`,
           style: saved?.style || styleOptions[0],
           subject: saved?.subject || p.language || "",
+          world: saved?.world || "Paris · Night Market",
+          teachingApproach:
+            saved?.teachingApproach || "I use stories, conversation, and cultural details to help children speak with confidence.",
+          humanMoment:
+            saved?.humanMoment || "I reply when a child needs encouragement, shares a project, or asks a cultural question that matters.",
           character: saved?.character || "森林向导",
           motion: saved?.motion ?? null,
           talkingUrl: saved?.talkingUrl ?? null,
@@ -481,7 +487,7 @@ export default function TeacherStudioPage() {
           .update({ avatar_url: persona.photoUrl.split("?")[0] })
           .eq("id", me.id);
       }
-      flash("数字人已保存 ✓ 学生上课时就会看到 TA");
+      flash("你的 AI Mentor 已保存 ✓ 孩子会在你的世界里遇见 TA");
     } catch {
       flash("保存失败，请重试");
     } finally {
@@ -502,7 +508,7 @@ export default function TeacherStudioPage() {
   if (!me || me.role !== "teacher") {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
-        <p className="text-slate-400">数字人工作室是教育者专属，请用教育者账号登录。</p>
+        <p className="text-slate-400">Mentor Studio 是教育者专属，请用教育者账号登录。</p>
         <Link
           href="/account/"
           className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-2.5 text-sm font-semibold text-white"
@@ -523,7 +529,7 @@ export default function TeacherStudioPage() {
         <div className="flex items-center justify-between">
           <Link href="/teach/" className="flex items-center gap-1 text-sm text-slate-400 transition-colors hover:text-white">
             <ArrowLeft className="h-4 w-4" />
-            教育者后台
+            教育者工作台
           </Link>
           {notice && (
             <span className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300">
@@ -535,18 +541,17 @@ export default function TeacherStudioPage() {
         <div className="mt-6 max-w-2xl">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-violet-300">
-              My Digital Human · 我的数字人
+              MoliVerse Mentor Studio
             </span>
             <span className="inline-flex items-center rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-200">
               Beta
             </span>
           </div>
           <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            打造你的数字分身
+            把你的教学方式，变成一个会陪伴孩子探索世界的 AI Mentor
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-400">
-            上传照片、录一段声音、设定你的教学风格 —— 右边实时预览你的数字人在课堂世界里的样子。
-            保存后，学生上课看到的就是 TA。
+            你决定角色、文化视角、故事入口与真人出现的时刻。MoliVerse 负责把它延续成孩子能反复回来的学习关系。
           </p>
         </div>
 
@@ -561,9 +566,9 @@ export default function TeacherStudioPage() {
                 </span>
                 <div className="flex-1">
                   <h2 className="font-display text-base font-semibold text-white">
-                    01 · 形象照片
+                    01 · Mentor 形象
                   </h2>
-                  <p className="text-xs text-slate-500">一张清晰正面照，AI 会识别面部关键点</p>
+                  <p className="text-xs text-slate-500">让孩子看见故事背后的真实教育者</p>
                 </div>
                 {landmarks.length > 0 && <Check className="h-5 w-5 text-emerald-400" />}
               </div>
@@ -590,7 +595,7 @@ export default function TeacherStudioPage() {
                   ) : (
                     <div className="flex h-full flex-col items-center justify-center gap-2 text-slate-600">
                       <ScanFace className="h-8 w-8" strokeWidth={1} />
-                      <span className="text-[11px]">还没有照片</span>
+                      <span className="text-[11px]">还没有 Mentor 形象</span>
                     </div>
                   )}
                   {detecting && (
@@ -613,7 +618,7 @@ export default function TeacherStudioPage() {
                   </label>
                   {detectMsg && <p className="text-xs text-cyan-300">{detectMsg}</p>}
                   <p className="text-[11px] leading-relaxed text-slate-600">
-                    照片只用于生成你的数字人形象，保存在你自己的空间里。
+                    照片只用于生成你的 Mentor 形象，保存在你自己的空间里。
                   </p>
                 </div>
               </div>
@@ -627,10 +632,10 @@ export default function TeacherStudioPage() {
                 </span>
                 <div className="flex-1">
                   <h2 className="font-display text-base font-semibold text-white">
-                    02 · 声音样本
+                    02 · 你的声音
                   </h2>
                   <p className="text-xs text-slate-500">
-                    录一段你的声音（建议 30 秒以上），未来用于声音克隆
+                    录一段你的声音（建议 30 秒以上），让孩子听见熟悉、真实的引导
                   </p>
                 </div>
                 {persona.voiceUrl && <Check className="h-5 w-5 text-emerald-400" />}
@@ -689,10 +694,10 @@ export default function TeacherStudioPage() {
                 </span>
                 <div className="flex-1">
                   <h2 className="font-display text-base font-semibold text-white">
-                    03 · 故事角色与动作
+                    03 · 角色与表达方式
                   </h2>
                   <p className="text-xs text-slate-500">
-                    选一个化身，再录一段你的动作 —— 角色会演出你的动作走进故事
+                    选择孩子会在故事里遇见的角色，再录下你的动作，让表达不只发生在文字里
                   </p>
                 </div>
                 {(persona.motion?.length ?? 0) > 0 && (
@@ -741,7 +746,7 @@ export default function TeacherStudioPage() {
                 )}
                 {capturing && (
                   <span className="text-xs text-cyan-300">
-                    动起来！挥手、转身、跳一跳 —— 右边就是你的角色
+                    动起来！挥手、转身、跳一跳 —— 右边是孩子将在世界里遇见的 Mentor
                   </span>
                 )}
                 {!capturing && (persona.motion?.length ?? 0) > 0 && (
@@ -761,9 +766,9 @@ export default function TeacherStudioPage() {
                 </span>
                 <div>
                   <h2 className="font-display text-base font-semibold text-white">
-                    04 · 人设与开场白
+                    04 · 你的教学 DNA
                   </h2>
-                  <p className="text-xs text-slate-500">这决定了数字人怎么和孩子说话</p>
+                  <p className="text-xs text-slate-500">这让 AI 保留你的方式，而不是变成另一个通用聊天机器人</p>
                 </div>
               </div>
 
@@ -771,7 +776,7 @@ export default function TeacherStudioPage() {
                 <input
                   value={persona.subject}
                   onChange={(e) => setPersona((p) => ({ ...p, subject: e.target.value }))}
-                  placeholder="你教什么，如 English · 英语启蒙"
+                  placeholder="你带孩子探索什么语言，如 French · 初级法语"
                   className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
                 />
                 <div className="flex flex-wrap gap-2">
@@ -790,13 +795,46 @@ export default function TeacherStudioPage() {
                   ))}
                 </div>
                 <textarea
+                  value={persona.world}
+                  onChange={(e) => setPersona((p) => ({ ...p, world: e.target.value }))}
+                  rows={2}
+                  placeholder="你的第一个文化世界，如 Paris · Night Market / Malaysian Food Street"
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
+                />
+                <textarea
+                  value={persona.teachingApproach}
+                  onChange={(e) => setPersona((p) => ({ ...p, teachingApproach: e.target.value }))}
+                  rows={3}
+                  placeholder="你怎样带孩子学习？例如：先让他们好奇，再在故事里自然开口。"
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
+                />
+                <textarea
                   value={persona.greeting}
                   onChange={(e) => setPersona((p) => ({ ...p, greeting: e.target.value }))}
                   rows={2}
-                  placeholder="开场白，如 Hi! I'm Catherine. Shall we learn English together?"
+                    placeholder="第一次见面的开场白，如 Hi! I’m Camille. Shall we explore Paris together?"
                   className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/50"
                 />
               </div>
+            </div>
+
+            <div className="glass-card border-amber-300/15 p-6">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-amber-300/20 bg-amber-300/10 text-amber-200">
+                  <HeartHandshake className="h-4 w-4" />
+                </span>
+                <div>
+                  <h2 className="font-display text-base font-semibold text-white">05 · 人类出现的时刻</h2>
+                  <p className="text-xs text-slate-500">AI 负责日常陪伴；你在真正重要的时刻出现。</p>
+                </div>
+              </div>
+              <textarea
+                value={persona.humanMoment}
+                onChange={(e) => setPersona((p) => ({ ...p, humanMoment: e.target.value }))}
+                rows={3}
+                placeholder="例如：当孩子害怕开口、完成作品、或提出一个深刻的文化问题时，我会亲自回应。"
+                className="mt-4 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-slate-600 focus:border-amber-300/40"
+              />
             </div>
 
             {/* real talking-head generation */}
@@ -807,10 +845,10 @@ export default function TeacherStudioPage() {
                 </span>
                 <div className="flex-1">
                   <h2 className="font-display text-base font-semibold text-white">
-                    05 · 生成会说话的我
+                    06 · 生成会说话的 Mentor
                   </h2>
                   <p className="text-xs text-slate-500">
-                    用你的照片和开场白，生成一段真正会开口的数字人视频
+                    用你的照片和开场白，生成一段孩子在旅程起点会遇见的真实欢迎
                   </p>
                 </div>
                 {persona.talkingUrl && <Check className="h-5 w-5 text-emerald-400" />}
@@ -865,7 +903,7 @@ export default function TeacherStudioPage() {
               className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_0_32px_-8px_rgba(139,92,246,0.5)] transition-all enabled:hover:opacity-90 disabled:opacity-40"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {ready ? "保存我的数字人" : "先上传一张照片"}
+              {ready ? "保存我的 AI Mentor" : "先上传一张照片"}
             </button>
           </div>
 
@@ -873,7 +911,7 @@ export default function TeacherStudioPage() {
           <div className="lg:sticky lg:top-8 lg:self-start">
             <div className="glass-card overflow-hidden">
               <div className="flex items-center justify-between border-b border-white/[0.08] px-5 py-3">
-                <p className="text-sm font-semibold text-white">实时预览 · 课堂里的你</p>
+                <p className="text-sm font-semibold text-white">实时预览 · 孩子将进入的世界</p>
                 <span className="flex items-center gap-1.5 text-xs text-emerald-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                   Live

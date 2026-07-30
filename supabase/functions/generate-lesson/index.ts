@@ -15,12 +15,24 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-function buildPrompt(title: string, desc: string, teacher: string): string {
+function buildPrompt(title: string, desc: string, teacher: string, materials: string): string {
+  // The teacher's own courseware, when they have uploaded any. Anchoring the
+  // lesson to their real material is the whole point of the upload step, so
+  // it goes in ahead of the format rules and is called out as authoritative.
+  const knowledge = materials.trim()
+    ? `
+
+老师上传的课件内容（请优先使用这里出现的词汇、句型和故事情节，不要另起炉灶）：
+"""
+${materials.trim()}
+"""`
+    : "";
+
   return `你是儿童英语启蒙课程设计师。为下面这门课设计一堂沉浸式 live 课堂，输出严格的 JSON（只输出 JSON，不要解释、不要 markdown）。顶层格式：{"steps": [ ... ]}。
 
 课程标题：${title}
 课程简介：${desc}
-授课老师：${teacher}
+授课老师：${teacher}${knowledge}
 
 要求：
 - 9 到 12 个步骤，带孩子穿越与课程主题相关的不同场景，逐步学 3-6 个核心英文词/短语。
@@ -81,7 +93,7 @@ function normalize(steps: any[]): any[] {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
-    const { title, description, teacherName } = await req.json();
+    const { title, description, teacherName, materials } = await req.json();
     if (!title) {
       return new Response(JSON.stringify({ error: "missing title" }), {
         status: 400,
@@ -100,7 +112,17 @@ Deno.serve(async (req: Request) => {
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "deepseek-chat",
-        messages: [{ role: "user", content: buildPrompt(title, description ?? "", teacherName ?? "Teacher") }],
+        messages: [
+          {
+            role: "user",
+            content: buildPrompt(
+              title,
+              description ?? "",
+              teacherName ?? "Teacher",
+              String(materials ?? "").slice(0, 20000)
+            ),
+          },
+        ],
         temperature: 0.8,
         response_format: { type: "json_object" },
         max_tokens: 3500,

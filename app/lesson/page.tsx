@@ -16,7 +16,13 @@ import {
   ShieldCheck,
   Volume2,
 } from "lucide-react";
-import { supabase, type Course, type CourseFile, type Profile } from "@/lib/supabase";
+import {
+  supabase,
+  buildKnowledgeBase,
+  type Course,
+  type CourseFile,
+  type Profile,
+} from "@/lib/supabase";
 import {
   alphabetLesson,
   buildLessonFromCourse,
@@ -169,8 +175,11 @@ function LessonInner() {
         setSteps(alphabetLesson());
         return;
       }
-      // 3) Cached runtime generation
-      const cacheKey = `moli-lesson-${c.id}`;
+      // 3) Cached runtime generation. The key carries the courseware size so
+      //    uploading or removing material regenerates instead of serving a
+      //    lesson built from what the teacher had before.
+      const knowledge = buildKnowledgeBase(c.course_files);
+      const cacheKey = `moli-lesson-${c.id}-${knowledge.length}`;
       const cached =
         typeof window !== "undefined" ? window.localStorage.getItem(cacheKey) : null;
       if (cached) {
@@ -188,7 +197,12 @@ function LessonInner() {
       setGenerating(true);
       try {
         const { data, error } = await supabase.functions.invoke("generate-lesson", {
-          body: { title: c.title, description: c.description, teacherName },
+          body: {
+            title: c.title,
+            description: c.description,
+            teacherName,
+            materials: knowledge,
+          },
         });
         if (cancelled) return;
         const genSteps = (data as { steps?: LessonStep[] } | null)?.steps;

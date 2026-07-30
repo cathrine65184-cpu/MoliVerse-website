@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Flag, FileText, Heart, Loader2, MessageCircle, Play, ShieldCheck } from "lucide-react";
+import { Bot, Flag, FileText, Heart, Loader2, MessageCircle, Play, ShieldCheck } from "lucide-react";
 import {
   supabase,
   getMyProfile,
@@ -97,9 +97,9 @@ export default function LearnPage() {
           </Link>
         </div>
 
-        <h1 className="mt-6 font-display text-3xl font-semibold text-white">课程广场</h1>
+        <h1 className="mt-6 font-display text-3xl font-semibold text-white">今天，想探索哪个世界？</h1>
         <p className="mt-1 text-sm text-slate-500">
-          来自真实教育者的课程 — 喜欢就点 ❤️，有问题就私信老师本人
+          由真实语言教育者设计的文化旅程。遇见 AI Mentor，在故事里自然开口。
         </p>
 
         {loading ? (
@@ -108,13 +108,13 @@ export default function LearnPage() {
           </div>
         ) : courses.length === 0 ? (
           <div className="glass-card mt-10 p-10 text-center">
-            <p className="text-slate-400">还没有老师发布课程。</p>
+            <p className="text-slate-400">新的学习旅程正在被教育者创造。</p>
             <p className="mt-2 text-sm text-slate-600">
-              你是教育者？
+              你是语言教育者？
               <Link href="/account/" className="text-violet-300 hover:text-violet-200">
                 注册教育者账号
               </Link>
-              ，发布第一门课！
+              ，创造第一个孩子会记得的世界。
             </p>
           </div>
         ) : (
@@ -213,7 +213,14 @@ export default function LearnPage() {
                       className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-1.5 text-xs font-semibold text-white shadow-[0_0_24px_-8px_rgba(139,92,246,0.7)] transition-all hover:opacity-90"
                     >
                       <Play className="h-3.5 w-3.5 fill-white" />
-                      开始上课
+                      进入旅程
+                    </Link>
+                    <Link
+                      href={`/ask/?c=${course.id}`}
+                      className="flex items-center gap-1.5 rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-1.5 text-xs font-semibold text-cyan-300 transition-all hover:border-cyan-400/50 hover:text-cyan-200"
+                    >
+                      <Bot className="h-3.5 w-3.5" />
+                      遇见 AI Mentor
                     </Link>
                     <button
                       onClick={() => toggleLike(course)}
@@ -237,7 +244,7 @@ export default function LearnPage() {
                         ) : (
                           <MessageCircle className="h-3.5 w-3.5" />
                         )}
-                        私信{teacher?.name ?? "老师"}
+                        联系{teacher?.name ?? "教育者"}
                       </button>
                     )}
                     <button

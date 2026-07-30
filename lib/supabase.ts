@@ -86,7 +86,27 @@ export type CourseFile = {
   kind: "image" | "audio" | "video" | "doc";
   name: string;
   url: string;
+  /** Text pulled out of the document at upload time; "" for images and video. */
+  text?: string;
 };
+
+/**
+ * The teacher's courseware as one prompt-ready block.
+ *
+ * Files with no extractable text (images, video, scanned PDFs) are skipped so
+ * the model is never handed a bare filename and left to invent the contents.
+ */
+export function buildKnowledgeBase(files: CourseFile[] | undefined, maxChars = 20000): string {
+  let out = "";
+  for (const f of files ?? []) {
+    const text = f.text?.trim();
+    if (!text) continue;
+    const block = `【${f.name}】\n${text}\n\n`;
+    if (out.length + block.length > maxChars) break;
+    out += block;
+  }
+  return out.trim();
+}
 
 export type Conversation = {
   id: string;
