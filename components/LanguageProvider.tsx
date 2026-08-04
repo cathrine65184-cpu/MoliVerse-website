@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Languages } from "lucide-react";
 
 type Locale = "en" | "zh" | "pt" | "es";
@@ -56,6 +56,28 @@ const copy: Record<string, Record<Locale, string>> = {
   "Open to Everywhere": { en: "Open to Everywhere", zh: "向每个地方开放", pt: "Aberta para todos os lugares", es: "Abierta a todos los lugares" },
   "In some places, classrooms overflow with resources. In others, a good language teacher is impossible to find — or to afford. AI alone doesn't close that gap: knowledge still needs a human guide. MoliVerse connects the two, building a universe that belongs to every child, not only those born near great schools.": { en: "In some places, classrooms overflow with resources. In others, a good language teacher is impossible to find — or to afford. AI alone doesn't close that gap: knowledge still needs a human guide. MoliVerse connects the two, building a universe that belongs to every child, not only those born near great schools.", zh: "有些地方的课堂资源充足，另一些地方却很难找到或负担得起优秀语言教师。仅有 AI 无法弥合这道鸿沟：知识仍需要人的引导。MoliVerse 连接两者，打造属于每个孩子的宇宙，而不仅属于出生在好学校附近的孩子。", pt: "Em alguns lugares, as salas de aula têm muitos recursos. Em outros, é impossível encontrar — ou pagar — um bom professor de idiomas. A IA sozinha não fecha essa lacuna: o conhecimento ainda precisa de orientação humana. A MoliVerse conecta os dois e constrói um universo para todas as crianças, não apenas para quem nasce perto de boas escolas.", es: "En algunos lugares las aulas rebosan de recursos. En otros, es imposible encontrar —o pagar— un buen profesor de idiomas. La IA por sí sola no cierra esa brecha: el conocimiento aún necesita una guía humana. MoliVerse une ambas cosas y construye un universo para todos los niños, no solo para quienes nacen cerca de buenas escuelas." },
   "Crafted for explorers of language and worlds.": { en: "Crafted for explorers of language and worlds.", zh: "为探索语言与世界的人而造。", pt: "Criada para exploradores de idiomas e mundos.", es: "Creada para exploradores de idiomas y mundos." },
+  "Which world would you like to explore today?": { en: "Which world would you like to explore today?", zh: "今天，你想探索哪个世界？", pt: "Qual mundo você gostaria de explorar hoje?", es: "¿Qué mundo te gustaría explorar hoy?" },
+  "Enter journey": { en: "Enter journey", zh: "进入旅程", pt: "Entrar na jornada", es: "Entrar al viaje" },
+  "Meet AI Mentor": { en: "Meet AI Mentor", zh: "遇见 AI Mentor", pt: "Conhecer o Mentor de IA", es: "Conocer al Mentor de IA" },
+  "Family information": { en: "Family information", zh: "家庭说明", pt: "Informações para famílias", es: "Información para familias" },
+  "For families": { en: "For families", zh: "家庭专区", pt: "Para famílias", es: "Para familias" },
+  "A language journey your child can care about.": { en: "A language journey your child can care about.", zh: "一段让孩子真正关心的语言旅程。", pt: "Uma jornada de idiomas com a qual seu filho pode se importar.", es: "Un viaje de idiomas que le importe a tu hijo." },
+  "Start a language story, together.": { en: "Start a language story, together.", zh: "一起开启语言故事。", pt: "Comecem juntos uma história de idiomas.", es: "Comiencen juntos una historia de idiomas." },
+  "Explorer name": { en: "Explorer name", zh: "探索者名字", pt: "Nome do Explorador", es: "Nombre del Explorador" },
+  "Age range": { en: "Age range", zh: "年龄范围", pt: "Faixa etária", es: "Rango de edad" },
+  "Language": { en: "Language", zh: "语言", pt: "Idioma", es: "Idioma" },
+  "Parent or guardian email": { en: "Parent or guardian email", zh: "家长或监护人邮箱", pt: "E-mail do responsável", es: "Correo del padre, madre o tutor" },
+  "Your grown-up said yes.": { en: "Your grown-up said yes.", zh: "你的家长已同意。", pt: "Seu responsável autorizou.", es: "Tu adulto responsable dijo que sí." },
+  "Ask your grown-up to check their email.": { en: "Ask your grown-up to check their email.", zh: "请家长查看邮件。", pt: "Peça ao seu responsável para verificar o e-mail.", es: "Pide a tu adulto responsable que revise su correo." },
+  "What your grown-up controls": { en: "What your grown-up controls", zh: "家长可以控制什么", pt: "O que seu responsável controla", es: "Lo que controla tu adulto responsable" },
+  "Use a different email": { en: "Use a different email", zh: "使用其他邮箱", pt: "Usar outro e-mail", es: "Usar otro correo" },
+  "My account": { en: "My account", zh: "我的账号", pt: "Minha conta", es: "Mi cuenta" },
+  "Educator workspace": { en: "Educator workspace", zh: "教育者工作台", pt: "Espaço do educador", es: "Espacio del educador" },
+  "Mentor Studio is for educators. Please sign in with an educator account.": { en: "Mentor Studio is for educators. Please sign in with an educator account.", zh: "Mentor Studio 仅面向教育者。请使用教育者账号登录。", pt: "O Mentor Studio é para educadores. Entre com uma conta de educador.", es: "Mentor Studio es para educadores. Inicia sesión con una cuenta de educador." },
+  "Story Stage · Immersive story theatre": { en: "Story Stage · Immersive story theatre", zh: "Story Stage · 沉浸式故事剧场", pt: "Story Stage · Teatro de histórias imersivo", es: "Story Stage · Teatro de historias inmersivo" },
+  "Choose a story · Live story": { en: "Choose a story · Live story", zh: "选择故事 · 实时故事", pt: "Escolha uma história · História ao vivo", es: "Elige una historia · Historia en vivo" },
+  "Start camera and enter the story": { en: "Start camera and enter the story", zh: "开启摄像头，走进故事", pt: "Inicie a câmera e entre na história", es: "Enciende la cámara y entra en la historia" },
+  "Real 3D twin": { en: "Real 3D twin", zh: "真实 3D 分身", pt: "Gêmeo 3D real", es: "Gemelo 3D real" },
 };
 
 const textSources = new WeakMap<Text, string>();
@@ -90,6 +112,7 @@ function translateDocument(locale: Locale) {
 
 export default function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocale] = useState<Locale>("en");
+  const localeRef = useRef<Locale>("en");
 
   useEffect(() => {
     const saved = localStorage.getItem("moliverse-locale") as Locale | null;
@@ -97,10 +120,24 @@ export default function LanguageProvider({ children }: { children: React.ReactNo
   }, []);
 
   useEffect(() => {
+    localeRef.current = locale;
     document.documentElement.lang = locale === "zh" ? "zh-CN" : locale;
     localStorage.setItem("moliverse-locale", locale);
     translateDocument(locale);
   }, [locale]);
+
+  useEffect(() => {
+    let frame = 0;
+    const observer = new MutationObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => translateDocument(localeRef.current));
+    });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, []);
 
   return <>{children}<div className="fixed bottom-4 right-4 z-[70]"><label className="flex items-center gap-2 rounded-xl border border-white/15 bg-[#100d1a]/90 px-3 py-2 text-xs text-slate-100 shadow-xl backdrop-blur-xl"><Languages className="h-3.5 w-3.5 text-violet-300" /><span className="sr-only">Language</span><select value={locale} onChange={(event) => setLocale(event.target.value as Locale)} className="appearance-none bg-transparent pr-3 text-xs font-medium outline-none"><option value="en">English</option><option value="zh">中文</option><option value="pt">Português</option><option value="es">Español</option></select><ChevronDown className="pointer-events-none -ml-5 h-3.5 w-3.5 text-slate-400" /></label></div></>;
 }
