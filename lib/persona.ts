@@ -12,9 +12,25 @@ import { supabase } from "./supabase";
 /** One captured pose frame: flattened [x,y] pairs for the tracked joints. */
 export type MotionFrame = number[];
 
+/**
+ * The audio identity is deliberately separate from a portrait or a character.
+ * A teacher may change their visual world without losing the voice children
+ * recognise. `voiceId` is a provider identifier, never an API key.
+ */
+export type VoiceIdentity = {
+  provider: "minimax";
+  /** Internal `voice_identities.id`; safe for the browser to reference. */
+  mentorVoiceId: string | null;
+  status: "empty" | "processing" | "ready" | "error";
+  language: string;
+  consentedAt: string | null;
+  previewUrl: string | null;
+};
+
 export type Persona = {
   photoUrl: string | null;
   voiceUrl: string | null;
+  voiceIdentity: VoiceIdentity;
   greeting: string;
   style: string;
   subject: string;
@@ -36,6 +52,14 @@ export type Persona = {
 export const emptyPersona: Persona = {
   photoUrl: null,
   voiceUrl: null,
+  voiceIdentity: {
+    provider: "minimax",
+    mentorVoiceId: null,
+    status: "empty",
+    language: "English",
+    consentedAt: null,
+    previewUrl: null,
+  },
   greeting: "",
   style: "",
   subject: "",
@@ -86,7 +110,11 @@ export async function savePersona(uid: string, persona: Persona): Promise<void> 
 
 /** Upload a voice sample and return its public URL. */
 export async function saveVoiceSample(uid: string, blob: Blob): Promise<string> {
-  const path = `${uid}/persona/voice.webm`;
+  // MiniMax accepts MP3, M4A, or WAV for cloning. Preserve a user-uploaded
+  // extension instead of incorrectly naming every file `.webm`.
+  const sourceName = blob instanceof File ? blob.name : "voice.webm";
+  const ext = (sourceName.split(".").pop() || "webm").toLowerCase();
+  const path = `${uid}/persona/voice.${ext}`;
   const { error } = await supabase.storage.from("media").upload(path, blob, {
     upsert: true,
     contentType: blob.type || "audio/webm",

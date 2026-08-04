@@ -37,6 +37,7 @@ import {
   type Point,
 } from "@/lib/characterEngine";
 import { withBasePath } from "@/lib/paths";
+import { playMiniMaxStream } from "@/lib/minimaxAudio";
 
 /** Joints we store per motion frame (keeps the saved loop small). */
 const MOTION_JOINTS = [
@@ -100,6 +101,8 @@ export default function TeacherStudioPage() {
   const [micError, setMicError] = useState<string | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const meterRaf = useRef(0);
+  const [voiceConsent, setVoiceConsent] = useState(false);
+  const [cloningVoice, setCloningVoice] = useState(false);
 
   // preview stage
   const [sceneIdx, setSceneIdx] = useState(0);
@@ -147,6 +150,7 @@ export default function TeacherStudioPage() {
           ...emptyPersona,
           photoUrl: saved?.photoUrl ?? p.avatar_url ?? null,
           voiceUrl: saved?.voiceUrl ?? null,
+          voiceIdentity: saved?.voiceIdentity ?? emptyPersona.voiceIdentity,
           greeting:
             saved?.greeting ||
             `Hi! I'm ${p.name}. Shall we learn together?`,
@@ -291,50 +295,13 @@ export default function TeacherStudioPage() {
 
   async function generateTalkingVideo() {
     if (!me || !persona.photoUrl) return;
-    setGenState("working");
-    setGenMsg("Turning your photo into a speaking Mentor… (about 1–3 minutes)");
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-avatar", {
-        body: { action: "create", text: persona.greeting || `Hi! I'm ${me.name}.` },
-      });
-      let created = data as { videoId?: string; message?: string } | null;
-      if (error) {
-        // supabase-js hides the body on non-2xx — read the server's real message
-        try {
-          const ctx = (error as { context?: Response }).context;
-          if (ctx) created = await ctx.json();
-        } catch {
-          /* keep the generic message */
-        }
-      }
-      if (!created?.videoId) {
-        setGenState("error");
-        setGenMsg(created?.message ?? "Generation failed. Please try again shortly.");
-        return;
-      }
-      // poll until the video is ready
-      for (let i = 0; i < 40; i++) {
-        await new Promise((r) => setTimeout(r, 10000));
-        const { data: st } = await supabase.functions.invoke("generate-avatar", {
-          body: { action: "status", videoId: created.videoId },
-        });
-        const s = st as { status?: string; videoUrl?: string } | null;
-        if (s?.status === "completed" && s.videoUrl) {
-          const url = `${s.videoUrl}?t=${Date.now()}`;
-          setPersona((p) => ({ ...p, talkingUrl: url }));
-          setGenState("done");
-          setGenMsg("Your Mentor video is ready ✓ Remember to save it.");
-          return;
-        }
-        if (s?.status === "failed") break;
-        setGenMsg(`Generating… (${(i + 1) * 10} seconds elapsed)`);
-      }
-      setGenState("error");
-      setGenMsg("Generation timed out. Please try again shortly.");
-    } catch {
-      setGenState("error");
-      setGenMsg("Generation failed. Please try again shortly.");
-    }
+    // MiniMax is the audio source of truth. The existing HeyGen endpoint only
+    // accepts a HeyGen-native voice ID, so do not pass a MiniMax ID and risk a
+    // generic voice or a mismatched identity. The video adapter is connected
+    // only after an authorised HeyGen voice is linked server-side.
+    setGenState("error");
+    setGenMsg("Your voice identity is ready for live lessons. The HeyGen video adapter still needs an authorised linked video voice; MoliVerse will never substitute a default voice.");
+    return;
   }
 
   useEffect(() => {
@@ -405,6 +372,71 @@ export default function TeacherStudioPage() {
     }
   }
 
+  async function onCloneAudio(file: File | undefined) {
+    if (!file || !me) return;
+    const permitted = ["audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav", "audio/m4a"];
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!permitted.includes(file.type) && !["mp3", "m4a", "wav"].includes(ext ?? "")) {
+      flash("For voice cloning, choose an MP3, M4A, or WAV file.");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      flash("Voice samples must be 20 MB or smaller.");
+      return;
+    }
+    try {
+      flash("Uploading your voice sample…");
+      const url = await saveVoiceSample(me.id, file);
+      setPersona((p) => ({ ...p, voiceUrl: `${url}?t=${Date.now()}`, voiceIdentity: { ...p.voiceIdentity, status: "empty", previewUrl: null, mentorVoiceId: null } }));
+      flash("Voice sample ready. Confirm consent, then create your voice identity.");
+    } catch {
+      flash("Voice sample could not be saved. Please try again.");
+    }
+  }
+
+  async function createVoiceIdentity() {
+    if (!persona.voiceUrl || !voiceConsent) {
+      flash("Upload a sample and confirm that you own this voice first.");
+      return;
+    }
+    setCloningVoice(true);
+    setPersona((p) => ({ ...p, voiceIdentity: { ...p.voiceIdentity, status: "processing" } }));
+    try {
+      const { data, error } = await supabase.functions.invoke("voice-identity", {
+        body: {
+          audioUrl: persona.voiceUrl.split("?")[0],
+          language: persona.voiceIdentity.language,
+          consent: true,
+          previewText: persona.greeting || `Hello! I am ${me?.name ?? "your mentor"}. Let us learn together.`,
+        },
+      });
+      let result = data as { mentorVoiceId?: string; previewUrl?: string; message?: string } | null;
+      if (error) {
+        try {
+          const response = (error as { context?: Response }).context;
+          if (response) result = await response.json();
+        } catch { /* preserve generic failure */ }
+      }
+      if (!result?.mentorVoiceId) throw new Error(result?.message || "Voice identity could not be created.");
+      setPersona((p) => ({
+        ...p,
+        voiceIdentity: {
+          ...p.voiceIdentity,
+          mentorVoiceId: result.mentorVoiceId!,
+          previewUrl: result.previewUrl ?? null,
+          status: "ready",
+          consentedAt: new Date().toISOString(),
+        },
+      }));
+      flash("Your MoliVerse voice identity is ready ✓ Save your Mentor to keep it.");
+    } catch (err) {
+      setPersona((p) => ({ ...p, voiceIdentity: { ...p.voiceIdentity, status: "error" } }));
+      flash(err instanceof Error ? err.message : "Voice identity could not be created.");
+    } finally {
+      setCloningVoice(false);
+    }
+  }
+
   /* ---------- voice ---------- */
 
   async function startRecording() {
@@ -460,11 +492,30 @@ export default function TeacherStudioPage() {
 
   /* ---------- speak preview ---------- */
 
-  function speakGreeting() {
+  async function speakGreeting() {
+    if (persona.voiceIdentity.status === "ready" && persona.voiceIdentity.mentorVoiceId) {
+      try {
+        setSpeaking(true);
+        await playMiniMaxStream({
+          mentorVoiceId: persona.voiceIdentity.mentorVoiceId,
+          language: persona.voiceIdentity.language,
+          text: persona.greeting || "Hello!",
+          onEnd: () => setSpeaking(false),
+          onError: () => setSpeaking(false),
+        });
+        return;
+      } catch {
+        setSpeaking(false);
+        flash("Your voice preview could not play. Please try again.");
+        return;
+      }
+    }
     const synth = window.speechSynthesis;
     if (!synth) return;
     synth.cancel();
     const u = new SpeechSynthesisUtterance(persona.greeting || "Hello!");
+    // Browser speech is an explicitly labelled fallback preview only. It is
+    // never used for a published mentor or a generated video.
     const voices = synth.getVoices();
     u.voice = voices.find((v) => v.lang.startsWith("en")) ?? null;
     u.rate = 0.88;
@@ -644,13 +695,13 @@ export default function TeacherStudioPage() {
                 </span>
                 <div className="flex-1">
                   <h2 className="font-display text-base font-semibold text-white">
-                    Optional · Your voice
+                    Your voice identity
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Record your voice (30 seconds or more is ideal) so children can hear familiar, real guidance.
+                    Your voice belongs to you. Create an authorised voice identity that follows your Mentor across stories and languages.
                   </p>
                 </div>
-                {persona.voiceUrl && <Check className="h-5 w-5 text-emerald-400" />}
+                {persona.voiceIdentity.status === "ready" && <Check className="h-5 w-5 text-emerald-400" />}
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -696,6 +747,43 @@ export default function TeacherStudioPage() {
                 )}
               </div>
               {micError && <p className="mt-3 text-xs text-amber-300">{micError}</p>}
+              <div className="mt-4 rounded-2xl border border-violet-400/15 bg-violet-400/[0.05] p-4">
+                <p className="text-xs font-semibold text-violet-200">Create a usable voice identity</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
+                  For the best result, upload a clean 60–120 second MP3, M4A, or WAV recording. Browser recordings stay as a reference, but are not always in a format a voice model can clone.
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-3 py-2 text-xs font-medium text-slate-200 transition hover:border-violet-300/50 hover:text-white">
+                    <Volume2 className="h-3.5 w-3.5" />
+                    Upload clone sample
+                    <input type="file" accept="audio/mpeg,audio/mp4,audio/wav,.mp3,.m4a,.wav" className="hidden" onChange={(e) => onCloneAudio(e.target.files?.[0])} />
+                  </label>
+                  <select
+                    value={persona.voiceIdentity.language}
+                    onChange={(e) => setPersona((p) => ({ ...p, voiceIdentity: { ...p.voiceIdentity, language: e.target.value } }))}
+                    className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs text-slate-200 outline-none"
+                    aria-label="Voice language"
+                  >
+                    {['English', 'French', 'Spanish', 'Portuguese', 'Chinese', 'Malay', 'German', 'Japanese', 'auto'].map((language) => <option key={language} value={language}>{language === 'auto' ? 'Auto detect' : language}</option>)}
+                  </select>
+                </div>
+                <label className="mt-3 flex cursor-pointer items-start gap-2 text-[11px] leading-relaxed text-slate-400">
+                  <input type="checkbox" checked={voiceConsent} onChange={(e) => setVoiceConsent(e.target.checked)} className="mt-0.5 accent-violet-400" />
+                  <span>I confirm this is my own voice, or I have the documented permission of the adult voice owner to create and use this Mentor voice. It will never be made from a child&apos;s voice.</span>
+                </label>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={createVoiceIdentity}
+                    disabled={cloningVoice || !persona.voiceUrl || !voiceConsent}
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+                  >
+                    {cloningVoice ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    {persona.voiceIdentity.status === "ready" ? "Refresh my voice identity" : "Create my voice identity"}
+                  </button>
+                  {persona.voiceIdentity.previewUrl && <audio controls src={persona.voiceIdentity.previewUrl} className="h-8 max-w-[220px]" />}
+                  {persona.voiceIdentity.status === "ready" && <span className="text-xs text-emerald-300">Your Mentor will use this voice.</span>}
+                </div>
+              </div>
             </div>
 
             {/* character + motion */}
@@ -859,18 +947,16 @@ export default function TeacherStudioPage() {
                   <h2 className="font-display text-base font-semibold text-white">
                     Optional · Generate a speaking Mentor
                   </h2>
-                  <p className="text-xs text-slate-500">
-                    Use your photo and greeting to create a real welcome children meet at the start of their journey.
-                  </p>
+                  <p className="text-xs text-slate-500">Use your photo and greeting for a real welcome. Video generation never silently substitutes a generic default voice.</p>
                 </div>
                 {persona.talkingUrl && <Check className="h-5 w-5 text-emerald-400" />}
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-3">
-                <button
-                  onClick={generateTalkingVideo}
-                  disabled={genState === "working" || !persona.photoUrl}
-                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white transition-all enabled:hover:opacity-90 disabled:opacity-40"
+                  <button
+                    onClick={generateTalkingVideo}
+                  disabled={genState === "working" || !persona.photoUrl || persona.voiceIdentity.status !== "ready"}
+                    className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white transition-all enabled:hover:opacity-90 disabled:opacity-40"
                 >
                   {genState === "working" ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -881,6 +967,9 @@ export default function TeacherStudioPage() {
                 </button>
                 {!persona.photoUrl && (
                   <span className="text-xs text-slate-500">Upload a photo first</span>
+                )}
+                {persona.photoUrl && persona.voiceIdentity.status !== "ready" && (
+                  <span className="text-xs text-amber-200">Create your voice identity first</span>
                 )}
               </div>
 
@@ -994,7 +1083,7 @@ export default function TeacherStudioPage() {
                   className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-2 text-xs font-semibold text-white transition-all hover:opacity-90"
                 >
                   {speaking ? <Volume2 className="h-3.5 w-3.5 animate-pulse" /> : <Play className="h-3.5 w-3.5" />}
-                  Preview greeting
+                  {persona.voiceIdentity.status === "ready" ? "Play my voice" : "Preview system voice"}
                 </button>
                 <span className="text-[11px] text-slate-500">Switch scenes to preview:</span>
                 {previewScenes.map((s, i) => (
@@ -1014,7 +1103,7 @@ export default function TeacherStudioPage() {
             </div>
 
             <p className="mt-3 text-center text-[11px] leading-relaxed text-slate-600">
-              Your character is driven by your real movement (pose estimation runs locally and video is not uploaded). The greeting currently uses browser speech; it will use your voice when voice cloning is connected.
+              Your character is driven by your real movement (pose estimation runs locally and video is not uploaded). Published mentor audio uses the educator&apos;s authorised voice identity; the browser voice is only a clearly labelled setup fallback.
             </p>
 
             <video ref={camVideoRef} className="hidden" playsInline muted />
