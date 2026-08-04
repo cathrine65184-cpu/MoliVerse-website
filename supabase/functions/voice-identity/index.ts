@@ -4,6 +4,7 @@
 // educator-owned clone and synthesises previews; browsers only ever receive a
 // short-lived audio URL / a provider voice ID, never a key.
 //
+// POST FormData { action: "upload", file } -> { audioUrl }
 // POST { action: "clone", audioUrl, language, consent, previewText }
 // POST { action: "speak", voiceId, language, text } (legacy studio preview)
 
@@ -37,8 +38,6 @@ Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  if (!apiKey) return json({ error: "voice_not_configured", message: "Voice identity is not configured yet. Add MINIMAX_API_KEY in Supabase secrets." }, 503);
-
   const authHeader = req.headers.get("Authorization") ?? "";
   const asUser = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
   const { data: userData } = await asUser.auth.getUser();
@@ -46,9 +45,31 @@ Deno.serve(async (req: Request) => {
   if (!user) return json({ error: "unauthorized" }, 401);
 
   try {
-    const body = await req.json();
+    const isForm = req.headers.get("content-type")?.includes("multipart/form-data");
+    const form = isForm ? await req.formData() : null;
+    const body = form ? Object.fromEntries(form.entries()) : await req.json();
     const action = String(body.action ?? "clone");
     const language = cleanLanguage(body.language);
+
+    if (action === "upload") {
+      const file = form?.get("file");
+      if (!(file instanceof File)) return json({ error: "missing_audio", message: "Choose an MP3, M4A, or WAV recording." }, 400);
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+      if (!['mp3', 'm4a', 'wav'].includes(ext) || file.size > 20 * 1024 * 1024) {
+        return json({ error: "invalid_audio", message: "Use an MP3, M4A, or WAV file no larger than 20 MB." }, 400);
+      }
+      const admin = createClient(supabaseUrl, serviceKey);
+      const path = `${user.id}/persona/voice.${ext}`;
+      const { error: uploadError } = await admin.storage.from("media").upload(path, file, {
+        upsert: true,
+        contentType: file.type || "audio/mpeg",
+      });
+      if (uploadError) return json({ error: "storage_failed", message: uploadError.message }, 502);
+      const audioUrl = admin.storage.from("media").getPublicUrl(path).data.publicUrl;
+      return json({ audioUrl });
+    }
+
+    if (!apiKey) return json({ error: "voice_not_configured", message: "Voice identity is not configured yet. Add MINIMAX_API_KEY in Supabase secrets." }, 503);
 
     if (action === "clone") {
       if (body.consent !== true) return json({ error: "consent_required", message: "The adult voice owner must confirm permission before cloning." }, 400);

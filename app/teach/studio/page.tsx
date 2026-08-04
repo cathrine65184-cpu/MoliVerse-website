@@ -386,11 +386,27 @@ export default function TeacherStudioPage() {
     }
     try {
       flash("Uploading your voice sample…");
-      const url = await saveVoiceSample(me.id, file);
+      // Voice files are uploaded through the authenticated server function.
+      // This keeps Mentor Studio reliable even when the media bucket has no
+      // direct browser-write policy, while a teacher can still only write to
+      // their own folder.
+      const form = new FormData();
+      form.append("action", "upload");
+      form.append("file", file);
+      const { data, error } = await supabase.functions.invoke("voice-identity", { body: form });
+      let result = data as { audioUrl?: string; message?: string } | null;
+      if (error) {
+        try {
+          const response = (error as { context?: Response }).context;
+          if (response) result = await response.json();
+        } catch { /* retain generic error */ }
+      }
+      if (!result?.audioUrl) throw new Error(result?.message || "Voice file could not be saved.");
+      const url = result.audioUrl;
       setPersona((p) => ({ ...p, voiceUrl: `${url}?t=${Date.now()}`, voiceIdentity: { ...p.voiceIdentity, status: "empty", previewUrl: null, mentorVoiceId: null } }));
       flash("Voice sample ready. Confirm consent, then create your voice identity.");
-    } catch {
-      flash("Voice sample could not be saved. Please try again.");
+    } catch (err) {
+      flash(err instanceof Error ? err.message : "Voice sample could not be saved. Please try again.");
     }
   }
 
