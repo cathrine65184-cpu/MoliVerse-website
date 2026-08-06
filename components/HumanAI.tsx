@@ -290,9 +290,11 @@ function ConnectionPanel() {
 /* ---------- panel 5 · network + finale ---------- */
 
 const educators = [
-  { flag: "🇫🇷", name: "Leo", language: "French" },
-  { flag: "🇪🇸", name: "Nicolò", language: "Spanish" },
-  { flag: "🇩🇪", name: "Lutfiya", language: "German" },
+  { photo: "/educators/oleksandra.jpg", name: "Oleksandra", language: "Ukrainian · German", flags: "🇺🇦 🇩🇪" },
+  { photo: "/educators/leo.png", name: "Leo", language: "English · French", flags: "🇬🇧 🇫🇷" },
+  { photo: "/educators/estelle.jpg", name: "Estelle", language: "Portuguese", flags: "🇵🇹" },
+  { photo: "/educators/lutfiya.jpg", name: "Lutfiya", language: "English · German", flags: "🇬🇧 🇩🇪" },
+  { photo: "/educators/nicolo.jpg", name: "Nicolo", language: "Spanish · English", flags: "🇪🇸 🇬🇧" },
 ];
 
 function NetworkPanel() {
@@ -305,23 +307,29 @@ function NetworkPanel() {
       <div className="relative flex flex-col items-center">
         <StepLabel number="05" label="Global Educator Network" />
 
-        <div className="flex max-w-2xl flex-wrap items-center justify-center gap-2.5">
-          <span className="flex items-center gap-2 rounded-full border border-violet-300/30 bg-violet-400/10 py-1.5 pl-1.5 pr-4 text-sm text-white">
-            <CatherinePhoto size={28} className="h-7 w-7 rounded-full" />
-            Catherine · English
-          </span>
+        <p className="mt-1 max-w-xl text-center text-sm leading-relaxed text-slate-400">
+          Real educators, cultural perspectives, and languages from around the world.
+        </p>
+        <div className="mt-7 grid w-full max-w-3xl grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {educators.map((educator) => (
-            <span
+            <div
               key={educator.name}
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-sm text-slate-200"
+              className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] text-left shadow-[0_10px_35px_-24px_rgba(0,0,0,.8)] transition-transform duration-300 hover:-translate-y-1 hover:border-violet-300/30"
             >
-              <span aria-hidden>{educator.flag}</span>
-              {educator.name} · {educator.language}
-            </span>
+              <Image
+                src={withBasePath(educator.photo)}
+                alt={`${educator.name}, language educator`}
+                width={220}
+                height={240}
+                className="aspect-[4/4.5] w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="p-3">
+                <p className="truncate text-sm font-semibold text-white">{educator.name}</p>
+                <p className="mt-1 text-[11px] leading-snug text-slate-400">{educator.language}</p>
+                <p className="mt-2 text-xs" aria-label={`${educator.name}'s languages`}>{educator.flags}</p>
+              </div>
+            </div>
           ))}
-          <span className="rounded-full border border-dashed border-white/15 px-4 py-1.5 text-sm text-slate-500">
-            + more joining soon
-          </span>
         </div>
 
         <div className="mt-12 flex flex-col items-center text-center">
