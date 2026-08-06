@@ -58,9 +58,16 @@ function CatherinePhoto({
 /* ---------- panel 1 · the teacher ---------- */
 
 function TeacherPanel() {
+  const teacherPortraits = [
+    { photo: "/educators/oleksandra.jpg", name: "Oleksandra" },
+    { photo: "/educators/leo.png", name: "Leo" },
+    { photo: "/educators/estelle.jpg", name: "Estelle" },
+    { photo: "/educators/lutfiya.jpg", name: "Lutfiya" },
+    { photo: "/educators/nicolo.jpg", name: "Nicolo" },
+  ];
   return (
     <div className="flex flex-col items-center text-center">
-      <StepLabel number="01" label="The Teacher" />
+      <StepLabel number="01" label="The Educators" />
       <div className="glass-card flex flex-col items-center px-10 py-8">
         <span className="relative">
           <CatherinePhoto
@@ -88,6 +95,26 @@ function TeacherPanel() {
       </div>
       <p className="mt-7 max-w-md text-base italic leading-relaxed text-slate-400">
         &ldquo;Every great educator has a unique way of teaching.&rdquo;
+      </p>
+      <div className="mt-6 flex items-center justify-center -space-x-2" aria-label="MoliVerse language educators">
+        {teacherPortraits.map((teacher) => (
+          <span
+            key={teacher.name}
+            title={teacher.name}
+            className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-[#0d1020] bg-slate-800 shadow-lg transition-transform hover:z-10 hover:-translate-y-1"
+          >
+            <Image
+              src={withBasePath(teacher.photo)}
+              alt={`${teacher.name}, language educator`}
+              width={40}
+              height={40}
+              className="h-full w-full object-cover"
+            />
+          </span>
+        ))}
+      </div>
+      <p className="mt-3 text-xs text-slate-500">
+        Catherine is one of a growing community of educators.
       </p>
     </div>
   );
