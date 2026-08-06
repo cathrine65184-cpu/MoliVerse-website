@@ -26,6 +26,13 @@ const STARTERS = [
   "How do I pronounce these words?",
 ];
 
+const LETTER_WORLD_ID = "f15af2ba-b75e-4440-9a63-b5514d031aa9";
+const LETTER_WORLD_STARTERS = [
+  "Can you help me start a letter?",
+  "What does ‘I remember …’ mean?",
+  "Who could I write a kind letter to?",
+];
+
 function AskMentor() {
   const params = useSearchParams();
   const courseId = params.get("c");
@@ -109,6 +116,7 @@ function AskMentor() {
 
   const teacher = course?.profiles;
   const knowledgeFiles = (course?.course_files ?? []).filter((f) => f.text?.trim()).length;
+  const starters = course?.id === LETTER_WORLD_ID ? LETTER_WORLD_STARTERS : STARTERS;
 
   if (loading) {
     return (
@@ -195,7 +203,7 @@ function AskMentor() {
               What would you like to ask? Your Mentor answers using resources shared by the educator.
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {STARTERS.map((s) => (
+              {starters.map((s) => (
                 <button
                   key={s}
                   onClick={() => ask(s)}
@@ -264,11 +272,11 @@ function AskMentor() {
       </form>
 
       <p className="mt-3 text-[11px] leading-relaxed text-slate-600">
-        This is an AI Mentor, not the educator themselves. It answers using educator-provided material and can make mistakes. For a real educator response, visit
+        This is an AI Mentor, not the educator themselves. It answers using educator-provided material and can make mistakes. For a real educator response, ask a parent or guardian to use
         <Link href="/families/" className="text-slate-500 underline underline-offset-2 hover:text-slate-300">
           Family information
         </Link>
-        。
+        .
       </p>
     </>
   );
