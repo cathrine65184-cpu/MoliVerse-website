@@ -14,6 +14,14 @@ create table if not exists public.mentor_onboardings (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- HeyGen is the temporary visual-Mentor provider. The educator's own voice
+-- remains an opt-in layer; these fields track the provider's avatar, its
+-- temporary default voice, and the asynchronous welcome-video job.
+alter table public.mentor_onboardings
+  add column if not exists heygen_avatar_id text,
+  add column if not exists heygen_voice_id text,
+  add column if not exists heygen_video_id text;
 alter table public.mentor_onboardings enable row level security;
 drop policy if exists "teachers read own mentor onboarding" on public.mentor_onboardings;
 create policy "teachers read own mentor onboarding" on public.mentor_onboardings

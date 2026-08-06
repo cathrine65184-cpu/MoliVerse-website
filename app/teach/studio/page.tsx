@@ -588,13 +588,13 @@ export default function TeacherStudioPage() {
 
   // Studio is intentionally an editing workspace, not a second competing
   // onboarding route. An educator first creates an authorised Mentor identity.
-  if (!persona.photoUrl || persona.voiceIdentity.status !== "ready") {
+  if (!persona.photoUrl) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-5 px-6 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-violet-300/25 bg-violet-400/10 text-violet-200"><Sparkles className="h-5 w-5" /></span>
         <div className="max-w-md">
-          <p className="font-display text-2xl font-semibold text-white">Create your Mentor first</p>
-          <p className="mt-2 text-sm leading-relaxed text-slate-400">Mentor Studio is where you shape a ready Mentor&apos;s cultural world, stories, and learning journeys.</p>
+          <p className="font-display text-2xl font-semibold text-white">Create your visual Mentor first</p>
+          <p className="mt-2 text-sm leading-relaxed text-slate-400">Mentor Studio is where you shape a ready Mentor&apos;s cultural world, stories, and learning journeys. Voice identity can be added later.</p>
         </div>
         <Link href="/teach/mentor/" className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3 text-sm font-semibold text-white">Create your Mentor →</Link>
         <Link href="/teach/" className="text-sm text-slate-500 hover:text-white">Back to educator workspace</Link>
