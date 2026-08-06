@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, Loader2, ShieldCheck, Sparkles, Upload, ArrowLeft } from "lucide-react";
-import { supabase, getMyProfile } from "@/lib/supabase";
+import { supabase, getMyProfile, type Profile } from "@/lib/supabase";
 import { savePersona, emptyPersona } from "@/lib/persona";
 
 type Status = "draft" | "uploading" | "processing" | "ready" | "error";
@@ -16,12 +16,27 @@ export default function CreateMentorPage() {
   const [greeting, setGreeting] = useState("Hello! I am your MoliVerse mentor. Let us learn together.");
   const [status, setStatus] = useState<Status>("draft");
   const [message, setMessage] = useState("");
+  const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
+
+  useEffect(() => {
+    getMyProfile().then(setProfile);
+  }, []);
 
   async function upload(kind: "photo" | "voice", file: File) {
     const extension = file.name.split(".").pop() ?? "";
     const { data, error } = await supabase.functions.invoke("mentor-onboarding", { body: { action: "begin-upload", kind, extension } });
-    if (error || !(data as { path?: string; token?: string })?.token) throw new Error((data as { message?: string } | null)?.message ?? "Could not prepare secure upload.");
-    const prepared = data as { path: string; token: string };
+    let prepared = data as { path?: string; token?: string; message?: string } | null;
+    if (error) {
+      try {
+        const response = (error as { context?: Response }).context;
+        if (response) prepared = await response.json();
+      } catch {
+        // Keep the generic network error only when the server gave no body.
+      }
+    }
+    if (error || !prepared?.token || !prepared.path) {
+      throw new Error(prepared?.message ?? "We could not prepare a secure upload. Please check your connection and try again.");
+    }
     const { error: uploadError } = await supabase.storage.from("mentor-assets").uploadToSignedUrl(prepared.path, prepared.token, file);
     if (uploadError) throw uploadError;
     return prepared.path;
@@ -43,6 +58,8 @@ export default function CreateMentorPage() {
   }
 
   const busy = status === "uploading" || status === "processing";
+  if (profile === undefined) return <main className="flex min-h-screen items-center justify-center text-slate-500"><Loader2 className="h-6 w-6 animate-spin" /></main>;
+  if (!profile || profile.role !== "teacher") return <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 text-center"><p className="font-display text-2xl font-semibold text-white">Create your Mentor is for educators.</p><p className="mt-3 text-sm leading-relaxed text-slate-400">Please sign in to an educator account to create an authorised Mentor voice and teaching identity.</p><Link href="/account/" className="mt-6 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 py-3 text-sm font-semibold text-white">Sign in as an educator →</Link></main>;
   return <main className="mx-auto min-h-screen max-w-3xl px-6 py-14">
     <Link href="/teach/" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft className="h-4 w-4" /> Educator workspace</Link>
     <p className="mt-10 text-xs font-semibold uppercase tracking-[.22em] text-violet-300">Create your Mentor</p>
