@@ -312,9 +312,9 @@ export default function TeachPage() {
           </div>
         </div>
 
-        {/* Digital human studio */}
+        {/* The single required first step */}
         <Link
-          href="/teach/studio/"
+          href="/teach/mentor/"
           className="glass-card group mt-5 flex items-center gap-4 border-violet-400/20 p-6 transition-all hover:border-violet-400/50"
         >
           <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-violet-400/50 bg-gradient-to-br from-indigo-400 to-violet-400">
@@ -330,17 +330,17 @@ export default function TeachPage() {
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
-              Mentor Studio · Create your AI Mentor
+              Create your Mentor
               <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-2 py-0.5 text-[10px] font-medium text-amber-200">
                 Beta
               </span>
             </h2>
             <p className="mt-1 text-sm text-slate-400">
-              Turn your teaching style, cultural perspective, and real voice into a Mentor that can accompany children as they explore.
+              Start with an authorised photo, voice, and teaching identity. After that, Mentor Studio becomes your place to shape worlds and journeys.
             </p>
           </div>
           <span className="shrink-0 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2.5 text-xs font-semibold text-white transition-all group-hover:opacity-90">
-            Start creating →
+            Create Mentor →
           </span>
         </Link>
 

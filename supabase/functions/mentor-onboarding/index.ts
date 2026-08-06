@@ -52,6 +52,27 @@ Deno.serve(async (req) => {
     const cloneResponse = await fetch("https://api.minimax.io/v1/voice_clone", { method: "POST", headers: { Authorization: `Bearer ${minimax}`, "Content-Type": "application/json" }, body: JSON.stringify({ file_id: fileId, voice_id: providerVoiceId, text: greeting, model: "speech-2.8-turbo", language_boost: body.language ?? "auto", need_noise_reduction: true, need_volume_normalization: true }) });
     const clone = await cloneResponse.json();
     if (!cloneResponse.ok || clone?.base_resp?.status_code !== 0) throw new Error(clone?.base_resp?.status_msg ?? "Voice cloning failed.");
+    // A clone is not a usable Mentor voice until it has completed one real
+    // synthesis. This creates the preview children and educators hear, rather
+    // than allowing the client to fall back silently to a system voice.
+    const activationResponse = await fetch("https://api-uw.minimax.io/v1/t2a_v2", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${minimax}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "speech-2.8-turbo",
+        text: greeting,
+        stream: false,
+        language_boost: body.language ?? "auto",
+        output_format: "url",
+        voice_setting: { voice_id: providerVoiceId, speed: 0.94, vol: 1, pitch: 0 },
+        audio_setting: { sample_rate: 32000, bitrate: 128000, format: "mp3", channel: 1 },
+      }),
+    });
+    const activation = await activationResponse.json();
+    const previewUrl = activation?.data?.audio ?? clone?.demo_audio ?? null;
+    if (!activationResponse.ok || !previewUrl) {
+      throw new Error(activation?.base_resp?.status_msg ?? "Voice was cloned but could not be activated.");
+    }
     await admin.from("voice_identities").update({ status: "revoked", revoked_at: new Date().toISOString() }).eq("teacher_id", user.id).eq("status", "ready");
     const { data: identity, error: identityError } = await admin.from("voice_identities").insert({ teacher_id: user.id, provider: "minimax", provider_voice_id: providerVoiceId, language: body.language ?? "auto", status: "ready", consented_at: new Date().toISOString() }).select("id").single();
     if (identityError || !identity) throw new Error("Voice identity could not be saved.");
@@ -62,7 +83,7 @@ Deno.serve(async (req) => {
     if (copyError) throw new Error("Mentor photo could not be published.");
     const publicPhotoUrl = admin.storage.from("media").getPublicUrl(publicPhotoPath).data.publicUrl;
     await admin.from("mentor_onboardings").upsert({ teacher_id: user.id, status: "ready", mentor_voice_id: identity.id, updated_at: new Date().toISOString() }, { onConflict: "teacher_id" });
-    return json({ status: "ready", mentorVoiceId: identity.id, photoUrl: publicPhotoUrl, previewUrl: clone.demo_audio ?? null });
+    return json({ status: "ready", mentorVoiceId: identity.id, photoUrl: publicPhotoUrl, previewUrl });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Mentor creation failed.";
     await admin.from("mentor_onboardings").upsert({ teacher_id: user.id, status: "failed", error_message: message, updated_at: new Date().toISOString() }, { onConflict: "teacher_id" });
