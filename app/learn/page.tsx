@@ -9,6 +9,7 @@ import {
   getMyProfile,
   fileReport,
   type Course,
+  type CourseCollection,
   type Profile,
 } from "@/lib/supabase";
 import { loadJourneyMeta } from "@/lib/journey";
@@ -17,6 +18,7 @@ export default function LearnPage() {
   const router = useRouter();
   const [me, setMe] = useState<Profile | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [collections, setCollections] = useState<CourseCollection[]>([]);
   const [loading, setLoading] = useState(true);
   const [reported, setReported] = useState<Set<string>>(new Set());
   const [familyNotice, setFamilyNotice] = useState<string | null>(null);
@@ -29,18 +31,21 @@ export default function LearnPage() {
   }
 
   async function refresh() {
-    const { data } = await supabase
-      .from("courses")
-      .select("*, profiles!courses_teacher_id_fkey(*), course_files(*), likes(student_id)")
-      .order("created_at", { ascending: false });
+    const [{ data }, { data: collectionRows }, { data: linkedRows }] = await Promise.all([
+      supabase.from("courses").select("*, profiles!courses_teacher_id_fkey(*), course_files(*), likes(student_id)").order("created_at", { ascending: false }),
+      supabase.from("course_collections").select("*, profiles!course_collections_teacher_id_fkey(*), collection_lessons(course_id,position)").eq("status", "published").order("created_at", { ascending: false }),
+      supabase.from("collection_lessons").select("course_id"),
+    ]);
     const raw = (data as Course[]) ?? [];
+    const collectionCourseIds = new Set((linkedRows ?? []).map((row) => row.course_id));
     const enriched = await Promise.all(
       raw.map(async (course) => ({
         ...course,
         journey: await loadJourneyMeta(course.teacher_id, course.id),
       }))
     );
-    setCourses(enriched);
+    setCourses(enriched.filter((course) => !collectionCourseIds.has(course.id)));
+    setCollections((collectionRows as CourseCollection[]) ?? []);
   }
 
   useEffect(() => {
@@ -99,7 +104,7 @@ export default function LearnPage() {
           <div className="mt-20 flex justify-center text-slate-500">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-        ) : courses.length === 0 ? (
+        ) : courses.length === 0 && collections.length === 0 ? (
           <div className="glass-card mt-10 p-10 text-center">
             <p className="text-slate-400">New learning journeys are being created by educators.</p>
             <p className="mt-2 text-sm text-slate-600">
@@ -119,6 +124,14 @@ export default function LearnPage() {
           </div>
         ) : (
           <div className="mt-8 flex flex-col gap-5">
+            {collections.map((collection) => (
+              <div key={collection.id} className="glass-card overflow-hidden border-violet-300/20 bg-[radial-gradient(circle_at_100%_0%,rgba(139,92,246,.18),transparent_34%)]">
+                <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-start">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-fuchsia-500 text-2xl">💌</span>
+                  <div className="min-w-0 flex-1"><p className="text-xs font-semibold uppercase tracking-[.18em] text-violet-200">Five-part story collection · {collection.world}</p><h2 className="mt-2 font-display text-xl font-semibold text-white">{collection.title}</h2><p className="mt-2 text-sm leading-relaxed text-slate-300">{collection.description}</p><p className="mt-3 text-xs text-slate-500">By {collection.profiles?.name ?? "Educator"} · Ages {collection.age_range} · {collection.language}</p><div className="mt-4 flex flex-wrap gap-2"><Link href={`/collection/?id=${collection.id}`} className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2 text-xs font-semibold text-white"><Play className="h-3.5 w-3.5 fill-white" />Explore all five lessons</Link><Link href={`/ask/?c=${collection.collection_lessons?.[0]?.course_id ?? ""}`} className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-xs font-semibold text-cyan-200"><Bot className="h-3.5 w-3.5" />Meet AI Mentor</Link></div></div>
+                </div>
+              </div>
+            ))}
             {courses.map((course) => {
               const teacher = course.profiles;
               const liked = !!me && !!course.likes?.some((l) => l.student_id === me.id);

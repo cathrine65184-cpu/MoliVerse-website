@@ -36,6 +36,7 @@ import { parseTheme, drawPuppet, L, type Point as CPoint } from "@/lib/character
 import { loadPersona, type Persona } from "@/lib/persona";
 import { loadSharedMemory, saveSharedMemory, type SharedMemory } from "@/lib/memory";
 import { loadJourneyMeta, type JourneyMeta } from "@/lib/journey";
+import { completeCollectionLesson, getCollectionProgress, loadLessonCollection } from "@/lib/collections";
 
 /** Joints stored per motion frame — must match the studio's packing. */
 const MOTION_JOINTS = [
@@ -73,6 +74,9 @@ function LessonInner() {
   const [memory, setMemory] = useState<SharedMemory | null>(null);
   const [journey, setJourney] = useState<JourneyMeta | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [collectionState, setCollectionState] = useState<{ id: string; position: number; title: string } | null>(null);
+  const [locked, setLocked] = useState(false);
+  const collectionCompletedRef = useRef(false);
 
   // Player state
   const [started, setStarted] = useState(false);
@@ -172,6 +176,24 @@ function LessonInner() {
       }
       setVoiceLang(langCode(c.language));
       setLessonTitle(c.title);
+      const collectionInfo = await loadLessonCollection(c.id);
+      if (cancelled) return;
+      if (collectionInfo) {
+        setCollectionState({ id: collectionInfo.collection.id, position: collectionInfo.link.position, title: collectionInfo.collection.title });
+        const progress = await getCollectionProgress(collectionInfo.collection.id);
+        if (cancelled) return;
+        const completed = progress?.completedCourseIds ?? [];
+        const nextPosition = progress?.nextPosition ?? 1;
+        if (collectionInfo.link.position > nextPosition && !completed.includes(c.id)) {
+          setLocked(true);
+          return;
+        }
+        const authored = collectionInfo.content?.lesson_steps as LessonStep[] | undefined;
+        if (Array.isArray(authored) && authored.length > 2) {
+          setSteps(authored);
+          return;
+        }
+      }
       // 1) Baked-in AI lesson (instant)
       const baked = generatedLessons[c.id];
       if (baked && baked.length > 2) {
@@ -616,9 +638,17 @@ function LessonInner() {
     };
     if (!existing) saveSharedMemory(next);
     setMemory(next);
-  }, [courseId, isFinale, lessonTitle, started, step?.say, teacher.name]);
+    if (collectionState && courseId && !collectionCompletedRef.current) {
+      collectionCompletedRef.current = true;
+      void completeCollectionLesson(collectionState.id, courseId);
+    }
+  }, [courseId, isFinale, lessonTitle, started, step?.say, teacher.name, collectionState]);
 
   /* ---------- render ---------- */
+
+  if (locked && collectionState) {
+    return <main className="flex min-h-screen items-center justify-center px-6 text-center"><section className="glass-card max-w-md p-8"><h1 className="font-display text-2xl font-semibold text-white">This letter opens next.</h1><p className="mt-3 text-sm leading-relaxed text-slate-400">Complete the previous lesson in {collectionState.title} before continuing this story.</p><Link href={`/collections/${collectionState.id}`} className="mt-6 inline-flex rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white">Back to the collection</Link></section></main>;
+  }
 
   if (!steps) {
     return (

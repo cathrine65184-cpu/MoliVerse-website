@@ -9,6 +9,8 @@
 // version beats a vector store nobody has enough documents to need yet. When
 // that stops being true, only the selection of `materials` has to change.
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -22,6 +24,40 @@ const json = (body: unknown, status = 200) =>
   });
 
 type Turn = { role: "user" | "assistant"; content: string };
+const HEAVY_FEELING = /(nobody loves me|no one loves me|i.?m scared|i want to die|hurt myself|hurt someone|没人爱我|没有人爱我|我害怕|不想活|自杀|伤害自己|伤害别人)/i;
+
+async function createHumanMoment(explorerId: string, courseId: string, signalType: string) {
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceKey || !explorerId || !courseId) return false;
+  const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const { data: explorer } = await admin.from("explorers").select("guardian_email,status").eq("id", explorerId).maybeSingle();
+  const { data: preferences } = await admin.from("guardian_preferences").select("educator_response_enabled").eq("explorer_id", explorerId).maybeSingle();
+  const { data: link } = await admin.from("collection_lessons").select("collection_id, course_collections(teacher_id,title)").eq("course_id", courseId).maybeSingle();
+  const collection = link?.course_collections as { teacher_id?: string; title?: string } | null;
+  if (explorer?.status !== "active" || !preferences?.educator_response_enabled || !collection?.teacher_id) return false;
+  const since = new Date(Date.now() - 86400000).toISOString();
+  const { data: existing } = await admin.from("human_moment_events").select("id").eq("explorer_id", explorerId).eq("course_id", courseId).eq("signal_type", signalType).gte("created_at", since).maybeSingle();
+  if (existing) return true;
+  const { data: event, error } = await admin.from("human_moment_events").insert({ explorer_id: explorerId, collection_id: link?.collection_id, course_id: courseId, teacher_id: collection.teacher_id, signal_type: signalType }).select("id").single();
+  if (error || !event) return false;
+  const resendKey = Deno.env.get("RESEND_API_KEY");
+  const from = Deno.env.get("RESEND_FROM_EMAIL");
+  if (!resendKey || !from) {
+    await admin.from("human_moment_events").update({ notification_status: "failed", updated_at: new Date().toISOString() }).eq("id", event.id);
+    return true;
+  }
+  const { data: teacherAuth } = await admin.auth.admin.getUserById(collection.teacher_id);
+  const recipients = [explorer.guardian_email, teacherAuth.user?.email].filter(Boolean) as string[];
+  const text = `A Human Moment was detected in ${collection.title ?? "a MoliVerse collection"}. No child message is included. Please check in through the MoliVerse family or educator dashboard and offer support according to your safeguarding practice.`;
+  try {
+    const sent = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" }, body: JSON.stringify({ from, to: recipients, subject: "MoliVerse: a gentle wellbeing check may be helpful", text }) });
+    await admin.from("human_moment_events").update({ notification_status: sent.ok ? "sent" : "failed", guardian_notified_at: sent.ok ? new Date().toISOString() : null, teacher_notified_at: sent.ok ? new Date().toISOString() : null, updated_at: new Date().toISOString() }).eq("id", event.id);
+  } catch {
+    await admin.from("human_moment_events").update({ notification_status: "failed", updated_at: new Date().toISOString() }).eq("id", event.id);
+  }
+  return true;
+}
 
 function systemPrompt(
   teacher: string,
@@ -70,6 +106,8 @@ Deno.serve(async (req: Request) => {
       language,
       courseTitle,
       materials,
+      explorerId,
+      courseId,
     } = await req.json();
 
     const q = String(question ?? "").trim();
@@ -87,6 +125,7 @@ Deno.serve(async (req: Request) => {
           .map((m: Turn) => ({ role: m.role, content: String(m.content).slice(0, 2000) }))
       : [];
 
+    const humanMoment = HEAVY_FEELING.test(q);
     const resp = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -115,7 +154,8 @@ Deno.serve(async (req: Request) => {
     const answer = data?.choices?.[0]?.message?.content;
     if (!answer) return json({ error: "generation failed", detail: data }, 502);
 
-    return json({ answer });
+    const notified = humanMoment ? await createHumanMoment(String(explorerId ?? ""), String(courseId ?? ""), "heavy_feeling") : false;
+    return json({ answer, humanMoment, notified });
   } catch (err) {
     return json({ error: String(err) }, 500);
   }

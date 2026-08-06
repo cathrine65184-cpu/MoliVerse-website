@@ -102,11 +102,19 @@ function AskMentor() {
           language: course.language || course.profiles?.language || "",
           courseTitle: course.title,
           materials: buildKnowledgeBase(course.course_files),
+          explorerId: activeExplorerId(),
+          courseId: course.id,
         },
       });
-      const answer = (data as { answer?: string } | null)?.answer;
+      const result = data as { answer?: string; humanMoment?: boolean; notified?: boolean } | null;
+      const answer = result?.answer;
       if (err || !answer) throw new Error("no answer");
       setTurns((t) => [...t, { role: "assistant", content: answer }]);
+      if (result?.humanMoment) {
+        setError(result.notified
+          ? "Thank you for sharing. A parent-approved wellbeing reminder has been sent without sharing your words. Please also tell a trusted grown-up near you now."
+          : "Thank you for sharing. Please tell a trusted grown-up near you now — you do not have to carry this feeling alone.");
+      }
     } catch {
       setError("Your Mentor could not answer right now. If you need a real educator response, ask a parent or guardian to review the family information with you.");
     } finally {

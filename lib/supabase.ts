@@ -92,6 +92,52 @@ export type CourseFile = {
   text?: string;
 };
 
+export type TeacherDNA = {
+  teacher_id: string;
+  personality: string;
+  teaching_style: string;
+  stories: string;
+  memories: string;
+  values: string;
+  course_world: string;
+  updated_at?: string;
+};
+
+export type CourseCollection = {
+  id: string;
+  teacher_id: string;
+  title: string;
+  description: string;
+  language: string;
+  age_range: string;
+  world: string;
+  story_question: string;
+  human_moment_policy: string;
+  cover_url: string | null;
+  status: "draft" | "published" | "archived";
+  teacher_dna_snapshot: Partial<TeacherDNA>;
+  created_at: string;
+  profiles?: Profile;
+  collection_lessons?: CollectionLesson[];
+};
+
+export type CollectionLesson = {
+  collection_id: string;
+  course_id: string;
+  position: number;
+  courses?: Course;
+};
+
+export type CourseLessonContent = {
+  course_id: string;
+  story_beat: string;
+  learning_objectives: string[];
+  vocabulary: string[];
+  mentor_context: string;
+  human_moment_rules: string[];
+  lesson_steps: unknown[];
+};
+
 /**
  * The teacher's courseware as one prompt-ready block.
  *
