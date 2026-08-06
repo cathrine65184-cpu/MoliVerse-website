@@ -58,63 +58,40 @@ function CatherinePhoto({
 /* ---------- panel 1 · the teacher ---------- */
 
 function TeacherPanel() {
-  const teacherPortraits = [
-    { photo: "/educators/oleksandra.jpg", name: "Oleksandra" },
-    { photo: "/educators/leo.png", name: "Leo" },
-    { photo: "/educators/estelle.jpg", name: "Estelle" },
-    { photo: "/educators/lutfiya.jpg", name: "Lutfiya" },
-    { photo: "/educators/nicolo.jpg", name: "Nicolo" },
+  const teachers = [
+    { photo: "/catherine-sq.jpg", name: "Catherine", language: "English", flags: "🇬🇧", tags: ["Storytelling", "Culture"] },
+    { photo: "/educators/oleksandra.jpg", name: "Oleksandra", language: "Ukrainian · German", flags: "🇺🇦 🇩🇪", tags: ["Culture", "Conversation"] },
+    { photo: "/educators/leo.png", name: "Leo", language: "English · French", flags: "🇬🇧 🇫🇷", tags: ["Conversation", "Confidence"] },
+    { photo: "/educators/estelle.jpg", name: "Estelle", language: "Portuguese", flags: "🇵🇹", tags: ["Stories", "Expression"] },
+    { photo: "/educators/lutfiya.jpg", name: "Lutfiya", language: "English · German", flags: "🇬🇧 🇩🇪", tags: ["Curiosity", "Culture"] },
+    { photo: "/educators/nicolo.jpg", name: "Nicolo", language: "Spanish · English", flags: "🇪🇸 🇬🇧", tags: ["Playful", "Conversation"] },
   ];
   return (
-    <div className="flex flex-col items-center text-center">
+    <div className="flex w-full flex-col items-center text-center">
       <StepLabel number="01" label="The Educators" />
-      <div className="glass-card flex flex-col items-center px-10 py-8">
-        <span className="relative">
-          <CatherinePhoto
-            size={144}
-            className="h-32 w-32 animate-float rounded-3xl border border-white/15 shadow-[0_0_50px_-12px_rgba(251,191,36,0.4)] sm:h-36 sm:w-36"
-          />
-          <span className="absolute -bottom-2 -right-2 text-2xl" aria-hidden>
-            🇬🇧
-          </span>
-        </span>
-        <h3 className="mt-5 font-display text-2xl font-semibold text-white">
-          Catherine
-        </h3>
-        <p className="mt-1 text-sm text-slate-400">English Language Educator</p>
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
-          {["Storytelling", "Culture", "Conversation"].map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-200"
-            >
-              {tag}
+      <div className="flex w-full max-w-[88rem] gap-4 overflow-x-auto px-5 pb-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {teachers.map((teacher, index) => (
+          <div key={teacher.name} className="glass-card flex min-w-[205px] flex-1 flex-col items-center px-5 py-6 sm:min-w-[215px]">
+            <span className="relative">
+              <Image
+                src={withBasePath(teacher.photo)}
+                alt={`${teacher.name}, ${teacher.language} language educator`}
+                width={116}
+                height={116}
+                className={`h-28 w-28 rounded-3xl border border-white/15 object-cover shadow-[0_0_42px_-12px_rgba(251,191,36,0.35)] ${index === 0 ? "animate-float" : ""}`}
+              />
+              <span className="absolute -bottom-2 -right-3 rounded-full bg-void px-1 text-base" aria-hidden>{teacher.flags}</span>
             </span>
-          ))}
-        </div>
+            <h3 className="mt-5 font-display text-xl font-semibold text-white">{teacher.name}</h3>
+            <p className="mt-1 min-h-10 text-center text-xs leading-relaxed text-slate-400">{teacher.language} Language Educator</p>
+            <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+              {teacher.tags.map((tag) => <span key={tag} className="rounded-full border border-amber-300/20 bg-amber-300/10 px-2.5 py-1 text-[10px] font-medium text-amber-200">{tag}</span>)}
+            </div>
+          </div>
+        ))}
       </div>
       <p className="mt-7 max-w-md text-base italic leading-relaxed text-slate-400">
         &ldquo;Every great educator has a unique way of teaching.&rdquo;
-      </p>
-      <div className="mt-6 flex items-center justify-center -space-x-2" aria-label="MoliVerse language educators">
-        {teacherPortraits.map((teacher) => (
-          <span
-            key={teacher.name}
-            title={teacher.name}
-            className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-[#0d1020] bg-slate-800 shadow-lg transition-transform hover:z-10 hover:-translate-y-1"
-          >
-            <Image
-              src={withBasePath(teacher.photo)}
-              alt={`${teacher.name}, language educator`}
-              width={40}
-              height={40}
-              className="h-full w-full object-cover"
-            />
-          </span>
-        ))}
-      </div>
-      <p className="mt-3 text-xs text-slate-500">
-        Catherine is one of a growing community of educators.
       </p>
     </div>
   );
