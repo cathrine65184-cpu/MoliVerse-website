@@ -48,7 +48,9 @@ Deno.serve(async (req: Request) => {
     if (body.kind !== "photo") return json({ message: "Only a Mentor photo is needed for this HeyGen setup." }, 400);
     const ext = String(body.extension ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
     if (!["jpg", "jpeg", "png", "webp"].includes(ext)) return json({ message: "Use a JPG, PNG, or WebP Mentor photo." }, 400);
-    const path = `${user.id}/photo.${ext}`;
+    // A creator can safely retry with the same filename. New objects avoid
+    // Storage's 409 ResourceAlreadyExists response and prevent CDN staleness.
+    const path = `${user.id}/photo-${crypto.randomUUID()}.${ext}`;
     const { data, error } = await admin.storage.from("mentor-assets").createSignedUploadUrl(path);
     if (error || !data) return json({ message: error?.message ?? "Could not prepare a private upload." }, 502);
     await admin.from("mentor_onboardings").upsert(
@@ -63,7 +65,7 @@ Deno.serve(async (req: Request) => {
   if (action === "complete") {
     if (body.consent !== true) return json({ message: "Please confirm that you own this photo or have the adult's permission to use it." }, 400);
     const photoPath = String(body.photoPath ?? "");
-    if (!photoPath.startsWith(`${user.id}/photo.`)) return json({ message: "Upload your Mentor photo first." }, 400);
+    if (!photoPath.startsWith(`${user.id}/photo-`)) return json({ message: "Upload your Mentor photo first." }, 400);
     const greeting = String(body.greeting ?? "Hello! I am your MoliVerse mentor. Let us learn together.").trim().slice(0, 1000);
     if (!greeting) return json({ message: "Add a short welcome message." }, 400);
 

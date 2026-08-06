@@ -17,10 +17,15 @@ export default function CreateMentorPage() {
   const [message, setMessage] = useState("");
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [videoId, setVideoId] = useState<string | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   useEffect(() => {
     getMyProfile().then(setProfile);
   }, []);
+
+  useEffect(() => () => {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+  }, [photoPreview]);
 
   useEffect(() => {
     if (!videoId) return;
@@ -88,17 +93,39 @@ export default function CreateMentorPage() {
   const busy = status === "uploading" || status === "processing";
   if (profile === undefined) return <main className="flex min-h-screen items-center justify-center text-slate-500"><Loader2 className="h-6 w-6 animate-spin" /></main>;
   if (!profile || profile.role !== "teacher") return <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 text-center"><p className="font-display text-2xl font-semibold text-white">Create your Mentor is for educators.</p><p className="mt-3 text-sm leading-relaxed text-slate-400">Please sign in to an educator account to create an authorised Mentor voice and teaching identity.</p><Link href="/account/" className="mt-6 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 py-3 text-sm font-semibold text-white">Sign in as an educator →</Link></main>;
-  return <main className="mx-auto min-h-screen max-w-3xl px-6 py-14">
-    <Link href="/teach/" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft className="h-4 w-4" /> Educator workspace</Link>
-    <p className="mt-10 text-xs font-semibold uppercase tracking-[.22em] text-violet-300">Create your Mentor</p>
-    <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight text-white">Make your teaching presence ready to meet children.</h1>
-    <p className="mt-3 max-w-2xl text-slate-400">Start with an authorised photo. HeyGen creates a visual Mentor and a welcome video using a temporary platform voice; your own voice remains an optional next step.</p>
-    <div className="mt-10">
-      <label className="glass-card cursor-pointer p-6 transition hover:border-violet-400/40"><Upload className="h-5 w-5 text-violet-300" /><p className="mt-4 font-semibold text-white">1. Mentor photo</p><p className="mt-1 text-xs text-slate-500">Clear, front-facing JPG, PNG, or WebP.</p><p className="mt-4 text-xs text-violet-200">{photo?.name ?? "Choose photo"}</p><input className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} /></label>
-    </div>
-    <div className="mt-4 glass-card p-6"><p className="font-semibold text-white">2. Teaching identity</p><div className="mt-4 flex gap-3"><select value={language} onChange={(e) => setLanguage(e.target.value)} className="rounded-xl border border-white/10 bg-slate-950 px-3 text-sm text-white"><option>English</option><option>French</option><option>Spanish</option><option>Portuguese</option><option>Chinese</option><option>Malay</option></select><input value={greeting} onChange={(e) => setGreeting(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[.04] px-3 text-sm text-white" aria-label="Mentor greeting" /></div><p className="mt-3 text-xs text-violet-200">For this early version, the welcome video uses the default HeyGen voice selected for this avatar.</p><label className="mt-5 flex gap-2 text-xs leading-relaxed text-slate-400"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 accent-violet-400" />I own this adult photo or have documented permission to create a Mentor from it. I understand that the initial welcome uses a clearly labelled HeyGen platform voice.</label></div>
-    <button disabled={busy || status === "ready"} onClick={create} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : status === "ready" ? <Check className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}{busy ? "Creating your Mentor…" : status === "ready" ? "Mentor ready" : "Create my Mentor"}</button>
-    {message && <p className={`mt-4 rounded-xl border p-4 text-sm ${status === "error" ? "border-rose-400/30 text-rose-200" : "border-violet-400/20 text-slate-300"}`}>{status === "ready" && <ShieldCheck className="mr-2 inline h-4 w-4 text-emerald-300" />}{message}</p>}
-    {status === "ready" && <Link href="/teach/studio/" className="mt-5 inline-block text-sm font-semibold text-violet-300 hover:text-violet-100">Enter Mentor Studio →</Link>}
-  </main>;
+  return (
+    <main className="relative min-h-screen overflow-hidden px-6 py-10 sm:py-14">
+      <div className="pointer-events-none absolute left-[10%] top-[-10rem] h-[26rem] w-[26rem] rounded-full bg-violet-500/15 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-[-12rem] right-[5%] h-[26rem] w-[26rem] rounded-full bg-fuchsia-500/10 blur-[120px]" />
+      <div className="relative mx-auto max-w-5xl">
+        <Link href="/teach/" className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> Educator workspace</Link>
+
+        <div className="mt-10 max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[.24em] text-violet-300">Create your Mentor</p>
+          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight text-white sm:text-5xl">A familiar guide for every story world.</h1>
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-400">Start with a photo you have permission to use. MoliVerse turns it into a HeyGen visual Mentor, then prepares a short welcome for Story Stage.</p>
+        </div>
+
+        <div className="mt-10 grid gap-5 lg:grid-cols-[1.05fr_.95fr]">
+          <label className="group glass-card relative min-h-[350px] cursor-pointer overflow-hidden p-6 transition hover:border-violet-300/45">
+            {photoPreview ? <img src={photoPreview} alt="Mentor portrait preview" className="absolute inset-0 h-full w-full object-cover opacity-55 transition duration-500 group-hover:scale-[1.03]" /> : <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(139,92,246,.22),transparent_46%),linear-gradient(135deg,rgba(14,12,29,.9),rgba(24,18,48,.85))]" />}
+            <div className="relative flex h-full min-h-[300px] flex-col justify-between">
+              <div className="flex items-center justify-between"><span className="rounded-full border border-violet-300/25 bg-violet-400/10 px-3 py-1 text-[11px] font-semibold tracking-wide text-violet-200">01 · YOUR PORTRAIT</span><Upload className="h-5 w-5 text-violet-200" /></div>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4 backdrop-blur-md"><p className="font-display text-xl font-semibold text-white">{photo ? "Portrait selected" : "Choose a warm, clear photo"}</p><p className="mt-1 text-xs leading-relaxed text-slate-300">Front-facing JPG, PNG, or WebP. Your original stays in private storage.</p><p className="mt-3 text-xs font-medium text-violet-200">{photo?.name ?? "Tap to choose a photo"}</p></div>
+            </div>
+            <input className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { const file = e.target.files?.[0] ?? null; setPhoto(file); if (photoPreview) URL.revokeObjectURL(photoPreview); setPhotoPreview(file ? URL.createObjectURL(file) : null); }} />
+          </label>
+
+          <div className="flex flex-col gap-5">
+            <section className="glass-card p-6"><p className="text-xs font-semibold uppercase tracking-[.2em] text-cyan-300">02 · FIRST HELLO</p><div className="mt-4 flex flex-col gap-3"><select value={language} onChange={(e) => setLanguage(e.target.value)} className="h-11 rounded-xl border border-white/10 bg-slate-950/70 px-3 text-sm text-white outline-none focus:border-violet-300/50"><option>English</option><option>French</option><option>Spanish</option><option>Portuguese</option><option>Chinese</option><option>Malay</option></select><textarea value={greeting} onChange={(e) => setGreeting(e.target.value)} rows={3} className="rounded-xl border border-white/10 bg-white/[.04] px-3 py-2.5 text-sm leading-relaxed text-white outline-none focus:border-violet-300/50" aria-label="Mentor greeting" /></div><p className="mt-3 text-xs leading-relaxed text-slate-500">The first welcome video uses a clearly labelled temporary HeyGen platform voice. You can add your own authorised voice later.</p></section>
+            <section className="glass-card border-amber-300/15 bg-amber-300/[.035] p-6"><p className="text-xs font-semibold uppercase tracking-[.2em] text-amber-200">03 · PERMISSION</p><label className="mt-4 flex cursor-pointer items-start gap-3 text-sm leading-relaxed text-slate-300"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 h-4 w-4 accent-violet-400" /><span>I own this adult photo, or have documented permission to create a Mentor from it. I understand the first welcome uses HeyGen&apos;s platform voice.</span></label></section>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="text-xs leading-relaxed text-slate-500"><span className="font-semibold text-slate-300">What happens next:</span> private upload → HeyGen visual Mentor → welcome video in Story Stage.</div><button disabled={busy || status === "ready"} onClick={create} className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-3 text-sm font-semibold text-white shadow-[0_0_36px_-10px_rgba(168,85,247,.75)] transition enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : status === "ready" ? <Check className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}{busy ? "Building your Mentor…" : status === "ready" ? "Mentor ready" : "Create my Mentor"}</button></div>
+        {message && <p className={`mt-5 max-w-2xl rounded-2xl border px-4 py-3 text-sm leading-relaxed ${status === "error" ? "border-rose-400/30 bg-rose-400/10 text-rose-100" : "border-violet-400/20 bg-violet-400/[.06] text-slate-300"}`}>{status === "ready" && <ShieldCheck className="mr-2 inline h-4 w-4 text-emerald-300" />}{message}</p>}
+        {status === "ready" && <Link href="/teach/studio/" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-violet-200 transition hover:text-white">Continue to Mentor Studio <ArrowLeft className="h-4 w-4 rotate-180" /></Link>}
+      </div>
+    </main>
+  );
 }
