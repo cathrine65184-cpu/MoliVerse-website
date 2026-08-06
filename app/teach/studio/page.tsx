@@ -640,7 +640,7 @@ export default function TeacherStudioPage() {
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1fr,420px]">
           {/* ---------- left: builder ---------- */}
-          <div className="flex flex-col gap-5">
+          <div className="order-2 flex flex-col gap-5 lg:order-1">
             <div className="glass-card border-cyan-400/20 p-6">
               <div className="flex items-start gap-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">01</span>
@@ -1041,10 +1041,13 @@ export default function TeacherStudioPage() {
           </div>
 
           {/* ---------- right: live preview ---------- */}
-          <div className="lg:sticky lg:top-8 lg:self-start">
+          <div className="order-1 lg:sticky lg:top-8 lg:order-2 lg:self-start">
             <div className="glass-card overflow-hidden">
               <div className="flex items-center justify-between border-b border-white/[0.08] px-5 py-3">
-                <p className="text-sm font-semibold text-white">Live preview · the world children will enter</p>
+                <div>
+                  <p className="text-sm font-semibold text-white">Story Stage</p>
+                  <p className="mt-0.5 text-[11px] text-slate-500">Preview the world children will enter</p>
+                </div>
                 <span className="flex items-center gap-1.5 text-xs text-emerald-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                   Live
