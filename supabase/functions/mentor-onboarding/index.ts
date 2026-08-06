@@ -18,8 +18,12 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 });
 
 function errorMessage(payload: unknown, fallback: string) {
-  const data = payload as { error?: { message?: string } | string; message?: string } | null;
-  return typeof data?.error === "object" ? data.error.message ?? fallback : data?.message ?? fallback;
+  const data = payload as { error?: { message?: string; code?: string } | string; message?: string; data?: { error?: { message?: string; code?: string } } } | null;
+  const nested = data?.data?.error;
+  const error = typeof data?.error === "object" ? data.error : nested;
+  const message = error?.message ?? data?.message ?? (typeof data?.error === "string" ? data.error : null);
+  const code = error?.code ? ` (${error.code})` : "";
+  return message ? `${message}${code}` : fallback;
 }
 
 Deno.serve(async (req: Request) => {
@@ -47,7 +51,7 @@ Deno.serve(async (req: Request) => {
   if (action === "begin-upload") {
     if (body.kind !== "photo") return json({ message: "Only a Mentor photo is needed for this HeyGen setup." }, 400);
     const ext = String(body.extension ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (!["jpg", "jpeg", "png", "webp"].includes(ext)) return json({ message: "Use a JPG, PNG, or WebP Mentor photo." }, 400);
+    if (!["jpg", "jpeg", "png"].includes(ext)) return json({ message: "Use a JPG or PNG Mentor photo." }, 400);
     // A creator can safely retry with the same filename. New objects avoid
     // Storage's 409 ResourceAlreadyExists response and prevent CDN staleness.
     const path = `${user.id}/photo-${crypto.randomUUID()}.${ext}`;
@@ -74,8 +78,21 @@ Deno.serve(async (req: Request) => {
     }, { onConflict: "teacher_id" });
 
     try {
-      const { data: signed, error: signedError } = await admin.storage.from("mentor-assets").createSignedUrl(photoPath, 3600);
-      if (signedError || !signed?.signedUrl) throw new Error("Your private photo could not be prepared for HeyGen.");
+      // Transfer the private source file directly to HeyGen as an asset. This
+      // avoids depending on an external service fetching a short-lived URL.
+      const { data: photoFile, error: photoError } = await admin.storage.from("mentor-assets").download(photoPath);
+      if (photoError || !photoFile) throw new Error("Mentor photo was not found after upload.");
+      const filename = photoPath.split("/").pop() ?? "mentor.jpg";
+      const assetForm = new FormData();
+      assetForm.append("file", new File([await photoFile.arrayBuffer()], filename, { type: photoFile.type || "image/jpeg" }));
+      const assetResponse = await fetch("https://api.heygen.com/v3/assets", {
+        method: "POST",
+        headers: { "x-api-key": heygen },
+        body: assetForm,
+      });
+      const assetJson = await assetResponse.json();
+      const assetId = assetJson?.data?.id ?? assetJson?.data?.asset_id;
+      if (!assetResponse.ok || !assetId) throw new Error(`HeyGen could not receive the photo: ${errorMessage(assetJson, `HTTP ${assetResponse.status}`)}`);
 
       const avatarResponse = await fetch("https://api.heygen.com/v3/avatars", {
         method: "POST",
@@ -83,14 +100,24 @@ Deno.serve(async (req: Request) => {
         body: JSON.stringify({
           type: "photo",
           name: `${profile.name || "MoliVerse"} — MoliVerse Mentor`,
-          file: { type: "url", url: signed.signedUrl },
+          file: { type: "asset_id", asset_id: assetId },
         }),
       });
       const avatarJson = await avatarResponse.json();
       const avatar = avatarJson?.data?.avatar_item;
       const avatarId = avatar?.id;
-      const voiceId = avatar?.default_voice_id ?? avatarJson?.data?.avatar_group?.default_voice_id;
-      if (!avatarResponse.ok || !avatarId || !voiceId) throw new Error(errorMessage(avatarJson, "HeyGen could not create this photo Mentor."));
+      if (!avatarResponse.ok || !avatarId) throw new Error(`HeyGen could not create this photo Mentor: ${errorMessage(avatarJson, `HTTP ${avatarResponse.status}`)}`);
+
+      let voiceId = avatar?.default_voice_id ?? avatarJson?.data?.avatar_group?.default_voice_id;
+      if (!voiceId) {
+        const language = encodeURIComponent(String(body.language ?? "English"));
+        const voicesResponse = await fetch(`https://api.heygen.com/v3/voices?type=public&language=${language}&limit=1`, {
+          headers: { "x-api-key": heygen },
+        });
+        const voicesJson = await voicesResponse.json();
+        voiceId = voicesJson?.data?.[0]?.voice_id;
+        if (!voicesResponse.ok || !voiceId) throw new Error(`HeyGen created the photo Mentor but could not select a platform voice: ${errorMessage(voicesJson, `HTTP ${voicesResponse.status}`)}`);
+      }
 
       const videoResponse = await fetch("https://api.heygen.com/v3/videos", {
         method: "POST",
@@ -102,8 +129,7 @@ Deno.serve(async (req: Request) => {
           voice_id: voiceId,
           title: "MoliVerse Mentor welcome",
           resolution: "720p",
-          aspect_ratio: "1:1",
-          engine: { type: "avatar_iv" },
+          aspect_ratio: "16:9",
           motion_prompt: "Warm, gentle language educator welcoming a child into an imaginative cultural story world.",
           expressiveness: "medium",
         }),
@@ -112,8 +138,6 @@ Deno.serve(async (req: Request) => {
       const videoId = videoJson?.data?.video_id;
       if (!videoResponse.ok || !videoId) throw new Error(errorMessage(videoJson, "HeyGen created the Mentor image but could not start the welcome video."));
 
-      const { data: photoFile, error: photoError } = await admin.storage.from("mentor-assets").download(photoPath);
-      if (photoError || !photoFile) throw new Error("Mentor photo was not found after upload.");
       const publicPhotoPath = `${user.id}/persona/portrait.${photoPath.split(".").pop()}`;
       const { error: copyError } = await admin.storage.from("media").upload(publicPhotoPath, photoFile, {
         upsert: true,

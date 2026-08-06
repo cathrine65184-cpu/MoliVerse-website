@@ -81,7 +81,15 @@ export default function CreateMentorPage() {
       const photoPath = await upload(photo);
       setStatus("processing"); setMessage("Creating your HeyGen photo Mentor and welcome video…");
       const { data, error } = await supabase.functions.invoke("mentor-onboarding", { body: { action: "complete", photoPath, consent: true, language, greeting } });
-      const result = data as { photoUrl?: string; videoId?: string; message?: string } | null;
+      let result = data as { photoUrl?: string; videoId?: string; message?: string } | null;
+      if (error) {
+        try {
+          const response = (error as { context?: Response }).context;
+          if (response) result = await response.json();
+        } catch {
+          // The generic error below is only used when no server response exists.
+        }
+      }
       if (error || !result?.photoUrl || !result.videoId) throw new Error(result?.message ?? "HeyGen could not create your Mentor.");
       const me = await getMyProfile();
       if (me) await savePersona(me.id, { ...emptyPersona, photoUrl: result.photoUrl, greeting, subject: me.language });
@@ -111,9 +119,9 @@ export default function CreateMentorPage() {
             {photoPreview ? <img src={photoPreview} alt="Mentor portrait preview" className="absolute inset-0 h-full w-full object-cover opacity-55 transition duration-500 group-hover:scale-[1.03]" /> : <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(139,92,246,.22),transparent_46%),linear-gradient(135deg,rgba(14,12,29,.9),rgba(24,18,48,.85))]" />}
             <div className="relative flex h-full min-h-[300px] flex-col justify-between">
               <div className="flex items-center justify-between"><span className="rounded-full border border-violet-300/25 bg-violet-400/10 px-3 py-1 text-[11px] font-semibold tracking-wide text-violet-200">01 · YOUR PORTRAIT</span><Upload className="h-5 w-5 text-violet-200" /></div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4 backdrop-blur-md"><p className="font-display text-xl font-semibold text-white">{photo ? "Portrait selected" : "Choose a warm, clear photo"}</p><p className="mt-1 text-xs leading-relaxed text-slate-300">Front-facing JPG, PNG, or WebP. Your original stays in private storage.</p><p className="mt-3 text-xs font-medium text-violet-200">{photo?.name ?? "Tap to choose a photo"}</p></div>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4 backdrop-blur-md"><p className="font-display text-xl font-semibold text-white">{photo ? "Portrait selected" : "Choose a warm, clear photo"}</p><p className="mt-1 text-xs leading-relaxed text-slate-300">Front-facing JPG or PNG. Your original stays in private storage.</p><p className="mt-3 text-xs font-medium text-violet-200">{photo?.name ?? "Tap to choose a photo"}</p></div>
             </div>
-            <input className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { const file = e.target.files?.[0] ?? null; setPhoto(file); if (photoPreview) URL.revokeObjectURL(photoPreview); setPhotoPreview(file ? URL.createObjectURL(file) : null); }} />
+            <input className="hidden" type="file" accept="image/jpeg,image/png" onChange={(e) => { const file = e.target.files?.[0] ?? null; setPhoto(file); if (photoPreview) URL.revokeObjectURL(photoPreview); setPhotoPreview(file ? URL.createObjectURL(file) : null); }} />
           </label>
 
           <div className="flex flex-col gap-5">
