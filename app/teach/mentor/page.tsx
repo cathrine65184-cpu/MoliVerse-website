@@ -79,9 +79,9 @@ export default function CreateMentorPage() {
     setStatus("uploading"); setMessage("Uploading your private Mentor photo…");
     try {
       const photoPath = await upload(photo);
-      setStatus("processing"); setMessage("Creating your HeyGen photo Mentor and welcome video…");
+      setStatus("processing"); setMessage("Creating your HeyGen photo Mentor…");
       const { data, error } = await supabase.functions.invoke("mentor-onboarding", { body: { action: "complete", photoPath, consent: true, language, greeting } });
-      let result = data as { photoUrl?: string; videoId?: string; message?: string } | null;
+      let result = data as { photoUrl?: string; videoId?: string; message?: string; warning?: string | null } | null;
       if (error) {
         try {
           const response = (error as { context?: Response }).context;
@@ -90,11 +90,14 @@ export default function CreateMentorPage() {
           // The generic error below is only used when no server response exists.
         }
       }
-      if (error || !result?.photoUrl || !result.videoId) throw new Error(result?.message ?? "HeyGen could not create your Mentor.");
+      if (error || !result?.photoUrl) throw new Error(result?.message ?? "HeyGen could not create your Mentor.");
       const me = await getMyProfile();
       if (me) await savePersona(me.id, { ...emptyPersona, photoUrl: result.photoUrl, greeting, subject: me.language });
-      setVideoId(result.videoId);
-      setStatus("ready"); setMessage("Your visual Mentor is ready. HeyGen is rendering their welcome video with a temporary HeyGen voice.");
+      if (result.videoId) setVideoId(result.videoId);
+      setStatus("ready");
+      setMessage(result.videoId
+        ? "Your visual Mentor is ready. HeyGen is rendering their welcome video with a temporary HeyGen voice."
+        : `Your visual Mentor is ready and Story Stage is unlocked.${result.warning ? ` The optional welcome video is not available yet: ${result.warning}` : ""}`);
     } catch (error) { setStatus("error"); setMessage(error instanceof Error ? error.message : "Mentor creation failed."); }
   }
 

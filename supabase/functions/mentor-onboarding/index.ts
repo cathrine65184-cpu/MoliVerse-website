@@ -108,36 +108,9 @@ Deno.serve(async (req: Request) => {
       const avatarId = avatar?.id;
       if (!avatarResponse.ok || !avatarId) throw new Error(`HeyGen could not create this photo Mentor: ${errorMessage(avatarJson, `HTTP ${avatarResponse.status}`)}`);
 
-      let voiceId = avatar?.default_voice_id ?? avatarJson?.data?.avatar_group?.default_voice_id;
-      if (!voiceId) {
-        const language = encodeURIComponent(String(body.language ?? "English"));
-        const voicesResponse = await fetch(`https://api.heygen.com/v3/voices?type=public&language=${language}&limit=1`, {
-          headers: { "x-api-key": heygen },
-        });
-        const voicesJson = await voicesResponse.json();
-        voiceId = voicesJson?.data?.[0]?.voice_id;
-        if (!voicesResponse.ok || !voiceId) throw new Error(`HeyGen created the photo Mentor but could not select a platform voice: ${errorMessage(voicesJson, `HTTP ${voicesResponse.status}`)}`);
-      }
-
-      const videoResponse = await fetch("https://api.heygen.com/v3/videos", {
-        method: "POST",
-        headers: { "x-api-key": heygen, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "avatar",
-          avatar_id: avatarId,
-          script: greeting,
-          voice_id: voiceId,
-          title: "MoliVerse Mentor welcome",
-          resolution: "720p",
-          aspect_ratio: "16:9",
-          motion_prompt: "Warm, gentle language educator welcoming a child into an imaginative cultural story world.",
-          expressiveness: "medium",
-        }),
-      });
-      const videoJson = await videoResponse.json();
-      const videoId = videoJson?.data?.video_id;
-      if (!videoResponse.ok || !videoId) throw new Error(errorMessage(videoJson, "HeyGen created the Mentor image but could not start the welcome video."));
-
+      // The Avatar is the Mentor. Persist it before asking HeyGen for the
+      // optional welcome video: a render failure must never lock an educator
+      // out of Story Stage after their photo avatar has been created.
       const publicPhotoPath = `${user.id}/persona/portrait.${photoPath.split(".").pop()}`;
       const { error: copyError } = await admin.storage.from("media").upload(publicPhotoPath, photoFile, {
         upsert: true,
@@ -148,13 +121,41 @@ Deno.serve(async (req: Request) => {
 
       await admin.from("mentor_onboardings").upsert({
         teacher_id: user.id,
-        status: "processing",
+        status: "ready",
         heygen_avatar_id: avatarId,
-        heygen_voice_id: voiceId,
-        heygen_video_id: videoId,
+        heygen_voice_id: null,
+        heygen_video_id: null,
         updated_at: new Date().toISOString(),
       }, { onConflict: "teacher_id" });
-      return json({ status: "processing", photoUrl, avatarId, videoId, voice: "heygen-default" });
+
+      // A video is a progressive enhancement. Some newly-created photo avatars
+      // need additional HeyGen processing or may reject a particular source
+      // image; keep the Mentor usable and report that without changing status.
+      let voiceId: string | null = avatar?.default_voice_id ?? avatarJson?.data?.avatar_group?.default_voice_id ?? null;
+      let videoId: string | null = null;
+      let warning: string | null = null;
+      try {
+        if (!voiceId) {
+          const language = encodeURIComponent(String(body.language ?? "English"));
+          const voicesResponse = await fetch(`https://api.heygen.com/v3/voices?type=public&language=${language}&limit=1`, { headers: { "x-api-key": heygen } });
+          const voicesJson = await voicesResponse.json();
+          voiceId = voicesJson?.data?.[0]?.voice_id ?? null;
+          if (!voicesResponse.ok || !voiceId) throw new Error(`HeyGen could not select a platform voice: ${errorMessage(voicesJson, `HTTP ${voicesResponse.status}`)}`);
+        }
+        const videoResponse = await fetch("https://api.heygen.com/v3/videos", {
+          method: "POST",
+          headers: { "x-api-key": heygen, "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "avatar", avatar_id: avatarId, script: greeting, voice_id: voiceId, title: "MoliVerse Mentor welcome", resolution: "720p", aspect_ratio: "16:9", motion_prompt: "Warm, gentle language educator welcoming a child into an imaginative cultural story world.", expressiveness: "medium" }),
+        });
+        const videoJson = await videoResponse.json();
+        videoId = videoJson?.data?.video_id ?? null;
+        if (!videoResponse.ok || !videoId) throw new Error(errorMessage(videoJson, "HeyGen could not start the welcome video."));
+        await admin.from("mentor_onboardings").update({ heygen_voice_id: voiceId, heygen_video_id: videoId, updated_at: new Date().toISOString() }).eq("teacher_id", user.id);
+      } catch (videoError) {
+        warning = videoError instanceof Error ? videoError.message : "The welcome video could not start yet.";
+        await admin.from("mentor_onboardings").update({ error_message: warning, updated_at: new Date().toISOString() }).eq("teacher_id", user.id);
+      }
+      return json({ status: "ready", photoUrl, avatarId, videoId, voice: videoId ? "heygen-default" : null, warning });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Mentor creation failed.";
       await admin.from("mentor_onboardings").upsert({ teacher_id: user.id, status: "failed", error_message: message, updated_at: new Date().toISOString() }, { onConflict: "teacher_id" });
@@ -178,7 +179,8 @@ Deno.serve(async (req: Request) => {
     if (!response.ok) return json({ message: errorMessage(result, "Could not check HeyGen video status.") }, 502);
     if (video?.status === "failed") {
       const message = video.failure_message ?? "HeyGen could not render the welcome video.";
-      await admin.from("mentor_onboardings").update({ status: "failed", error_message: message, updated_at: new Date().toISOString() }).eq("teacher_id", user.id);
+      // A video is optional; the photo Avatar remains a ready Mentor.
+      await admin.from("mentor_onboardings").update({ status: "ready", error_message: message, updated_at: new Date().toISOString() }).eq("teacher_id", user.id);
       return json({ status: "failed", message }, 502);
     }
     if (video?.status !== "completed" || !video.video_url) return json({ status: video?.status ?? "processing" });
