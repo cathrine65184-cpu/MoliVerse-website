@@ -64,8 +64,6 @@ Deno.serve(async (req: Request) => {
     return json({ path, token: data.token });
   }
 
-  if (!heygen) return json({ message: "HeyGen is not configured yet." }, 503);
-
   if (action === "complete") {
     if (body.consent !== true) return json({ message: "Please confirm that you own this photo or have the adult's permission to use it." }, 400);
     const photoPath = String(body.photoPath ?? "");
@@ -78,39 +76,11 @@ Deno.serve(async (req: Request) => {
     }, { onConflict: "teacher_id" });
 
     try {
-      // Transfer the private source file directly to HeyGen as an asset. This
-      // avoids depending on an external service fetching a short-lived URL.
+      // MoliVerse identity belongs to the educator, not a renderer credit
+      // balance. Save the authorised portrait first; HeyGen can connect later.
       const { data: photoFile, error: photoError } = await admin.storage.from("mentor-assets").download(photoPath);
       if (photoError || !photoFile) throw new Error("Mentor photo was not found after upload.");
       const filename = photoPath.split("/").pop() ?? "mentor.jpg";
-      const assetForm = new FormData();
-      assetForm.append("file", new File([await photoFile.arrayBuffer()], filename, { type: photoFile.type || "image/jpeg" }));
-      const assetResponse = await fetch("https://api.heygen.com/v3/assets", {
-        method: "POST",
-        headers: { "x-api-key": heygen },
-        body: assetForm,
-      });
-      const assetJson = await assetResponse.json();
-      const assetId = assetJson?.data?.id ?? assetJson?.data?.asset_id;
-      if (!assetResponse.ok || !assetId) throw new Error(`HeyGen could not receive the photo: ${errorMessage(assetJson, `HTTP ${assetResponse.status}`)}`);
-
-      const avatarResponse = await fetch("https://api.heygen.com/v3/avatars", {
-        method: "POST",
-        headers: { "x-api-key": heygen, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "photo",
-          name: `${profile.name || "MoliVerse"} — MoliVerse Mentor`,
-          file: { type: "asset_id", asset_id: assetId },
-        }),
-      });
-      const avatarJson = await avatarResponse.json();
-      const avatar = avatarJson?.data?.avatar_item;
-      const avatarId = avatar?.id;
-      if (!avatarResponse.ok || !avatarId) throw new Error(`HeyGen could not create this photo Mentor: ${errorMessage(avatarJson, `HTTP ${avatarResponse.status}`)}`);
-
-      // The Avatar is the Mentor. Persist it before asking HeyGen for the
-      // optional welcome video: a render failure must never lock an educator
-      // out of Story Stage after their photo avatar has been created.
       const publicPhotoPath = `${user.id}/persona/portrait.${photoPath.split(".").pop()}`;
       const { error: copyError } = await admin.storage.from("media").upload(publicPhotoPath, photoFile, {
         upsert: true,
@@ -119,25 +89,60 @@ Deno.serve(async (req: Request) => {
       if (copyError) throw new Error("Mentor photo could not be published.");
       const photoUrl = admin.storage.from("media").getPublicUrl(publicPhotoPath).data.publicUrl;
 
+      let avatarId: string | null = null;
+      let rendererWarning: string | null = null;
+      if (heygen) {
+        try {
+          const assetForm = new FormData();
+          assetForm.append("file", new File([await photoFile.arrayBuffer()], filename, { type: photoFile.type || "image/jpeg" }));
+          const assetResponse = await fetch("https://api.heygen.com/v3/assets", {
+            method: "POST",
+            headers: { "x-api-key": heygen },
+            body: assetForm,
+          });
+          const assetJson = await assetResponse.json();
+          const assetId = assetJson?.data?.id ?? assetJson?.data?.asset_id;
+          if (!assetResponse.ok || !assetId) throw new Error(`HeyGen could not receive the photo: ${errorMessage(assetJson, `HTTP ${assetResponse.status}`)}`);
+
+          const avatarResponse = await fetch("https://api.heygen.com/v3/avatars", {
+            method: "POST",
+            headers: { "x-api-key": heygen, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "photo",
+              name: `${profile.name || "MoliVerse"} — MoliVerse Mentor`,
+              file: { type: "asset_id", asset_id: assetId },
+            }),
+          });
+          const avatarJson = await avatarResponse.json();
+          avatarId = avatarJson?.data?.avatar_item?.id ?? null;
+          if (!avatarResponse.ok || !avatarId) throw new Error(`HeyGen could not create this photo Mentor: ${errorMessage(avatarJson, `HTTP ${avatarResponse.status}`)}`);
+        } catch (rendererError) {
+          rendererWarning = rendererError instanceof Error
+            ? rendererError.message
+            : "HeyGen could not connect the visual renderer yet.";
+        }
+      } else {
+        rendererWarning = "HeyGen is not configured. Your MoliVerse portrait is ready; connect a visual renderer later.";
+      }
+
       await admin.from("mentor_onboardings").upsert({
         teacher_id: user.id,
         status: "ready",
         heygen_avatar_id: avatarId,
         heygen_voice_id: null,
         heygen_video_id: null,
+        error_message: rendererWarning,
         updated_at: new Date().toISOString(),
       }, { onConflict: "teacher_id" });
 
-      // Never attach a platform-default voice to a real educator's face.
-      // Visual identity is ready now; voice and live rendering are connected
-      // only after the educator approves a matched voice identity.
       return json({
         status: "ready",
         photoUrl,
         avatarId,
         videoId: null,
         voice: null,
-        warning: "Visual identity ready. Continue to Studio to verify your own voice before opening a live classroom.",
+        rendererStatus: avatarId ? "connected" : "pending",
+        warning: rendererWarning || "Visual identity ready. Continue to Studio to verify your own voice before opening a live classroom.",
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Mentor creation failed.";
@@ -147,6 +152,7 @@ Deno.serve(async (req: Request) => {
   }
 
   if (action === "status") {
+    if (!heygen) return json({ message: "HeyGen is not configured yet." }, 503);
     const videoId = String(body.videoId ?? "");
     const { data: onboarding } = await admin.from("mentor_onboardings")
       .select("heygen_video_id,status")
