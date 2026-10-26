@@ -128,34 +128,17 @@ Deno.serve(async (req: Request) => {
         updated_at: new Date().toISOString(),
       }, { onConflict: "teacher_id" });
 
-      // A video is a progressive enhancement. Some newly-created photo avatars
-      // need additional HeyGen processing or may reject a particular source
-      // image; keep the Mentor usable and report that without changing status.
-      let voiceId: string | null = avatar?.default_voice_id ?? avatarJson?.data?.avatar_group?.default_voice_id ?? null;
-      let videoId: string | null = null;
-      let warning: string | null = null;
-      try {
-        if (!voiceId) {
-          const language = encodeURIComponent(String(body.language ?? "English"));
-          const voicesResponse = await fetch(`https://api.heygen.com/v3/voices?type=public&language=${language}&limit=1`, { headers: { "x-api-key": heygen } });
-          const voicesJson = await voicesResponse.json();
-          voiceId = voicesJson?.data?.[0]?.voice_id ?? null;
-          if (!voicesResponse.ok || !voiceId) throw new Error(`HeyGen could not select a platform voice: ${errorMessage(voicesJson, `HTTP ${voicesResponse.status}`)}`);
-        }
-        const videoResponse = await fetch("https://api.heygen.com/v3/videos", {
-          method: "POST",
-          headers: { "x-api-key": heygen, "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "avatar", avatar_id: avatarId, script: greeting, voice_id: voiceId, title: "MoliVerse Mentor welcome", resolution: "720p", aspect_ratio: "16:9", motion_prompt: "Warm, gentle language educator welcoming a child into an imaginative cultural story world.", expressiveness: "medium" }),
-        });
-        const videoJson = await videoResponse.json();
-        videoId = videoJson?.data?.video_id ?? null;
-        if (!videoResponse.ok || !videoId) throw new Error(errorMessage(videoJson, "HeyGen could not start the welcome video."));
-        await admin.from("mentor_onboardings").update({ heygen_voice_id: voiceId, heygen_video_id: videoId, updated_at: new Date().toISOString() }).eq("teacher_id", user.id);
-      } catch (videoError) {
-        warning = videoError instanceof Error ? videoError.message : "The welcome video could not start yet.";
-        await admin.from("mentor_onboardings").update({ error_message: warning, updated_at: new Date().toISOString() }).eq("teacher_id", user.id);
-      }
-      return json({ status: "ready", photoUrl, avatarId, videoId, voice: videoId ? "heygen-default" : null, warning });
+      // Never attach a platform-default voice to a real educator's face.
+      // Visual identity is ready now; voice and live rendering are connected
+      // only after the educator approves a matched voice identity.
+      return json({
+        status: "ready",
+        photoUrl,
+        avatarId,
+        videoId: null,
+        voice: null,
+        warning: "Visual identity ready. Continue to Studio to verify your own voice before opening a live classroom.",
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Mentor creation failed.";
       await admin.from("mentor_onboardings").upsert({ teacher_id: user.id, status: "failed", error_message: message, updated_at: new Date().toISOString() }, { onConflict: "teacher_id" });

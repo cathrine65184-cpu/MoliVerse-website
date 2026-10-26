@@ -114,7 +114,7 @@ export default function CreateMentorPage() {
         <div className="mt-10 max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[.24em] text-violet-300">Create your Mentor</p>
           <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight text-white sm:text-5xl">A familiar guide for every story world.</h1>
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-400">Start with a photo you have permission to use. MoliVerse turns it into a HeyGen visual Mentor, then prepares a short welcome for Story Stage.</p>
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-400">Start with a photo you have permission to use. This establishes your visual identity. Your voice is verified separately in Mentor Studio; MoliVerse never pairs a real face with a platform-default voice.</p>
         </div>
 
         <div className="mt-10 grid gap-5 lg:grid-cols-[1.05fr_.95fr]">
