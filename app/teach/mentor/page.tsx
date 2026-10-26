@@ -1,142 +1,480 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, Loader2, ShieldCheck, Sparkles, Upload, ArrowLeft } from "lucide-react";
-import { supabase, getMyProfile, type Profile } from "@/lib/supabase";
-import { savePersona, emptyPersona, loadPersona } from "@/lib/persona";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  Check,
+  CheckCircle2,
+  ImagePlus,
+  Loader2,
+  Mic,
+  ShieldCheck,
+  Sparkles,
+  Square,
+  Upload,
+  Volume2,
+} from "lucide-react";
 
-type Status = "draft" | "uploading" | "processing" | "ready" | "error";
+import { emptyPersona, loadPersona, savePersona } from "@/lib/persona";
+import { getMyProfile, supabase } from "@/lib/supabase";
+
+type BuildStep = "identity" | "ready";
+
+function mergeAudio(chunks: Float32Array[]) {
+  const totalLength = chunks.reduce((total, chunk) => total + chunk.length, 0);
+  const merged = new Float32Array(totalLength);
+  let offset = 0;
+
+  chunks.forEach((chunk) => {
+    merged.set(chunk, offset);
+    offset += chunk.length;
+  });
+
+  return merged;
+}
+
+function audioSamplesToWav(samples: Float32Array, sampleRate: number) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  const writeText = (offset: number, text: string) => {
+    for (let index = 0; index < text.length; index += 1) {
+      view.setUint8(offset + index, text.charCodeAt(index));
+    }
+  };
+
+  writeText(0, "RIFF");
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeText(8, "WAVE");
+  writeText(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeText(36, "data");
+  view.setUint32(40, samples.length * 2, true);
+
+  for (let index = 0; index < samples.length; index += 1) {
+    const sample = Math.max(-1, Math.min(1, samples[index]));
+    view.setInt16(44 + index * 2, sample * 0x7fff, true);
+  }
+
+  return new File([buffer], "mentor-voice.wav", { type: "audio/wav" });
+}
+
+function errorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  return "Something went wrong. Please try again.";
+}
 
 export default function CreateMentorPage() {
+  const [step, setStep] = useState<BuildStep>("identity");
   const [photo, setPhoto] = useState<File | null>(null);
-  const [consent, setConsent] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [voiceFile, setVoiceFile] = useState<File | null>(null);
+  const [voicePreview, setVoicePreview] = useState("");
+  const [recording, setRecording] = useState(false);
+  const [recordedSeconds, setRecordedSeconds] = useState(0);
+  const [consented, setConsented] = useState(false);
   const [language, setLanguage] = useState("English");
-  const [greeting, setGreeting] = useState("Hello! I am your MoliVerse mentor. Let us learn together.");
-  const [status, setStatus] = useState<Status>("draft");
+  const [greeting, setGreeting] = useState("Hello! I am so glad we are learning together.");
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
-  const [videoId, setVideoId] = useState<string | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [previewAudio, setPreviewAudio] = useState("");
+  const [mentorName, setMentorName] = useState("your Mentor");
+
+  const streamRef = useRef<MediaStream | null>(null);
+  const contextRef = useRef<AudioContext | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const chunksRef = useRef<Float32Array[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sampleRateRef = useRef(44100);
 
   useEffect(() => {
-    getMyProfile().then(setProfile);
+    void getMyProfile().then(async (profile) => {
+      if (!profile) return;
+      setMentorName(profile.name || "your Mentor");
+      setLanguage(profile.language || "English");
+      const savedPersona = await loadPersona(profile.id);
+      if (savedPersona?.greeting) setGreeting(savedPersona.greeting);
+    });
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      processorRef.current?.disconnect();
+      sourceRef.current?.disconnect();
+      void contextRef.current?.close();
+      if (photoPreview) URL.revokeObjectURL(photoPreview);
+      if (voicePreview) URL.revokeObjectURL(voicePreview);
+    };
   }, []);
 
-  useEffect(() => () => {
+  function setPhotoFile(file: File) {
+    if (!file.type.startsWith("image/")) {
+      setMessage("Please choose a JPG, PNG, or WEBP portrait.");
+      return;
+    }
+
     if (photoPreview) URL.revokeObjectURL(photoPreview);
-  }, [photoPreview]);
-
-  useEffect(() => {
-    if (!videoId) return;
-    let cancelled = false;
-    const check = async () => {
-      const { data, error } = await supabase.functions.invoke("mentor-onboarding", { body: { action: "status", videoId } });
-      const result = data as { status?: string; videoUrl?: string; message?: string } | null;
-      if (cancelled) return;
-      if (error || result?.status === "failed") {
-        setMessage(result?.message ?? "Your Mentor is ready, but HeyGen could not finish the welcome video yet.");
-        setVideoId(null);
-        return;
-      }
-      if (result?.status === "completed" && result.videoUrl) {
-        const me = await getMyProfile();
-        if (me) {
-          const current = await loadPersona(me.id);
-          await savePersona(me.id, { ...(current ?? emptyPersona), photoUrl: current?.photoUrl ?? null, greeting: current?.greeting || greeting, talkingUrl: result.videoUrl });
-        }
-        setMessage("Your Mentor is ready — the HeyGen welcome video has been added to Story Stage.");
-        setVideoId(null);
-      }
-    };
-    void check();
-    const timer = window.setInterval(() => void check(), 7000);
-    return () => { cancelled = true; window.clearInterval(timer); };
-  }, [videoId, greeting]);
-
-  async function upload(file: File) {
-    const extension = file.name.split(".").pop() ?? "";
-    const { data, error } = await supabase.functions.invoke("mentor-onboarding", { body: { action: "begin-upload", kind: "photo", extension } });
-    let prepared = data as { path?: string; token?: string; message?: string } | null;
-    if (error) {
-      try {
-        const response = (error as { context?: Response }).context;
-        if (response) prepared = await response.json();
-      } catch {
-        // Keep the generic network error only when the server gave no body.
-      }
-    }
-    if (error || !prepared?.token || !prepared.path) {
-      throw new Error(prepared?.message ?? "We could not prepare a secure upload. Please check your connection and try again.");
-    }
-    const { error: uploadError } = await supabase.storage.from("mentor-assets").uploadToSignedUrl(prepared.path, prepared.token, file);
-    if (uploadError) throw uploadError;
-    return prepared.path;
+    setPhoto(file);
+    setPhotoPreview(URL.createObjectURL(file));
+    setMessage("");
   }
 
-  async function create() {
-    if (!photo || !consent) { setMessage("Add a photo and confirm that you have permission to use it first."); return; }
-    setStatus("uploading"); setMessage("Uploading your private Mentor photo…");
+  function setVoiceSample(file: File) {
+    const allowed = ["audio/mpeg", "audio/wav", "audio/x-wav", "audio/mp4", "audio/x-m4a"];
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    const validExtension = extension === "mp3" || extension === "m4a" || extension === "wav";
+
+    if (!allowed.includes(file.type) && !validExtension) {
+      setMessage("Please use an MP3, M4A, or WAV voice sample.");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setMessage("Voice samples must be under 20 MB.");
+      return;
+    }
+
+    if (voicePreview) URL.revokeObjectURL(voicePreview);
+    setVoiceFile(file);
+    setVoicePreview(URL.createObjectURL(file));
+    setMessage("");
+  }
+
+  async function startRecording() {
     try {
-      const photoPath = await upload(photo);
-      setStatus("processing"); setMessage("Creating your HeyGen photo Mentor…");
-      const { data, error } = await supabase.functions.invoke("mentor-onboarding", { body: { action: "complete", photoPath, consent: true, language, greeting } });
-      let result = data as { photoUrl?: string; videoId?: string; message?: string; warning?: string | null } | null;
-      if (error) {
-        try {
-          const response = (error as { context?: Response }).context;
-          if (response) result = await response.json();
-        } catch {
-          // The generic error below is only used when no server response exists.
-        }
-      }
-      if (error || !result?.photoUrl) throw new Error(result?.message ?? "HeyGen could not create your Mentor.");
-      const me = await getMyProfile();
-      if (me) await savePersona(me.id, { ...emptyPersona, photoUrl: result.photoUrl, greeting, subject: me.language });
-      if (result.videoId) setVideoId(result.videoId);
-      setStatus("ready");
-      setMessage(result.videoId
-        ? "Your visual Mentor is ready. HeyGen is rendering their welcome video with a temporary HeyGen voice."
-        : `Your visual Mentor is ready and Story Stage is unlocked.${result.warning ? ` The optional welcome video is not available yet: ${result.warning}` : ""}`);
-    } catch (error) { setStatus("error"); setMessage(error instanceof Error ? error.message : "Mentor creation failed."); }
+      setMessage("");
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const context = new AudioContextClass();
+      const source = context.createMediaStreamSource(stream);
+      const processor = context.createScriptProcessor(4096, 1, 1);
+
+      chunksRef.current = [];
+      sampleRateRef.current = context.sampleRate;
+      processor.onaudioprocess = (event) => {
+        const input = event.inputBuffer.getChannelData(0);
+        chunksRef.current.push(new Float32Array(input));
+      };
+
+      source.connect(processor);
+      processor.connect(context.destination);
+      streamRef.current = stream;
+      contextRef.current = context;
+      sourceRef.current = source;
+      processorRef.current = processor;
+      setRecordedSeconds(0);
+      setRecording(true);
+      timerRef.current = setInterval(() => {
+        setRecordedSeconds((seconds) => seconds + 1);
+      }, 1000);
+    } catch {
+      setMessage("MoliVerse could not access your microphone. Please allow microphone access, then try again.");
+    }
   }
 
-  const busy = status === "uploading" || status === "processing";
-  if (profile === undefined) return <main className="flex min-h-screen items-center justify-center text-slate-500"><Loader2 className="h-6 w-6 animate-spin" /></main>;
-  if (!profile || profile.role !== "teacher") return <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 text-center"><p className="font-display text-2xl font-semibold text-white">Create your Mentor is for educators.</p><p className="mt-3 text-sm leading-relaxed text-slate-400">Please sign in to an educator account to create an authorised Mentor voice and teaching identity.</p><Link href="/account/" className="mt-6 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 py-3 text-sm font-semibold text-white">Sign in as an educator →</Link></main>;
-  return (
-    <main className="relative min-h-screen overflow-hidden px-6 py-10 sm:py-14">
-      <div className="pointer-events-none absolute left-[10%] top-[-10rem] h-[26rem] w-[26rem] rounded-full bg-violet-500/15 blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-[-12rem] right-[5%] h-[26rem] w-[26rem] rounded-full bg-fuchsia-500/10 blur-[120px]" />
-      <div className="relative mx-auto max-w-5xl">
-        <Link href="/teach/" className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> Educator workspace</Link>
+  async function stopRecording() {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    processorRef.current?.disconnect();
+    sourceRef.current?.disconnect();
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    const context = contextRef.current;
+    if (context) await context.close();
 
-        <div className="mt-10 max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[.24em] text-violet-300">Create your Mentor</p>
-          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight text-white sm:text-5xl">A familiar guide for every story world.</h1>
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-400">Start with a photo you have permission to use. This establishes your visual identity. Your voice is verified separately in Mentor Studio; MoliVerse never pairs a real face with a platform-default voice.</p>
-        </div>
+    const samples = mergeAudio(chunksRef.current);
+    setRecording(false);
 
-        <div className="mt-10 grid gap-5 lg:grid-cols-[1.05fr_.95fr]">
-          <label className="group glass-card relative min-h-[350px] cursor-pointer overflow-hidden p-6 transition hover:border-violet-300/45">
-            {photoPreview ? <img src={photoPreview} alt="Mentor portrait preview" className="absolute inset-0 h-full w-full object-cover opacity-55 transition duration-500 group-hover:scale-[1.03]" /> : <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(139,92,246,.22),transparent_46%),linear-gradient(135deg,rgba(14,12,29,.9),rgba(24,18,48,.85))]" />}
-            <div className="relative flex h-full min-h-[300px] flex-col justify-between">
-              <div className="flex items-center justify-between"><span className="rounded-full border border-violet-300/25 bg-violet-400/10 px-3 py-1 text-[11px] font-semibold tracking-wide text-violet-200">01 · YOUR PORTRAIT</span><Upload className="h-5 w-5 text-violet-200" /></div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-4 backdrop-blur-md"><p className="font-display text-xl font-semibold text-white">{photo ? "Portrait selected" : "Choose a warm, clear photo"}</p><p className="mt-1 text-xs leading-relaxed text-slate-300">Front-facing JPG or PNG. Your original stays in private storage.</p><p className="mt-3 text-xs font-medium text-violet-200">{photo?.name ?? "Tap to choose a photo"}</p></div>
+    if (!samples.length) {
+      setMessage("We did not capture any audio. Please try recording again.");
+      return;
+    }
+
+    setVoiceSample(audioSamplesToWav(samples, sampleRateRef.current));
+    processorRef.current = null;
+    sourceRef.current = null;
+    streamRef.current = null;
+    contextRef.current = null;
+  }
+
+  async function createMentor() {
+    if (!photo || !voiceFile || !consented) {
+      setMessage("Add a portrait, a voice sample, and confirm permission before continuing.");
+      return;
+    }
+
+    const profile = await getMyProfile();
+    if (!profile?.id) {
+      setMessage("Please sign in as an educator before creating a Mentor.");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const extension = photo.name.split(".").pop()?.toLowerCase() || "jpg";
+      const { data: uploadData, error: uploadError } = await supabase.functions.invoke("mentor-onboarding", {
+        body: { action: "begin-upload", kind: "photo", extension },
+      });
+      if (uploadError || !uploadData?.path || !uploadData?.token) {
+        throw new Error(uploadError?.message || uploadData?.error || "Could not prepare your portrait upload.");
+      }
+
+      const { error: photoUploadError } = await supabase.storage
+        .from("mentor-assets")
+        .uploadToSignedUrl(uploadData.path, uploadData.token, photo, {
+          contentType: photo.type || "image/jpeg",
+        });
+      if (photoUploadError) throw new Error("Could not upload your portrait. Please try again.");
+
+      const { data: mentorData, error: mentorError } = await supabase.functions.invoke("mentor-onboarding", {
+        body: {
+          action: "complete",
+          photoPath: uploadData.path,
+          consent: true,
+          language,
+          greeting,
+        },
+      });
+      if (mentorError || !mentorData?.photoUrl) {
+        throw new Error(mentorError?.message || mentorData?.error || "Could not create your visual Mentor identity.");
+      }
+
+      const formData = new FormData();
+      formData.append("action", "upload");
+      formData.append("file", voiceFile);
+      const { data: voiceUpload, error: voiceUploadError } = await supabase.functions.invoke("voice-identity", {
+        body: formData,
+      });
+      if (voiceUploadError || !voiceUpload?.audioUrl) {
+        throw new Error(voiceUploadError?.message || voiceUpload?.error || "Could not save your voice sample.");
+      }
+
+      const { data: voiceData, error: voiceError } = await supabase.functions.invoke("voice-identity", {
+        body: {
+          action: "clone",
+          audioUrl: voiceUpload.audioUrl,
+          language,
+          consent: true,
+          previewText: greeting,
+        },
+      });
+      if (voiceError || !voiceData?.mentorVoiceId) {
+        throw new Error(voiceError?.message || voiceData?.error || "Could not create your voice identity.");
+      }
+
+      const existingPersona = (await loadPersona(profile.id)) || emptyPersona;
+      await savePersona(profile.id, {
+        ...existingPersona,
+        photoUrl: mentorData.photoUrl,
+        voiceUrl: voiceUpload.audioUrl,
+        greeting,
+        voiceIdentity: {
+          provider: "minimax",
+          mentorVoiceId: voiceData.mentorVoiceId,
+          status: "ready",
+          language,
+          consentedAt: new Date().toISOString(),
+          previewUrl: voiceData.previewUrl || "",
+        },
+      });
+
+      setPreviewAudio(voiceData.previewUrl || "");
+      setStep("ready");
+    } catch (error) {
+      setMessage(errorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const minutes = Math.floor(recordedSeconds / 60);
+  const seconds = String(recordedSeconds % 60).padStart(2, "0");
+
+  if (step === "ready") {
+    return (
+      <main className="min-h-screen bg-[#080816] px-5 py-10 text-white sm:px-8">
+        <section className="mx-auto max-w-3xl rounded-[2rem] border border-emerald-200/20 bg-gradient-to-br from-emerald-500/15 via-[#131326] to-violet-500/10 p-8 shadow-2xl shadow-black/30 sm:p-12">
+          <div className="mb-7 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-300 text-[#0a1820]">
+            <CheckCircle2 size={34} />
+          </div>
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-200">Mentor identity ready</p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Your face and voice now belong together.</h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300">
+            {mentorName}&apos;s Mentor identity has a verified visual portrait and a voice created from the sample you authorised. MoliVerse will not replace it with a platform-default voice.
+          </p>
+          {previewAudio ? (
+            <div className="mt-7 rounded-2xl border border-white/10 bg-black/20 p-5">
+              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-200">
+                <Volume2 size={17} className="text-amber-200" />
+                Listen to your voice preview
+              </div>
+              <audio controls className="w-full" src={previewAudio} />
             </div>
-            <input className="hidden" type="file" accept="image/jpeg,image/png" onChange={(e) => { const file = e.target.files?.[0] ?? null; setPhoto(file); if (photoPreview) URL.revokeObjectURL(photoPreview); setPhotoPreview(file ? URL.createObjectURL(file) : null); }} />
-          </label>
+          ) : null}
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link href="/teach/studio/" className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-amber-100">
+              Design your story presence <Sparkles size={17} />
+            </Link>
+            <Link href="/teach/collections/" className="inline-flex items-center justify-center rounded-full border border-white/15 px-5 py-3 font-semibold text-white transition hover:border-white/35 hover:bg-white/5">
+              Build your first course
+            </Link>
+          </div>
+          <p className="mt-7 text-sm leading-6 text-slate-400">
+            Next, you will choose how your Mentor appears inside each Story World. Live visual sessions are enabled only after a renderer confirms that it can use this verified voice.
+          </p>
+        </section>
+      </main>
+    );
+  }
 
-          <div className="flex flex-col gap-5">
-            <section className="glass-card p-6"><p className="text-xs font-semibold uppercase tracking-[.2em] text-cyan-300">02 · FIRST HELLO</p><div className="mt-4 flex flex-col gap-3"><select value={language} onChange={(e) => setLanguage(e.target.value)} className="h-11 rounded-xl border border-white/10 bg-slate-950/70 px-3 text-sm text-white outline-none focus:border-violet-300/50"><option>English</option><option>French</option><option>Spanish</option><option>Portuguese</option><option>Chinese</option><option>Malay</option></select><textarea value={greeting} onChange={(e) => setGreeting(e.target.value)} rows={3} className="rounded-xl border border-white/10 bg-white/[.04] px-3 py-2.5 text-sm leading-relaxed text-white outline-none focus:border-violet-300/50" aria-label="Mentor greeting" /></div><p className="mt-3 text-xs leading-relaxed text-slate-500">The first welcome video uses a clearly labelled temporary HeyGen platform voice. You can add your own authorised voice later.</p></section>
-            <section className="glass-card border-amber-300/15 bg-amber-300/[.035] p-6"><p className="text-xs font-semibold uppercase tracking-[.2em] text-amber-200">03 · PERMISSION</p><label className="mt-4 flex cursor-pointer items-start gap-3 text-sm leading-relaxed text-slate-300"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 h-4 w-4 accent-violet-400" /><span>I own this adult photo, or have documented permission to create a Mentor from it. I understand the first welcome uses HeyGen&apos;s platform voice.</span></label></section>
+  return (
+    <main className="min-h-screen bg-[#080816] px-5 py-8 text-white sm:px-8 sm:py-12">
+      <section className="mx-auto max-w-5xl">
+        <Link href="/teach/" className="mb-8 inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white">
+          <ArrowLeft size={16} /> Back to educator space
+        </Link>
+
+        <div className="grid overflow-hidden rounded-[2rem] border border-white/10 bg-[#101022] shadow-2xl shadow-black/30 lg:grid-cols-[0.85fr_1.15fr]">
+          <aside className="relative overflow-hidden border-b border-white/10 bg-gradient-to-br from-[#251a4a] via-[#16152c] to-[#09212a] p-8 lg:border-b-0 lg:border-r lg:p-10">
+            <div className="absolute -right-14 top-10 h-52 w-52 rounded-full bg-amber-300/20 blur-3xl" />
+            <div className="relative">
+              <div className="inline-flex items-center gap-2 rounded-full border border-amber-100/15 bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-amber-100">
+                <Sparkles size={14} /> Create your Mentor
+              </div>
+              <h1 className="mt-6 text-4xl font-semibold leading-[1.08] tracking-tight">A real teacher, ready for a new kind of classroom.</h1>
+              <p className="mt-5 max-w-sm text-sm leading-7 text-slate-300">
+                Upload a portrait and record your own voice. MoliVerse keeps them as one authorised Mentor identity—never a teacher face with a random default voice.
+              </p>
+
+              <div className="mt-10 space-y-5">
+                {[
+                  ["01", "Your portrait", "A clear photo of the educator."],
+                  ["02", "Your real voice", "Record here or upload a sample."],
+                  ["03", "Your permission", "You stay in control of your identity."],
+                ].map(([number, title, description]) => (
+                  <div key={number} className="flex gap-4">
+                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-100/25 text-xs font-semibold text-amber-100">{number}</span>
+                    <div>
+                      <p className="font-medium text-white">{title}</p>
+                      <p className="mt-1 text-sm text-slate-400">{description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          <div className="p-6 sm:p-10">
+            <div className="mb-8">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-violet-200">Identity setup</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight">Build your verified Mentor identity</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-400">A 60–120 second sample works best. Please speak naturally, as you would to a learner.</p>
+            </div>
+
+            <div className="space-y-7">
+              <div>
+                <label className="mb-3 block text-sm font-medium text-slate-200">1. Choose a portrait</label>
+                <label className="group flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed border-white/20 bg-white/[0.025] p-4 transition hover:border-violet-300/60 hover:bg-violet-300/[0.05]">
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Mentor portrait preview" className="h-20 w-20 rounded-xl object-cover" />
+                  ) : (
+                    <span className="flex h-20 w-20 items-center justify-center rounded-xl bg-violet-400/10 text-violet-200"><ImagePlus size={27} /></span>
+                  )}
+                  <span>
+                    <span className="block font-medium text-white">{photo ? photo.name : "Upload a clear photo of yourself"}</span>
+                    <span className="mt-1 block text-sm text-slate-400">JPG, PNG, or WEBP. A front-facing portrait works best.</span>
+                  </span>
+                  <Upload size={18} className="ml-auto text-slate-400 transition group-hover:text-violet-200" />
+                  <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    const file = event.target.files?.[0];
+                    if (file) setPhotoFile(file);
+                  }} />
+                </label>
+              </div>
+
+              <div>
+                <label className="mb-3 block text-sm font-medium text-slate-200">2. Record your voice or upload a sample</label>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <button type="button" onClick={recording ? stopRecording : startRecording} className={"inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 font-semibold transition " + (recording ? "bg-rose-400 text-[#22080f] hover:bg-rose-300" : "bg-violet-300 text-[#180f29] hover:bg-violet-200")}>
+                      {recording ? <Square size={17} fill="currentColor" /> : <Mic size={17} />}
+                      {recording ? "Stop recording" : "Record in browser"}
+                    </button>
+                    <span className={"text-sm " + (recording ? "text-rose-200" : "text-slate-400")}>
+                      {recording ? "Recording " + minutes + ":" + seconds : "Recommended: 60–120 seconds"}
+                    </span>
+                    <span className="hidden text-slate-600 sm:inline">or</span>
+                    <label className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/15 px-4 text-sm font-semibold text-slate-200 transition hover:border-white/35 hover:bg-white/5">
+                      <Upload size={16} /> Upload audio
+                      <input className="sr-only" type="file" accept=".mp3,.m4a,.wav,audio/mpeg,audio/wav,audio/mp4" onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                        const file = event.target.files?.[0];
+                        if (file) setVoiceSample(file);
+                      }} />
+                    </label>
+                  </div>
+                  {voiceFile ? (
+                    <div className="mt-4 rounded-xl border border-emerald-200/15 bg-emerald-400/[0.06] p-3">
+                      <div className="flex items-center gap-2 text-sm text-emerald-100"><Check size={16} /> Voice sample ready: {voiceFile.name}</div>
+                      {voicePreview ? <audio controls className="mt-3 w-full" src={voicePreview} /> : null}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-6 text-slate-500">Try: “Hello, I&apos;m [your name]. I love helping learners notice the stories inside language…”</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block text-sm font-medium text-slate-200">
+                  Teaching language
+                  <select value={language} onChange={(event) => setLanguage(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0a0a18] px-3 py-3 text-sm text-white outline-none transition focus:border-violet-300">
+                    <option>English</option>
+                    <option>Chinese</option>
+                    <option>Spanish</option>
+                    <option>Portuguese</option>
+                    <option>French</option>
+                    <option>German</option>
+                    <option>Japanese</option>
+                  </select>
+                </label>
+                <label className="block text-sm font-medium text-slate-200">
+                  First greeting
+                  <input value={greeting} onChange={(event) => setGreeting(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0a0a18] px-3 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300" />
+                </label>
+              </div>
+
+              <label className="flex cursor-pointer gap-3 rounded-2xl border border-amber-100/10 bg-amber-100/[0.035] p-4">
+                <input type="checkbox" checked={consented} onChange={(event) => setConsented(event.target.checked)} className="mt-1 h-4 w-4 accent-amber-300" />
+                <span className="text-sm leading-6 text-slate-300">
+                  <span className="flex items-center gap-2 font-medium text-amber-100"><ShieldCheck size={16} /> I confirm I own this photo and voice, or have clear permission to use them.</span>
+                  I authorise MoliVerse to create this Mentor identity for my teaching experience. I understand I can later change or remove it.
+                </span>
+              </label>
+
+              {message ? <p role="alert" className="rounded-xl border border-rose-300/20 bg-rose-400/[0.08] px-4 py-3 text-sm text-rose-100">{message}</p> : null}
+
+              <button type="button" disabled={loading || recording} onClick={createMentor} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-200 to-violet-300 px-5 py-4 font-semibold text-[#170d24] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-55">
+                {loading ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                {loading ? "Creating your Mentor identity…" : "Build my Mentor identity"}
+              </button>
+
+              <p className="text-center text-xs leading-5 text-slate-500">Your photo and voice are only uploaded when you select “Build my Mentor identity.” We do not use a default platform voice for your Mentor.</p>
+            </div>
           </div>
         </div>
-
-        <div className="mt-5 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="text-xs leading-relaxed text-slate-500"><span className="font-semibold text-slate-300">What happens next:</span> private upload → HeyGen visual Mentor → welcome video in Story Stage.</div><button disabled={busy || status === "ready"} onClick={create} className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-3 text-sm font-semibold text-white shadow-[0_0_36px_-10px_rgba(168,85,247,.75)] transition enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : status === "ready" ? <Check className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}{busy ? "Building your Mentor…" : status === "ready" ? "Mentor ready" : "Create my Mentor"}</button></div>
-        {message && <p className={`mt-5 max-w-2xl rounded-2xl border px-4 py-3 text-sm leading-relaxed ${status === "error" ? "border-rose-400/30 bg-rose-400/10 text-rose-100" : "border-violet-400/20 bg-violet-400/[.06] text-slate-300"}`}>{status === "ready" && <ShieldCheck className="mr-2 inline h-4 w-4 text-emerald-300" />}{message}</p>}
-        {status === "ready" && <Link href="/teach/studio/" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-violet-200 transition hover:text-white">Continue to Mentor Studio <ArrowLeft className="h-4 w-4 rotate-180" /></Link>}
-      </div>
+      </section>
     </main>
   );
+}
+
+declare global {
+  interface Window {
+    webkitAudioContext?: typeof AudioContext;
+  }
 }
