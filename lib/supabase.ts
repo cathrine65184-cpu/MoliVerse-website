@@ -136,6 +136,14 @@ export type CourseLessonContent = {
   mentor_context: string;
   human_moment_rules: string[];
   lesson_steps: unknown[];
+  interactive_config?: {
+    type: "choice";
+    title: string;
+    prompt: string;
+    options: string[];
+    answer: number;
+    success: string;
+  };
 };
 
 /**

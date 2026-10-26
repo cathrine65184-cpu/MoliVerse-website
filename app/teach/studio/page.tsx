@@ -648,7 +648,7 @@ export default function TeacherStudioPage() {
                   <h2 className="font-display text-base font-semibold text-white">First, create a journey a child wants to enter.</h2>
                   <p className="mt-1 text-sm leading-relaxed text-slate-400">Begin with a cultural world, a story question, and a moment when you will show up. Photo, voice, and movement are optional expression layers.</p>
                   <Link href="/teach/collections/" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-2 text-xs font-semibold text-white">
-                    Build from your Teacher DNA <ArrowLeft className="h-3.5 w-3.5 rotate-180" />
+                    Open Course Architect Agent <Sparkles className="h-3.5 w-3.5" />
                   </Link>
                 </div>
               </div>
