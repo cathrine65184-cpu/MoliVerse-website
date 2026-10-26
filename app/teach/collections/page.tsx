@@ -7,7 +7,8 @@ import { getMyProfile, supabase, type TeacherDNA } from "@/lib/supabase";
 
 type Interactive = { type: "choice"; title: string; prompt: string; options: string[]; answer: number; success: string };
 type Lesson = { title: string; description: string; storyBeat: string; objectives: string[]; vocabulary: string[]; mentorContext: string; humanMomentRules: string[]; steps: unknown[]; interactive: Interactive };
-type Blueprint = { collection: { title: string; description: string; language: string; ageRange: string; world: string; storyQuestion: string; humanMomentPolicy: string }; lessons: Lesson[] };
+type LessonPlan = { position: number; title: string; promise: string; interactiveIdea: string };
+type Blueprint = { collection: { title: string; description: string; language: string; ageRange: string; world: string; storyQuestion: string; humanMomentPolicy: string }; lessons: Lesson[]; lessonPlan?: LessonPlan[] };
 type Brief = { idea: string; learners: string; outcome: string; world: string; language: string; ageRange: string };
 const emptyDNA: TeacherDNA = { teacher_id: "", personality: "", teaching_style: "", stories: "", memories: "", values: "", course_world: "" };
 const emptyBrief: Brief = { idea: "", learners: "", outcome: "", world: "", language: "English", ageRange: "6–12" };
@@ -34,6 +35,21 @@ export default function CourseArchitectPage() {
     });
   }, [blueprint, lessonStage]);
 
+  useEffect(() => {
+    if (!blueprint || lessonStage <= blueprint.lessons.length) return;
+    let cancelled = false;
+    setBusy("make");
+    supabase.functions.invoke("course-architect", { body: { action: "develop", brief, blueprint, position: lessonStage } }).then(({ data }) => {
+      const lesson = (data as { lesson?: Lesson })?.lesson;
+      if (!cancelled && lesson) {
+        setBlueprint((current) => current ? { ...current, lessons: [...current.lessons, lesson] } : current);
+        setNotice("Lesson " + lessonStage + " is ready for your review.");
+      }
+      if (!cancelled) setBusy("");
+    });
+    return () => { cancelled = true; };
+  }, [lessonStage, blueprint?.lessons.length]);
+
   useEffect(() => { getMyProfile().then(async (me) => {
     if (!me || me.role !== "teacher") { setNotice("Sign in with an educator account to work with Course Architect."); setLoading(false); return; }
     const [{ data: savedDNA }, { data: savedDraft }] = await Promise.all([
@@ -51,7 +67,23 @@ export default function CourseArchitectPage() {
   const setDnaValue = (key: keyof TeacherDNA, value: string) => setDna((d) => ({ ...d, [key]: value }));
   const setBriefValue = (key: keyof Brief, value: string) => setBrief((b) => ({ ...b, [key]: value }));
   async function saveDNA() { if (!dna.teacher_id) return; const { error } = await supabase.from("teacher_dna").upsert({ ...dna, updated_at: new Date().toISOString() }, { onConflict: "teacher_id" }); setNotice(error ? "Teacher DNA could not be saved." : "Teacher DNA saved — this is what gives your Mentor a recognisable teaching voice."); }
-  async function call(action: "synthesize" | "revise") { setBusy(action === "revise" ? "revise" : "make"); await saveDNA(); const { data, error } = await supabase.functions.invoke("course-architect", { body: { action, brief, revision } }); setBusy(""); if (error || !(data as { blueprint?: Blueprint })?.blueprint) { setNotice("Course Architect could not make a blueprint yet. Please try again."); return; } setBlueprint((data as { blueprint: Blueprint }).blueprint); if (action === "synthesize") setLessonStage(1); setRevision(""); setNotice(action === "revise" ? "This chapter has been reworked. Keep refining until it feels like you." : "Your five-part learning arc is ready. Develop one lesson at a time."); }
+  async function call(action: "synthesize" | "revise") {
+    setBusy(action === "revise" ? "revise" : "make"); await saveDNA();
+    if (action === "synthesize") {
+      const { data, error } = await supabase.functions.invoke("course-architect", { body: { action: "plan", brief } });
+      const map = (data as { blueprint?: Blueprint })?.blueprint;
+      if (error || !map) { setBusy(""); setNotice("Course Architect could not make a course map yet. Please try again."); return; }
+      const developed = await supabase.functions.invoke("course-architect", { body: { action: "develop", brief, blueprint: map, position: 1 } });
+      const lesson = (developed.data as { lesson?: Lesson })?.lesson;
+      setBusy(""); if (!lesson) { setNotice("The course map is ready, but lesson 1 needs another try."); setBlueprint(map); return; }
+      setBlueprint({ ...map, lessons: [lesson] }); setLessonStage(1); setRevision(""); setNotice("Your five-part map is ready. Now craft lesson 1 before opening lesson 2."); return;
+    }
+    if (!blueprint) { setBusy(""); return; }
+    const developed = await supabase.functions.invoke("course-architect", { body: { action: "develop", brief, blueprint, position: lessonStage, revision } });
+    const lesson = (developed.data as { lesson?: Lesson })?.lesson;
+    setBusy(""); if (!lesson) { setNotice("Course Architect could not rework this lesson yet."); return; }
+    setBlueprint({ ...blueprint, lessons: blueprint.lessons.map((item, index) => index === lessonStage - 1 ? lesson : item) }); setRevision(""); setNotice("This chapter has been reworked. Keep refining until it feels like you.");
+  }
   async function saveDraft() { if (!blueprint) return; setBusy("save"); const { data, error } = await supabase.functions.invoke("course-architect", { body: { action: "save", draftId, brief, blueprint } }); setBusy(""); if (error || !(data as { draft?: { id: string } })?.draft) { setNotice("Your private draft could not be saved."); return; } setDraftId((data as { draft: { id: string } }).draft.id); setNotice("Saved privately. Children cannot see this yet."); }
   async function publish() { if (!draftId) { setNotice("Save the draft once before publishing it."); return; } setBusy("publish"); const { data, error } = await supabase.functions.invoke("course-architect", { body: { action: "publish", draftId } }); setBusy(""); const id = (data as { collectionId?: string })?.collectionId; if (error || !id) { setNotice("Publishing did not finish. Your draft remains private."); return; } setNotice("Published — your five-lesson collection is now ready for the marketplace."); window.setTimeout(() => { window.location.href = `/collection/?id=${id}`; }, 900); }
   const updateLesson = (index: number, key: keyof Lesson, value: string | string[]) => setBlueprint((current) => current ? { ...current, lessons: current.lessons.map((lesson, i) => i === index ? { ...lesson, [key]: value } : lesson) } : current);

@@ -3,7 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const cors = { "Access-Control-Allow-Origin": "https://moliverse.tech", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 type Lesson = { title: string; description: string; storyBeat: string; objectives: string[]; vocabulary: string[]; mentorContext: string; humanMomentRules: string[]; steps: unknown[]; interactive: { type: "choice"; title: string; prompt: string; options: string[]; answer: number; success: string } };
-type Blueprint = { collection: { title: string; description: string; language: string; ageRange: string; world: string; storyQuestion: string; humanMomentPolicy: string }; lessons: Lesson[] };
+type LessonPlan = { position: number; title: string; promise: string; interactiveIdea: string };
+type Blueprint = { collection: { title: string; description: string; language: string; ageRange: string; world: string; storyQuestion: string; humanMomentPolicy: string }; lessons: Lesson[]; lessonPlan?: LessonPlan[] };
 
 function safeText(value: unknown, max = 1200) { return String(value ?? "").slice(0, max); }
 function fallback(dna: Record<string, string>, brief: Record<string, unknown>): Blueprint {
@@ -19,11 +20,36 @@ function fallback(dna: Record<string, string>, brief: Record<string, unknown>): 
 }
 
 function valid(input: unknown): input is Blueprint { const item = input as Blueprint; return !!item?.collection?.title && Array.isArray(item.lessons) && item.lessons.length === 5; }
+function hasPlan(input: unknown): input is Blueprint {
+  const item = input as Blueprint;
+  return !!item?.collection?.title && ((Array.isArray(item.lessonPlan) && item.lessonPlan.length === 5) || (Array.isArray(item.lessons) && item.lessons.length === 5));
+}
+function planFrom(blueprint: Blueprint): LessonPlan[] {
+  if (blueprint.lessonPlan?.length === 5) return blueprint.lessonPlan;
+  return blueprint.lessons.map((lesson, index) => ({ position: index + 1, title: lesson.title, promise: lesson.description, interactiveIdea: lesson.interactive?.title || "Story challenge" }));
+}
+function planFallback(dna: Record<string, string>, brief: Record<string, unknown>): Blueprint {
+  const full = fallback(dna, brief);
+  return { collection: full.collection, lessonPlan: planFrom(full), lessons: [] };
+}
 
 async function generate(dna: Record<string, string>, brief: Record<string, unknown>, revision = "") {
   const backup = fallback(dna, brief); const key = Deno.env.get("DEEPSEEK_KEY"); if (!key) return backup;
   const prompt = `You are MoliVerse Course Architect. Co-design an original, child-safe, story-led language course with an educator. Return JSON only, exactly matching {collection:{title,description,language,ageRange,world,storyQuestion,humanMomentPolicy},lessons:[{title,description,storyBeat,objectives,vocabulary,mentorContext,humanMomentRules,steps,interactive}]}. Exactly 5 sequential lessons. interactive must be {type:"choice",title,prompt,options:[3 short strings],answer:0|1|2,success}. Each lesson must feel meaningfully different and create a real, small interactive H5 moment. Do not use copyrighted characters, plots, or dialogue. Never infantilise children or make generic claims. Core learning stays in ${safeText(brief.language || "English", 30)}; other language help is brief and only on request. Educator DNA: personality=${safeText(dna.personality)}; style=${safeText(dna.teaching_style)}; stories=${safeText(dna.stories)}; memories=${safeText(dna.memories)}; values=${safeText(dna.values)}; world=${safeText(brief.world || dna.course_world)}. Educator’s idea: ${safeText(brief.idea)}. Learners: ${safeText(brief.learners)}. Desired child outcome: ${safeText(brief.outcome)}. Revision request: ${safeText(revision)}.`;
   try { const r = await fetch("https://api.deepseek.com/chat/completions", { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: "deepseek-chat", response_format: { type: "json_object" }, temperature: 0.5, max_tokens: 6500, messages: [{ role: "user", content: prompt }] }) }); const body = await r.json(); const generated = JSON.parse(body?.choices?.[0]?.message?.content ?? "null"); return valid(generated) ? generated : backup; } catch { return backup; }
+}
+async function generatePlan(dna: Record<string, string>, brief: Record<string, unknown>): Promise<Blueprint> {
+  const backup = planFallback(dna, brief);
+  const key = Deno.env.get("DEEPSEEK_KEY"); if (!key) return backup;
+  const prompt = "You are MoliVerse Course Architect. Create only a five-lesson learning arc, never detailed lessons. Return JSON only: {collection:{title,description,language,ageRange,world,storyQuestion,humanMomentPolicy},lessonPlan:[{position,title,promise,interactiveIdea}],lessons:[]}. Exactly five original, child-safe sequential lessons. No copyrighted characters, plots, or dialogue. Teacher DNA: personality=" + safeText(dna.personality) + "; teaching style=" + safeText(dna.teaching_style) + "; stories=" + safeText(dna.stories) + "; values=" + safeText(dna.values) + ". Idea=" + safeText(brief.idea) + ". Learners=" + safeText(brief.learners) + ". Outcome=" + safeText(brief.outcome);
+  try { const r = await fetch("https://api.deepseek.com/chat/completions", { method: "POST", headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" }, body: JSON.stringify({ model: "deepseek-chat", response_format: { type: "json_object" }, temperature: 0.45, max_tokens: 2200, messages: [{ role: "user", content: prompt }] }) }); const body = await r.json(); const output = JSON.parse(body?.choices?.[0]?.message?.content ?? "null") as Blueprint; return hasPlan(output) ? { ...output, lessons: [] } : backup; } catch { return backup; }
+}
+async function generateOne(dna: Record<string, string>, brief: Record<string, unknown>, blueprint: Blueprint, position: number, revision: string): Promise<Lesson | null> {
+  const plan = planFrom(blueprint)[position - 1]; if (!plan) return null;
+  const backup = fallback(dna, brief).lessons[position - 1];
+  const key = Deno.env.get("DEEPSEEK_KEY"); if (!key) return backup;
+  const prompt = "You are MoliVerse Course Architect. Craft ONLY lesson " + position + " of this agreed course map. Return JSON only: {lesson:{title,description,storyBeat,objectives,vocabulary,mentorContext,humanMomentRules,steps,interactive}}. steps must have 5-8 child-safe steps using intro/card/move/quiz/finale. interactive must be {type:'choice',title,prompt,options:[3 short strings],answer:0|1|2,success}. Do not generate other lessons. Make this specific to the educator, not generic. Teacher DNA: personality=" + safeText(dna.personality) + "; style=" + safeText(dna.teaching_style) + "; stories=" + safeText(dna.stories) + "; values=" + safeText(dna.values) + ". Course brief=" + JSON.stringify(brief) + ". Current lesson plan=" + JSON.stringify(plan) + ". Refinement request=" + safeText(revision);
+  try { const r = await fetch("https://api.deepseek.com/chat/completions", { method: "POST", headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" }, body: JSON.stringify({ model: "deepseek-chat", response_format: { type: "json_object" }, temperature: 0.45, max_tokens: 2800, messages: [{ role: "user", content: prompt }] }) }); const body = await r.json(); const output = JSON.parse(body?.choices?.[0]?.message?.content ?? "null")?.lesson as Lesson; return output?.title && Array.isArray(output.steps) ? output : backup; } catch { return backup; }
 }
 
 Deno.serve(async (req) => {
@@ -34,8 +60,10 @@ Deno.serve(async (req) => {
   const admin = createClient(url, service, { auth: { persistSession: false } }); const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).maybeSingle();
   if (profile?.role !== "teacher") return json({ error: "Only educator accounts can use Course Architect." }, 403);
   const body = await req.json().catch(() => ({})); const { data: dnaRow } = await admin.from("teacher_dna").select("*").eq("teacher_id", user.id).maybeSingle(); const dna = (dnaRow ?? {}) as Record<string, string>;
+  if (body.action === "plan") return json({ blueprint: await generatePlan(dna, body.brief ?? {}), dna });
+  if (body.action === "develop") { if (!hasPlan(body.blueprint)) return json({ error: "Create a five-lesson map first." }, 400); return json({ lesson: await generateOne(dna, body.brief ?? {}, body.blueprint, Number(body.position), body.revision ?? "") }); }
   if (body.action === "synthesize" || body.action === "revise") { const blueprint = await generate(dna, body.brief ?? {}, body.revision ?? ""); return json({ blueprint, dna }); }
-  if (body.action === "save") { if (!valid(body.blueprint)) return json({ error: "A draft needs exactly five lessons." }, 400); const row = { teacher_id: user.id, brief: body.brief ?? {}, blueprint: body.blueprint, status: "draft", updated_at: new Date().toISOString() }; const query = body.draftId ? admin.from("course_architect_drafts").update(row).eq("id", body.draftId).eq("teacher_id", user.id).select().single() : admin.from("course_architect_drafts").insert(row).select().single(); const { data, error } = await query; return error ? json({ error: "Could not save your private draft." }, 500) : json({ draft: data }); }
+  if (body.action === "save") { if (!hasPlan(body.blueprint)) return json({ error: "A draft needs a five-lesson map." }, 400); const row = { teacher_id: user.id, brief: body.brief ?? {}, blueprint: body.blueprint, status: "draft", updated_at: new Date().toISOString() }; const query = body.draftId ? admin.from("course_architect_drafts").update(row).eq("id", body.draftId).eq("teacher_id", user.id).select().single() : admin.from("course_architect_drafts").insert(row).select().single(); const { data, error } = await query; return error ? json({ error: "Could not save your private draft." }, 500) : json({ draft: data }); }
   if (body.action !== "publish") return json({ error: "Unknown action." }, 400);
   const { data: draft } = await admin.from("course_architect_drafts").select("*").eq("id", body.draftId).eq("teacher_id", user.id).maybeSingle(); if (!draft || !valid(draft.blueprint)) return json({ error: "Save a complete five-lesson draft before publishing." }, 400);
   const blueprint = draft.blueprint as Blueprint; const collectionId = crypto.randomUUID(); const { error: collError } = await admin.from("course_collections").insert({ id: collectionId, teacher_id: user.id, title: blueprint.collection.title, description: blueprint.collection.description, language: blueprint.collection.language, age_range: blueprint.collection.ageRange, world: blueprint.collection.world, story_question: blueprint.collection.storyQuestion, human_moment_policy: blueprint.collection.humanMomentPolicy, status: "published", teacher_dna_snapshot: dna }); if (collError) return json({ error: "Could not publish this collection." }, 500);
