@@ -14,6 +14,18 @@ assert.equal(bakery.theme, 'bakery');
 assert.equal(bakery.level, 'Beginner French');
 assert.equal(bakery.title, 'The Magic Bakery');
 assert.deepEqual(validateCourse(bakery), []);
+for (const [brief, theme, title] of [
+  ['A child explores a museum to find a missing painting.', 'museum', 'The Museum After Midnight'],
+  ['A child helps a farmer find a lost sunflower on a farm.', 'farm', 'The Sunflower Farm'],
+  ['A child helps a classmate find a missing book at school.', 'school', 'The School of Curious Ideas'],
+  ['A child follows a map to find a hidden pyramid in the desert.', 'desert', 'The Desert of Hidden Clues'],
+  ['A child helps a turtle find glowing shells under the ocean.', 'ocean', 'The Secret Ocean'],
+]) {
+  const generated = createWorldFromIdea(brief);
+  assert.equal(generated.theme, theme);
+  assert.equal(generated.title, title);
+  assert.deepEqual(validateCourse(generated), []);
+}
 assert.match(worldIdeaQuestion('hello'), /Where should/);
 assert.match(worldIdeaQuestion('A bakery in Paris'), /Who will/);
 assert.match(worldIdeaQuestion('A child meets a baker in a Paris bakery'), /problem or mission/);
@@ -36,7 +48,11 @@ for (const patch of [
   { target: 'object', id: 'missing', field: 'label', value: 'no' },
 ]) assert.throws(() => applyPatches(course, [patch]));
 assert.equal(applyPatches(course, offlineEdit(course, 'Make the lighting warmer', 'fruit')).warmth, .85);
-assert.equal(applyPatches(course, offlineEdit(course, 'Turn this into a moon library', 'fruit')).theme, 'space');
+const spaceEdit = applyPatches(course, offlineEdit(course, 'Turn this into a moon library', 'fruit'));
+assert.equal(spaceEdit.theme, 'space');
+assert.equal(spaceEdit.objects[0].label, 'Moon gate');
+assert.equal(spaceEdit.objects[1].label, 'Planet lab');
+assert.match(spaceEdit.objects[1].dialogue, /space word/i);
 assert.deepEqual(offlineEdit(course, 'unknown request', 'fruit'), []);
 const release = structuredClone(course);
 updated.objects[1].label = 'Later draft';
@@ -48,4 +64,4 @@ assert.equal(migrated.mentor.name, 'Moli');
 assert.equal(migrated.mentor.photo, '/mascot.png');
 assert.equal(migrated.mentor.voiceId, '');
 assert.equal(migrated.tasks[0].title, 'Meet Moli');
-console.log('PASS: schema, six tasks, shared edits, immutability, unsafe patch rejection, release isolation, legacy Mentor → Moli migration.');
+console.log('PASS: schema, distinct brief-driven themes, six tasks, shared edits, immutability, unsafe patch rejection, release isolation, legacy Mentor → Moli migration.');

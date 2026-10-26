@@ -4,7 +4,7 @@ export type Material = { id: string; name: string; kind: 'text' | 'image'; text:
 export type CourseWorld = {
   schemaVersion: 1; id: string; revision: number; title: string; ages: string; level: string; minutes: number;
   objectives: string[]; source: 'blank' | 'demo' | 'agent' | 'edited'; warmth: number;
-  theme: 'blank' | 'market' | 'bakery' | 'forest' | 'ocean' | 'space' | 'city' | 'castle' | 'library';
+  theme: 'blank' | 'market' | 'bakery' | 'forest' | 'ocean' | 'space' | 'city' | 'castle' | 'library' | 'museum' | 'farm' | 'school' | 'desert';
   objects: SceneObject[]; tasks: Task[]; materials: Material[];
   dna: { personality: string; teaching_style: string; stories: string; memories: string; values: string; course_world: string };
   mentor: { name: string; photo: string; voiceId: string; style: string; opening: string; correction: string; hintStrength: number; humanMoment: string };
@@ -29,7 +29,11 @@ function titleFromIdea(idea: string) {
   if (/moon|space|planet|月球|太空|星球/i.test(idea)) return 'The Moonlight Mission';
   if (/forest|jungle|森林|丛林/i.test(idea)) return 'The Whispering Forest';
   if (/castle|kingdom|城堡|王国/i.test(idea)) return 'The Hidden Castle';
+  if (/school|classroom|校园|学校|教室/i.test(idea)) return 'The School of Curious Ideas';
   if (/library|book|图书馆|书店/i.test(idea)) return 'The Library of Lost Words';
+  if (/museum|gallery|博物馆|美术馆/i.test(idea)) return 'The Museum After Midnight';
+  if (/farm|barn|农场|牧场/i.test(idea)) return 'The Sunflower Farm';
+  if (/desert|pyramid|沙漠|金字塔/i.test(idea)) return 'The Desert of Hidden Clues';
   if (/market|night market|夜市|市集/i.test(idea)) return 'The Night-Market Mystery';
   return clean.slice(0, 64) || 'My MoliVerse Story';
 }
@@ -40,7 +44,11 @@ function themeFromIdea(idea: string): CourseWorld['theme'] {
   if (/moon|space|planet|月球|太空|星球/i.test(idea)) return 'space';
   if (/forest|jungle|森林|丛林/i.test(idea)) return 'forest';
   if (/castle|kingdom|城堡|王国/i.test(idea)) return 'castle';
+  if (/school|classroom|校园|学校|教室/i.test(idea)) return 'school';
   if (/library|book|图书馆|书店/i.test(idea)) return 'library';
+  if (/museum|gallery|博物馆|美术馆/i.test(idea)) return 'museum';
+  if (/farm|barn|农场|牧场/i.test(idea)) return 'farm';
+  if (/desert|pyramid|沙漠|金字塔/i.test(idea)) return 'desert';
   if (/market|night market|夜市|市集/i.test(idea)) return 'market';
   return 'city';
 }
@@ -49,7 +57,7 @@ export function worldIdeaQuestion(idea: string): string | null {
   const text = idea.trim();
   const isGreeting = /^(hi|hello|hey|你好|嗨|哈喽|在吗)[!！。. ]*$/i.test(text);
   if (!text || isGreeting) return 'Hi! Where should our story happen — and who will the player meet there?';
-  const hasPlace = /bakery|school|market|city|village|forest|jungle|ocean|sea|island|space|moon|planet|castle|kingdom|library|museum|park|farm|café|cafe|shop|巴黎|学校|夜市|城市|村庄|森林|海洋|海底|岛|太空|月球|星球|城堡|王国|图书馆|博物馆|公园|农场|咖啡|商店/i.test(text);
+  const hasPlace = /bakery|school|market|city|village|forest|jungle|ocean|sea|island|space|moon|planet|castle|kingdom|library|museum|gallery|park|farm|desert|pyramid|café|cafe|shop|巴黎|学校|教室|夜市|城市|村庄|森林|海洋|海底|岛|太空|月球|星球|城堡|王国|图书馆|博物馆|美术馆|公园|农场|沙漠|金字塔|咖啡|商店/i.test(text);
   const hasAction = /help|find|look for|search|solve|save|make|build|learn|practi[cs]e|discover|collect|escape|rescue|lost|missing|challenge|帮助|寻找|找到|解决|拯救|制作|学习|练习|发现|收集|迷路|丢失|挑战/i.test(text);
   const hasCharacter = /\b(?:child|children|kid|girl|boy|teacher|baker|grandma|friend|dragon|animal|cat|dog|turtle|robot|witch|princess|player)\b|孩子|小朋友|女孩|男孩|老师|面包师|奶奶|朋友|龙|动物|猫|狗|乌龟|机器人|女巫|公主|玩家/i.test(text);
   if (!hasPlace) return 'Where should this story happen? Try a bakery, an island, a moon library, or a place from your own imagination.';
@@ -73,22 +81,31 @@ export function createWorldFromIdea(idea: string): CourseWorld {
     city: ['Story gate', 'Word garden', 'Little library', 'Friendship café'],
     castle: ['Castle gate', 'Potion garden', 'Map room', 'Great hall'],
     library: ['Library door', 'Whispering shelf', 'Map table', 'Story window'],
+    museum: ['Museum steps', 'Dinosaur hall', 'Painting gallery', 'Secret archive'],
+    farm: ['Farm gate', 'Sunflower field', 'Friendly barn', 'Picnic tree'],
+    school: ['School gate', 'Word classroom', 'Science corner', 'Story stage'],
+    desert: ['Desert camp', 'Oasis clues', 'Ancient map', 'Hidden pyramid'],
   };
   const [gate, first, second, finale] = placeNames[theme === 'blank' ? 'city' : theme];
   const palette: Record<Exclude<CourseWorld['theme'], 'blank'>, string[]> = {
     market: ['#d99b53','#d17875','#e8b75e'], bakery: ['#d79a62','#95a777','#e5b766'], forest: ['#7fa36b','#bf8a9b','#e2bd63'], ocean: ['#5ba9b5','#7c8fc7','#efbc73'], space: ['#7b70c7','#4fa6b6','#e2a45e'], city: ['#e4a957','#93b2aa','#d68c99'], castle: ['#9677b5','#6c91a7','#d8ab67'], library: ['#b7875c','#718f86','#d1a65c'],
+    museum: ['#b98163','#7e9e9a','#c5a65e'], farm: ['#7ca66f','#d6a55f','#be7d65'], school: ['#668ead','#e0a85f','#8aaa77'], desert: ['#d29a58','#c47455','#8da09b'],
   };
   const colors = palette[theme === 'blank' ? 'city' : theme];
+  const layouts: Record<Exclude<CourseWorld['theme'], 'blank'>, [[number,number],[number,number],[number,number],[number,number]]> = {
+    market:[[-4.8,3.5],[-3.6,-1.2],[.2,-2.2],[4.2,-1.2]], bakery:[[-5,3.2],[-3.7,-.8],[.2,-2.4],[4.5,-.6]], forest:[[-5,3.8],[-3.2,-1.5],[.8,-3],[4.5,.4]], ocean:[[-5,3.4],[-3,-1.3],[1,-2.8],[5,1]], space:[[-5,3.2],[-3.4,-1],[.4,-2.8],[4.8,.2]], city:[[-5,3.4],[-3.8,-1.3],[.2,-2.4],[4.4,-.8]], castle:[[-5,3.8],[-3,-1.8],[.7,-2.6],[4.6,.3]], library:[[-5,3.2],[-3.5,-1],[.4,-2.5],[4.5,-.4]], museum:[[-5,3.2],[-3.5,-1],[.4,-2.5],[4.5,-.4]], farm:[[-5,3.8],[-3.3,-1.4],[.8,-2.7],[4.7,.6]], school:[[-5,3.2],[-3.5,-1],[.3,-2.5],[4.5,-.5]], desert:[[-5,3.6],[-3.2,-1.2],[.7,-2.7],[4.8,.7]],
+  };
+  const [mentorPosition, firstPosition, secondPosition, finalePosition] = layouts[theme === 'blank' ? 'city' : theme];
   return {
     ...blankCourse(), id: `world-${Date.now()}`, revision: 1, title, source: 'agent', theme, level: `Beginner ${target}`,
     objectives: [`Notice and use three ${target} words.`, 'Ask one short question in the story.', 'Make one choice that changes the ending.'],
     dna: { ...blankCourse().dna, stories: idea.trim(), course_world: title },
     mentor: { ...blankCourse().mentor, opening: `Welcome to ${title}! I’m Moli. Let’s find our first clue together.` },
     objects: [
-      { id: 'mentor', label: gate, kind: 'mentor', x: -4.8, z: 3.5, color: '#a9c77f', dialogue: `Welcome to ${title}. Our story begins here.` },
-      { id: 'fruit', label: first, kind: 'fruit', x: -3.6, z: -1.2, color: colors[0], dialogue: 'Three useful words are hiding here. Tap each clue and say it aloud.' },
-      { id: 'books', label: second, kind: 'books', x: 0.2, z: -2.2, color: colors[1], dialogue: 'A short question will reveal the next part of the story.' },
-      { id: 'ice', label: finale, kind: 'ice', x: 4.2, z: -1.2, color: colors[2], dialogue: 'Use what you learned to choose how the story ends.' },
+      { id: 'mentor', label: gate, kind: 'mentor', x: mentorPosition[0], z: mentorPosition[1], color: '#a9c77f', dialogue: `Welcome to ${title}. Our story begins here.` },
+      { id: 'fruit', label: first, kind: 'fruit', x: firstPosition[0], z: firstPosition[1], color: colors[0], dialogue: 'Three useful words are hiding here. Tap each clue and say it aloud.' },
+      { id: 'books', label: second, kind: 'books', x: secondPosition[0], z: secondPosition[1], color: colors[1], dialogue: 'A short question will reveal the next part of the story.' },
+      { id: 'ice', label: finale, kind: 'ice', x: finalePosition[0], z: finalePosition[1], color: colors[2], dialogue: 'Use what you learned to choose how the story ends.' },
     ],
     tasks: [
       { id: 'welcome', title: 'Enter the world', kind: 'intro', objectId: 'mentor', prompt: `Meet Moli at ${gate}.`, options: [], answer: 'mentor', hint: 'Choose the place marked by Moli.', feedback: 'You stepped into the story.' },
@@ -152,7 +169,7 @@ export function validateCourse(value: unknown): string[] {
   const c = value as CourseWorld; const errors: string[] = [];
   if (!c || c.schemaVersion !== 1) return ['Unsupported course format.'];
   if (typeof c.id !== 'string' || !Number.isInteger(c.revision) || c.revision < 1 || typeof c.ages !== 'string' || typeof c.level !== 'string' || !Number.isFinite(c.minutes) || c.minutes < 5 || c.minutes > 60) errors.push('Invalid course metadata.');
-  if (!['blank','market','bakery','forest','ocean','space','city','castle','library'].includes(c.theme)) errors.push('Choose a supported world theme.');
+  if (!['blank','market','bakery','forest','ocean','space','city','castle','library','museum','farm','school','desert'].includes(c.theme)) errors.push('Choose a supported world theme.');
   if (typeof c.title !== 'string' || !c.title.trim() || c.title.length > 180) errors.push('Add a title under 180 characters.');
   if (!Number.isFinite(c.warmth) || c.warmth < 0 || c.warmth > 1) errors.push('Lighting must be between 0 and 1.');
   if (!Array.isArray(c.objects) || c.objects.length < 1 || c.objects.length > 20) return [...errors, 'Use 1–20 scene objects.'];
@@ -189,7 +206,7 @@ export function applyPatches(course: CourseWorld, patches: CoursePatch[]): Cours
     const numeric = ['warmth', 'x', 'z', 'hintStrength'].includes(p.field);
     if (numeric ? typeof p.value !== 'number' || !Number.isFinite(p.value) : typeof p.value !== 'string' || p.value.length > 4000) throw new Error('Invalid field value.');
     if (p.field === 'hintStrength' && p.value !== 1 && p.value !== 2) throw new Error('Choose hint strength 1 or 2.');
-    if (p.field === 'theme' && !['market','bakery','forest','ocean','space','city','castle','library'].includes(String(p.value))) throw new Error('Choose a supported world theme.');
+    if (p.field === 'theme' && !['market','bakery','forest','ocean','space','city','castle','library','museum','farm','school','desert'].includes(String(p.value))) throw new Error('Choose a supported world theme.');
     const target = p.target === 'world' ? next : p.target === 'mentor' ? next.mentor : p.target === 'object' ? next.objects.find(o => o.id === p.id) : next.tasks.find(t => t.id === p.id);
     if (!target) throw new Error('The selected course element no longer exists.');
     (target as unknown as Record<string, unknown>)[p.field] = p.value;
@@ -201,14 +218,37 @@ export function applyPatches(course: CourseWorld, patches: CoursePatch[]): Cours
 
 // Explicit, offline editing commands. This is not presented as LLM generation.
 export function offlineEdit(c: CourseWorld, request: string, selected: string): CoursePatch[] {
-  const themes: Array<[RegExp, CourseWorld['theme'], string]> = [
+  const themes: Array<[RegExp, Exclude<CourseWorld['theme'], 'blank'>, string]> = [
     [/bakery|面包|烘焙|croissant/i, 'bakery', 'The Magic Bakery'], [/ocean|sea|海洋|海底|pirate/i, 'ocean', 'The Secret Ocean'],
     [/moon|space|planet|月球|太空|星球/i, 'space', 'The Moonlight Mission'], [/forest|jungle|森林|丛林/i, 'forest', 'The Whispering Forest'],
     [/castle|kingdom|城堡|王国/i, 'castle', 'The Hidden Castle'], [/library|book|图书馆|书店/i, 'library', 'The Library of Lost Words'],
+    [/museum|gallery|博物馆|美术馆/i, 'museum', 'The Museum After Midnight'], [/farm|barn|农场|牧场/i, 'farm', 'The Sunflower Farm'],
+    [/school|classroom|校园|学校|教室/i, 'school', 'The School of Curious Ideas'], [/desert|pyramid|沙漠|金字塔/i, 'desert', 'The Desert of Hidden Clues'],
     [/market|night market|夜市|市集/i, 'market', 'The Night-Market Mystery'],
   ];
   const setting = themes.find(([pattern]) => pattern.test(request));
-  if (setting && setting[1] !== c.theme) return [{ target: 'world', field: 'theme', value: setting[1] }, { target: 'world', field: 'title', value: setting[2] }];
+  if (setting && setting[1] !== c.theme) {
+    const sceneCopy: Record<Exclude<CourseWorld['theme'], 'blank'>, Array<[string, string]>> = {
+      market: [['Lantern entrance','Welcome to the market. Look for the first clue.'],['Fruit stall','Name the fruit and ask where the clue is.'],['Flower stall','Use a position word to find the next stop.'],['Story stall','Choose the final clue and finish the story.']],
+      bakery: [['Bakery door','Welcome to the bakery. A recipe is missing.'],['Flour table','Match the ingredient to its picture.'],['Recipe shelf','Ask where the recipe is.'],['Magic oven','Choose the ingredients and complete the recipe.']],
+      forest: [['Forest gate','Enter quietly and listen for a clue.'],['Mushroom circle','Match a word to the right picture.'],['Old oak','Ask the tree where the path goes.'],['Firefly clearing','Use the clues to finish the forest mission.']],
+      ocean: [['Shell beach','Look for a glowing shell near the water.'],['Coral garden','Name what you see and follow the bubbles.'],['Moonlit boat','Ask where the lost clue is.'],['Turtle cove','Use the clues to help the turtle.']],
+      space: [['Moon gate','Welcome aboard. Find the first star clue.'],['Planet lab','Match a space word to its picture.'],['Star map','Ask where the next planet is.'],['Rocket deck','Choose a route and complete the mission.']],
+      city: [['City gate','Welcome to the city. Choose a street to explore.'],['Word garden','Find the word that matches the picture.'],['Little library','Ask where the missing clue is.'],['Friendship café','Use your clues to help a new friend.']],
+      castle: [['Castle gate','Welcome to the castle. A secret is waiting.'],['Potion garden','Match each magical ingredient.'],['Map room','Use position words to read the map.'],['Throne hall','Choose the final clue and solve the mystery.']],
+      library: [['Library door','Step inside and listen for the first clue.'],['Picture shelves','Match a word to the right picture.'],['Reading table','Ask where the missing page is.'],['Secret archive','Use your clues to finish the story.']],
+      museum: [['Museum steps','Welcome to the museum after dark.'],['Dinosaur hall','Name what you see and find a clue.'],['Painting gallery','Ask where the missing picture belongs.'],['Secret archive','Use the evidence to solve the mystery.']],
+      farm: [['Farm gate','Welcome to the farm. Look for the first clue.'],['Animal barn','Match each animal to its sound.'],['Sunflower field','Ask where the missing flower is.'],['Picnic table','Use your clues to complete the farm story.']],
+      school: [['School gate','Welcome to a school full of curious ideas.'],['Discovery lab','Match the object to the right word.'],['Story corner','Ask where the missing idea went.'],['Idea stage','Share your answer and finish the challenge.']],
+      desert: [['Desert camp','Welcome to the desert. Read the first map clue.'],['Oasis clues','Use position words to find the oasis.'],['Ancient map','Ask where the hidden path begins.'],['Hidden pyramid','Use every clue to open the final door.']],
+    };
+    const edits: CoursePatch[] = [{ target: 'world', field: 'theme', value: setting[1] }, { target: 'world', field: 'title', value: setting[2] }];
+    c.objects.forEach((object, index) => {
+      const copy = sceneCopy[setting[1]][index] || sceneCopy[setting[1]][sceneCopy[setting[1]].length - 1];
+      edits.push({ target: 'object', id: object.id, field: 'label', value: copy[0] }, { target: 'object', id: object.id, field: 'dialogue', value: copy[1] });
+    });
+    return edits;
+  }
   if (/暖|warm/i.test(request)) return [{ target: 'world', field: 'warmth', value: Math.min(1, c.warmth + 0.15) }];
   if (/magic|magical|梦幻|魔法/i.test(request)) return [{ target: 'world', field: 'warmth', value: Math.min(1, c.warmth + 0.1) }, { target: 'mentor', field: 'opening', value: `Welcome to ${c.title}. Look closely — something magical has just appeared.` }];
   if (/简单|simpl/i.test(request)) return [{ target: 'object', id: selected, field: 'dialogue', value: 'Hello! Can I help you? Look here. Thank you!' }];

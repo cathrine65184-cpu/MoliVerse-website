@@ -221,7 +221,7 @@ export default function ImmersiveStudio() {
         <div className={`scene-wrap ${course.source === "blank" ? "is-blank" : ""}`}>
           {course.source === "blank" ? <div className="blank-world"><div className="blank-orbit"><img src="/mascot.png" alt="Moli"/></div><span>YOUR FIRST SCENE STARTS HERE</span><h1>Describe a world to Moli.</h1><p>Try a place, a character and one small challenge. The canvas will change as soon as you send it.</p><button className="primary" onClick={() => setPanel("moli")}><Sparkles size={16}/>Start with an idea</button></div> : <>
             <StoryScene course={course} selected={selected} target={preview ? course.tasks[index]?.objectId : undefined} flat={flat} onSelect={(id) => { setSelected(id); setVisited(id); }}/>
-            <div className="world-caption"><span>✦ {course.dna.course_world.toUpperCase()}</span><h1>{course.title}</h1><p>{course.level} · Ages {course.ages}</p></div>
+            <div className="world-caption"><span>✦ {course.theme.toUpperCase()} STORY WORLD</span><h1>{course.title}</h1><p>{course.level} · Ages {course.ages}</p></div>
             <div className="scene-instructions">Drag to look around · Tap something to explore</div>
           </>}
         </div>
