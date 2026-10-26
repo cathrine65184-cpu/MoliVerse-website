@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Camera,
   CameraOff,
+  Gamepad2,
   Loader2,
   PartyPopper,
   Pause,
@@ -76,6 +77,7 @@ function LessonInner() {
   const [generating, setGenerating] = useState(false);
   const [collectionState, setCollectionState] = useState<{ id: string; position: number; title: string } | null>(null);
   const [locked, setLocked] = useState(false);
+  const [interactive, setInteractive] = useState<{ title: string; prompt: string; options: string[]; answer: number; success: string } | null>(null);
   const collectionCompletedRef = useRef(false);
 
   // Player state
@@ -180,6 +182,8 @@ function LessonInner() {
       if (cancelled) return;
       if (collectionInfo) {
         setCollectionState({ id: collectionInfo.collection.id, position: collectionInfo.link.position, title: collectionInfo.collection.title });
+        const h5 = collectionInfo.content?.interactive_config;
+        if (h5 && Array.isArray(h5.options)) setInteractive(h5);
         const progress = await getCollectionProgress(collectionInfo.collection.id);
         if (cancelled) return;
         const completed = progress?.completedCourseIds ?? [];
@@ -734,6 +738,15 @@ function LessonInner() {
           </div>
         </div>
         {camError && <p className="mt-2 text-xs text-amber-300">{camError}</p>}
+        {interactive && (
+          <Link
+            href={`/play/?lesson=${encodeURIComponent(JSON.stringify(interactive))}`}
+            className="mt-3 inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 backdrop-blur hover:border-cyan-200"
+          >
+            <Gamepad2 className="h-3.5 w-3.5" />
+            Play this chapter’s story challenge
+          </Link>
+        )}
 
         {/* Camera PiP */}
         {camOn && (
