@@ -46,13 +46,15 @@ export default function Hero() {
           initial={reduceMotion ? "visible" : "hidden"}
           animate="visible"
           custom={0.12}
-          className="font-display text-5xl font-semibold leading-[1.05] tracking-tight text-white sm:text-7xl md:text-8xl"
+          className="font-display text-5xl font-semibold leading-[1.05] tracking-tight text-white sm:text-6xl md:text-7xl"
         >
-          Imagine a World.
+          Learn Languages.
           <br />
           <span className="animate-shimmer bg-gradient-to-r from-indigo-300 via-violet-300 via-50% to-cyan-300 bg-[length:200%_auto] bg-clip-text text-transparent">
-            Play What You Create.
+            Live Stories.
           </span>
+          <br />
+          <span className="text-white">Create with Your Hands.</span>
         </motion.h1>
 
         <motion.p

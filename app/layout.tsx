@@ -17,12 +17,12 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://moliverse.tech"),
-  title: "MoliVerse — Imagine. Create. Play.",
+  title: "MoliVerse — Learn Languages. Live Stories.",
   description:
     "MoliVerse is an AI story-game maker where children and educators create immersive language worlds with Moli, then learn by playing what they imagined.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "MoliVerse — Imagine. Create. Play.",
+    title: "MoliVerse — Learn Languages. Live Stories.",
     description:
       "Create immersive language story games with Moli, play inside them, and improve the world as you learn.",
     url: "https://moliverse.tech",
@@ -33,13 +33,13 @@ export const metadata: Metadata = {
         url: "/og.jpg",
         width: 1200,
         height: 630,
-        alt: "MoliVerse — Imagine. Create. Play.",
+        alt: "MoliVerse — Learn Languages. Live Stories.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MoliVerse — Imagine. Create. Play.",
+    title: "MoliVerse — Learn Languages. Live Stories.",
     description:
       "Create immersive language story games with Moli, then learn by playing what you imagined.",
     images: ["/og.jpg"],

@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { ArrowRight, Camera, Gamepad2, Mic2, Sparkles, Users } from "lucide-react";
+import { Camera, Gamepad2, Mic2, Users } from "lucide-react";
 import { withBasePath } from "@/lib/paths";
 import Reveal from "./ui/Reveal";
 import SectionHeading from "./ui/SectionHeading";
@@ -16,34 +15,8 @@ const educators = [
   { photo: "/educators/nicolo.jpg", name: "Nicolo", language: "Spanish · English", flags: "🇪🇸 🇬🇧", note: "Play · Conversation" },
 ];
 
-const flow = [
-  { number: "01", title: "Imagine", copy: "A child or educator starts with one place, one character and one small challenge." },
-  { number: "02", title: "Build with Moli", copy: "Moli helps shape the story, language goal, clues and choices — one playable moment at a time." },
-  { number: "03", title: "Play and improve", copy: "Try the world immediately, notice what feels fun, then change it by simply asking Moli." },
-];
-
 export default function HumanAI() {
   return <>
-    <section id="how" className="relative scroll-mt-24 px-6 py-28 sm:py-36">
-      <div className="mx-auto max-w-6xl">
-        <SectionHeading eyebrow="How it works" title="A story idea becomes a world you can play." />
-        <div className="mt-16 grid gap-5 lg:grid-cols-3">
-          {flow.map((item, index) => <Reveal key={item.number} delay={index * 0.08}>
-            <div className="glass-card h-full p-7">
-              <span className="font-display text-sm font-semibold text-violet-300">{item.number}</span>
-              <h3 className="mt-8 font-display text-2xl font-semibold text-white">{item.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-slate-400">{item.copy}</p>
-            </div>
-          </Reveal>)}
-        </div>
-        <Reveal className="mt-10 flex justify-center">
-          <Link href="/teach/studio/?mode=young-creator" className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-7 py-3.5 text-sm font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,.6)]">
-            Create with Moli <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1"/>
-          </Link>
-        </Reveal>
-      </div>
-    </section>
-
     <section id="educators" className="relative scroll-mt-24 border-y border-white/[0.06] bg-white/[0.015] px-6 py-28 sm:py-36">
       <div className="mx-auto max-w-6xl">
         <SectionHeading eyebrow="Real educators" title="Technology creates worlds. Teachers give them meaning." />
