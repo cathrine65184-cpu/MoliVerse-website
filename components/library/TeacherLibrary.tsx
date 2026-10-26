@@ -12,7 +12,7 @@ import './library.css';
 import './library-extra.css';
 import './library-file.css';
 
-const MAX_DOCUMENT = 10 * 1024 * 1024;
+const MAX_DOCUMENT = 20 * 1024 * 1024;
 const MAX_AUDIO = 20 * 1024 * 1024;
 
 function fresh(ownerId: string): ImportedContentDraft {
@@ -43,7 +43,7 @@ export default function TeacherLibrary() {
     const audio = lower.endsWith('.mp3') || lower.endsWith('.wav') || ['audio/mpeg', 'audio/wav', 'audio/x-wav'].includes(file.type);
     const document = lower.endsWith('.txt') || lower.endsWith('.pdf') || ['text/plain', 'application/pdf'].includes(file.type);
     if (!audio && !document) { setNotice('Unsupported file. Use TXT, a text-layer PDF, MP3 or WAV.'); setBusy(false); return; }
-    if (file.size > (audio ? MAX_AUDIO : MAX_DOCUMENT)) { setNotice(`This file is too large. The limit is ${audio ? '20 MB for audio' : '10 MB for text and PDF'}.`); setBusy(false); return; }
+    if (file.size > (audio ? MAX_AUDIO : MAX_DOCUMENT)) { setNotice('This file is too large. The limit is 20 MB.'); setBusy(false); return; }
     if (audio) {
       update({ contentType: 'sing', audioBlob: file, fileName: file.name, fileType: file.type || (lower.endsWith('.mp3') ? 'audio/mpeg' : 'audio/wav'), fileSize: file.size, processingStatus: draft.text.trim() ? 'ready' : 'partial', processingMessage: draft.text.trim() ? 'Audio and lyrics are ready to review.' : 'Audio is ready. Paste the confirmed lyrics before publishing.' });
     } else {
@@ -73,7 +73,7 @@ export default function TeacherLibrary() {
           <label>Title<input value={draft.title} onChange={e => update({ title: e.target.value })} placeholder="Title as shown to learners"/></label>
           <div className="form-row"><label>Learning language<input value={draft.language} onChange={e => update({ language: e.target.value })}/></label><label>Age range<input value={draft.suggestedAgeRange} onChange={e => update({ suggestedAgeRange: e.target.value })}/></label><label>Language level<input value={draft.proficiencyLevel} onChange={e => update({ proficiencyLevel: e.target.value })}/></label></div>
           <label>{draft.contentType === 'read' ? 'Story text or extracted pages' : 'Confirmed lyrics'}<textarea value={draft.text} onChange={e => update({ text: e.target.value, processingStatus: e.target.value.trim() ? 'ready' : draft.processingStatus, processingMessage: e.target.value.trim() ? 'Pasted content is ready to review.' : draft.processingMessage })} placeholder={draft.contentType === 'read' ? 'Paste a short story or excerpt…' : 'Paste the lyrics you have permission to use…'}/></label>
-          <label className="file-drop"><Upload/><strong>Add a source file</strong><span>TXT or text-layer PDF · 10 MB<br/>MP3 or WAV · 20 MB</span><input type="file" accept=".txt,.pdf,.mp3,.wav,text/plain,application/pdf,audio/mpeg,audio/wav" onChange={e => void chooseFile(e.target.files?.[0])}/></label>
+          <label className="file-drop"><Upload/><strong>Add a source file</strong><span>TXT, text-layer PDF, MP3 or WAV · 20 MB</span><input type="file" accept=".txt,.pdf,.mp3,.wav,text/plain,application/pdf,audio/mpeg,audio/wav" onChange={e => void chooseFile(e.target.files?.[0])}/></label>
           <div className={`processing-state ${draft.processingStatus}`}>{busy ? <Loader2 className="spin"/> : draft.processingStatus === 'ready' ? <CheckCircle2/> : draft.contentType === 'sing' ? <FileAudio/> : <FileText/>}<div><strong>{draft.processingStatus}</strong><p>{draft.processingMessage}</p>{draft.fileName && <small>{draft.fileName} · {Math.ceil((draft.fileSize || 0) / 1024)} KB</small>}</div></div>
           <div className="form-row"><label>Source<input value={draft.source} onChange={e => update({ source: e.target.value })} placeholder="Publisher, collection or your name"/></label><label>Author<input value={draft.author} onChange={e => update({ author: e.target.value })}/></label><label>Edition<input value={draft.edition} onChange={e => update({ edition: e.target.value })}/></label></div>
           <div className="form-row"><label>Rights status<select value={draft.rightsStatus} onChange={e => update({ rightsStatus: e.target.value as ImportedContentDraft['rightsStatus'] })}><option value="unknown">Unknown</option><option value="private-use">Private use</option><option value="licensed">Licensed</option><option value="public-domain">Public domain</option><option value="original">Original</option></select></label><label>Visibility<select value={draft.visibility} onChange={e => update({ visibility: e.target.value as ImportedContentDraft['visibility'] })}><option value="private">Private</option><option value="class">Class (cloud setup required)</option><option value="public">Public (review required)</option></select></label></div>
