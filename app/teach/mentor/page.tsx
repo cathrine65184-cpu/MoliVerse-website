@@ -71,6 +71,26 @@ function errorMessage(error: unknown) {
   return "Something went wrong. Please try again.";
 }
 
+async function functionErrorMessage(error: unknown, data: unknown, fallback: string) {
+  const payload = data as { message?: string; error?: string } | null;
+  if (payload?.message) return payload.message;
+  if (payload?.error) return payload.error;
+
+  const response = (error as { context?: unknown } | null)?.context;
+  if (response instanceof Response) {
+    try {
+      const body = (await response.clone().json()) as { message?: string; error?: string };
+      if (body.message) return body.message;
+      if (body.error) return body.error;
+    } catch {
+      // A non-JSON provider error still falls back to the useful phase label.
+    }
+  }
+
+  const generic = errorMessage(error);
+  return generic.includes("non-2xx") ? fallback : generic;
+}
+
 export default function CreateMentorPage() {
   const [step, setStep] = useState<BuildStep>("identity");
   const [photo, setPhoto] = useState<File | null>(null);
@@ -84,6 +104,7 @@ export default function CreateMentorPage() {
   const [greeting, setGreeting] = useState("Hello! I am so glad we are learning together.");
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<BuildPhase>("idle");
+  const [failedPhase, setFailedPhase] = useState<BuildPhase | null>(null);
   const [message, setMessage] = useState("");
   const [previewAudio, setPreviewAudio] = useState("");
   const [mentorName, setMentorName] = useState("your Mentor");
@@ -222,7 +243,9 @@ export default function CreateMentorPage() {
 
     setLoading(true);
     setPhase("portrait");
+    setFailedPhase(null);
     setMessage("");
+    let activePhase: BuildPhase = "portrait";
 
     try {
       const extension = photo.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -230,7 +253,7 @@ export default function CreateMentorPage() {
         body: { action: "begin-upload", kind: "photo", extension },
       });
       if (uploadError || !uploadData?.path || !uploadData?.token) {
-        throw new Error(uploadError?.message || uploadData?.error || "Could not prepare your portrait upload.");
+        throw new Error(await functionErrorMessage(uploadError, uploadData, "Could not prepare a secure portrait upload."));
       }
 
       const { error: photoUploadError } = await supabase.storage
@@ -240,7 +263,8 @@ export default function CreateMentorPage() {
         });
       if (photoUploadError) throw new Error("Could not upload your portrait. Please try again.");
 
-      setPhase("avatar");
+      activePhase = "avatar";
+      setPhase(activePhase);
       const { data: mentorData, error: mentorError } = await supabase.functions.invoke("mentor-onboarding", {
         body: {
           action: "complete",
@@ -251,7 +275,7 @@ export default function CreateMentorPage() {
         },
       });
       if (mentorError || !mentorData?.photoUrl) {
-        throw new Error(mentorError?.message || mentorData?.error || "Could not create your visual Mentor identity.");
+        throw new Error(await functionErrorMessage(mentorError, mentorData, "HeyGen could not create your visual Mentor identity."));
       }
 
       const formData = new FormData();
@@ -261,10 +285,11 @@ export default function CreateMentorPage() {
         body: formData,
       });
       if (voiceUploadError || !voiceUpload?.audioUrl) {
-        throw new Error(voiceUploadError?.message || voiceUpload?.error || "Could not save your voice sample.");
+        throw new Error(await functionErrorMessage(voiceUploadError, voiceUpload, "Could not store your voice sample."));
       }
 
-      setPhase("voice");
+      activePhase = "voice";
+      setPhase(activePhase);
       const { data: voiceData, error: voiceError } = await supabase.functions.invoke("voice-identity", {
         body: {
           action: "clone",
@@ -275,10 +300,11 @@ export default function CreateMentorPage() {
         },
       });
       if (voiceError || !voiceData?.mentorVoiceId) {
-        throw new Error(voiceError?.message || voiceData?.error || "Could not create your voice identity.");
+        throw new Error(await functionErrorMessage(voiceError, voiceData, "MiniMax could not create your voice identity."));
       }
 
-      setPhase("binding");
+      activePhase = "binding";
+      setPhase(activePhase);
       const existingPersona = (await loadPersona(profile.id)) || emptyPersona;
       await savePersona(profile.id, {
         ...existingPersona,
@@ -298,6 +324,7 @@ export default function CreateMentorPage() {
       setPreviewAudio(voiceData.previewUrl || "");
       setStep("ready");
     } catch (error) {
+      setFailedPhase(activePhase);
       setMessage(errorMessage(error));
     } finally {
       setLoading(false);
@@ -469,6 +496,7 @@ export default function CreateMentorPage() {
               </label>
 
               {message ? <p role="alert" className="rounded-xl border border-rose-300/20 bg-rose-400/[0.08] px-4 py-3 text-sm text-rose-100">{message}</p> : null}
+              {failedPhase ? <p className="text-center text-xs text-slate-400">Stopped during: <span className="font-medium text-slate-200">{failedPhase === "portrait" ? "secure portrait upload" : failedPhase === "avatar" ? "visual Mentor creation" : failedPhase === "voice" ? "voice identity creation" : "MoliVerse identity binding"}</span></p> : null}
 
               {loading ? (
                 <div className="rounded-2xl border border-violet-300/15 bg-violet-300/[0.05] p-4">
