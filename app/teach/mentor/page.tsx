@@ -20,6 +20,7 @@ import { emptyPersona, loadPersona, savePersona } from "@/lib/persona";
 import { getMyProfile, supabase } from "@/lib/supabase";
 
 type BuildStep = "identity" | "ready";
+type BuildPhase = "idle" | "portrait" | "avatar" | "voice" | "binding";
 
 function mergeAudio(chunks: Float32Array[]) {
   const totalLength = chunks.reduce((total, chunk) => total + chunk.length, 0);
@@ -82,6 +83,7 @@ export default function CreateMentorPage() {
   const [language, setLanguage] = useState("English");
   const [greeting, setGreeting] = useState("Hello! I am so glad we are learning together.");
   const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<BuildPhase>("idle");
   const [message, setMessage] = useState("");
   const [previewAudio, setPreviewAudio] = useState("");
   const [mentorName, setMentorName] = useState("your Mentor");
@@ -213,8 +215,13 @@ export default function CreateMentorPage() {
       setMessage("Please sign in as an educator before creating a Mentor.");
       return;
     }
+    if (profile.role !== "teacher") {
+      setMessage("This account is not an educator account yet. Switch to or create an educator account before building a Mentor.");
+      return;
+    }
 
     setLoading(true);
+    setPhase("portrait");
     setMessage("");
 
     try {
@@ -233,6 +240,7 @@ export default function CreateMentorPage() {
         });
       if (photoUploadError) throw new Error("Could not upload your portrait. Please try again.");
 
+      setPhase("avatar");
       const { data: mentorData, error: mentorError } = await supabase.functions.invoke("mentor-onboarding", {
         body: {
           action: "complete",
@@ -256,6 +264,7 @@ export default function CreateMentorPage() {
         throw new Error(voiceUploadError?.message || voiceUpload?.error || "Could not save your voice sample.");
       }
 
+      setPhase("voice");
       const { data: voiceData, error: voiceError } = await supabase.functions.invoke("voice-identity", {
         body: {
           action: "clone",
@@ -269,6 +278,7 @@ export default function CreateMentorPage() {
         throw new Error(voiceError?.message || voiceData?.error || "Could not create your voice identity.");
       }
 
+      setPhase("binding");
       const existingPersona = (await loadPersona(profile.id)) || emptyPersona;
       await savePersona(profile.id, {
         ...existingPersona,
@@ -291,6 +301,7 @@ export default function CreateMentorPage() {
       setMessage(errorMessage(error));
     } finally {
       setLoading(false);
+      setPhase("idle");
     }
   }
 
@@ -458,6 +469,32 @@ export default function CreateMentorPage() {
               </label>
 
               {message ? <p role="alert" className="rounded-xl border border-rose-300/20 bg-rose-400/[0.08] px-4 py-3 text-sm text-rose-100">{message}</p> : null}
+
+              {loading ? (
+                <div className="rounded-2xl border border-violet-300/15 bg-violet-300/[0.05] p-4">
+                  <p className="text-sm font-semibold text-violet-100">Building your Mentor safely</p>
+                  <div className="mt-3 space-y-2">
+                    {[
+                      ["portrait", "Secure portrait upload"],
+                      ["avatar", "Create visual Mentor identity"],
+                      ["voice", "Create and activate your voice identity"],
+                      ["binding", "Bind your verified identity to MoliVerse"],
+                    ].map(([key, label]) => {
+                      const stages: BuildPhase[] = ["portrait", "avatar", "voice", "binding"];
+                      const current = stages.indexOf(phase);
+                      const index = stages.indexOf(key as BuildPhase);
+                      const complete = current > index;
+                      const active = phase === key;
+                      return (
+                        <div key={key} className={"flex items-center gap-2 text-xs " + (complete ? "text-emerald-200" : active ? "text-white" : "text-slate-500")}>
+                          {active ? <Loader2 size={14} className="animate-spin" /> : complete ? <Check size={14} /> : <span className="h-3.5 w-3.5 rounded-full border border-current/50" />}
+                          {label}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
 
               <button type="button" disabled={loading || recording} onClick={createMentor} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-200 to-violet-300 px-5 py-4 font-semibold text-[#170d24] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-55">
                 {loading ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
