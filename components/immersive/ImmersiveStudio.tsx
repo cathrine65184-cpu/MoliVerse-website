@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowLeft, ArrowUp, Eye, Layers, Loader2, Paperclip, Save, ShieldCheck, Sparkles, Undo2, Volume2, X } from "lucide-react";
-import { applyPatches, blankCourse, CoursePatch, CourseWorld, createWorldFromIdea, Material, offlineEdit, validateCourse, withMoliGuide } from "@/lib/immersive/course";
+import { applyPatches, blankCourse, CoursePatch, CourseWorld, createWorldFromIdea, Material, offlineEdit, validateCourse, withMoliGuide, worldIdeaQuestion } from "@/lib/immersive/course";
 import { readStudio, StudioRecord, writeStudio } from "@/lib/immersive/storage";
 import { getMyProfile, supabase } from "@/lib/supabase";
 import { extractText } from "@/lib/extractText";
@@ -114,12 +114,18 @@ export default function ImmersiveStudio() {
     setMessages((items) => [...items, { role: "creator", text }]);
     let working = course;
     if (course.source === "blank") {
-      working = createWorldFromIdea(text);
+      const accumulatedIdea = [...messages.filter((message) => message.role === "creator").map((message) => message.text), text].join(" ");
+      const question = worldIdeaQuestion(accumulatedIdea);
+      if (question) {
+        setMessages((items) => [...items, { role: "agent", text: question }]);
+        return;
+      }
+      working = createWorldFromIdea(accumulatedIdea);
       setHistory((items) => [...items.slice(-19), course]);
       setCourse(working);
       setSelected("mentor");
       setTaskId("welcome");
-      setMessages((items) => [...items, { role: "agent", text: `I opened ${working.title}. The first playable path is already on the canvas — now tell me what you want to change.` }]);
+      setMessages((items) => [...items, { role: "agent", text: `I opened ${working.title}. The first playable path is now on the canvas — tell me what you want to change.` }]);
     }
     const local = course.source === "blank" ? [] : offlineEdit(working, text, selected);
     if (local.length) {

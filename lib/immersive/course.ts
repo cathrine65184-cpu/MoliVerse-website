@@ -45,6 +45,19 @@ function themeFromIdea(idea: string): CourseWorld['theme'] {
   return 'city';
 }
 
+export function worldIdeaQuestion(idea: string): string | null {
+  const text = idea.trim();
+  const isGreeting = /^(hi|hello|hey|你好|嗨|哈喽|在吗)[!！。. ]*$/i.test(text);
+  if (!text || isGreeting) return 'Hi! Where should our story happen — and who will the player meet there?';
+  const hasPlace = /bakery|school|market|city|village|forest|jungle|ocean|sea|island|space|moon|planet|castle|kingdom|library|museum|park|farm|café|cafe|shop|巴黎|学校|夜市|城市|村庄|森林|海洋|海底|岛|太空|月球|星球|城堡|王国|图书馆|博物馆|公园|农场|咖啡|商店/i.test(text);
+  const hasAction = /help|find|look for|search|solve|save|make|build|learn|practi[cs]e|discover|collect|escape|rescue|lost|missing|challenge|帮助|寻找|找到|解决|拯救|制作|学习|练习|发现|收集|迷路|丢失|挑战/i.test(text);
+  const hasCharacter = /\b(?:child|children|kid|girl|boy|teacher|baker|grandma|friend|dragon|animal|cat|dog|turtle|robot|witch|princess|player)\b|孩子|小朋友|女孩|男孩|老师|面包师|奶奶|朋友|龙|动物|猫|狗|乌龟|机器人|女巫|公主|玩家/i.test(text);
+  if (!hasPlace) return 'Where should this story happen? Try a bakery, an island, a moon library, or a place from your own imagination.';
+  if (!hasCharacter) return 'Who will the player meet in this world?';
+  if (!hasAction) return 'What small problem or mission should the player help with?';
+  return null;
+}
+
 export function createWorldFromIdea(idea: string): CourseWorld {
   const theme = themeFromIdea(idea);
   const title = titleFromIdea(idea);
