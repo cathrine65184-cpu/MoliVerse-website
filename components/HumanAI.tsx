@@ -41,14 +41,24 @@ export default function HumanAI() {
     <section id="v2" className="relative scroll-mt-24 overflow-hidden px-6 py-28 sm:py-36">
       <div className="absolute left-1/2 top-1/2 h-[30rem] w-[30rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-600/10 blur-[120px]"/>
       <Reveal className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-violet-300/15 bg-gradient-to-br from-violet-500/[0.09] to-cyan-400/[0.04] p-8 sm:p-12">
-        <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-2xl">
+        <div className="grid gap-10 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
+          <div>
             <span className="inline-flex rounded-full border border-violet-300/20 bg-violet-300/10 px-3 py-1 text-xs font-semibold tracking-wide text-violet-200">MOLIVERSE 2.0 · COMING SOON</span>
             <h2 className="mt-6 font-display text-3xl font-semibold text-white sm:text-5xl">A teacher’s presence, inside every world.</h2>
-            <p className="mt-5 text-sm leading-relaxed text-slate-400 sm:text-base">Future educator tools will explore authorised teacher avatars, voice identity and digital teaching companions. These features are in development — they are not presented as available today.</p>
+            <p className="mt-5 text-sm leading-relaxed text-slate-400 sm:text-base">This early prototype shows how an authorised educator portrait can become a speaking guide. In MoliVerse 2.0, teacher presence, voice identity and interactive worlds will come together inside the learning experience.</p>
+            <div className="mt-7 flex flex-wrap gap-2">
+              {[{ icon: Camera, label: "Authorised avatar" }, { icon: Mic2, label: "Speaking video" }, { icon: Gamepad2, label: "Future worlds" }].map((item) => <span key={item.label} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/15 px-3 py-2 text-xs text-slate-300"><item.icon className="h-4 w-4 text-violet-300"/>{item.label}</span>)}
+            </div>
           </div>
-          <div className="grid shrink-0 grid-cols-3 gap-3">
-            {[{ icon: Camera, label: "Avatar" }, { icon: Mic2, label: "Voice" }, { icon: Gamepad2, label: "Worlds" }].map((item) => <div key={item.label} className="flex h-24 w-24 flex-col items-center justify-center rounded-2xl border border-white/10 bg-black/15 text-slate-300"><item.icon className="h-5 w-5 text-violet-300"/><span className="mt-3 text-xs">{item.label}</span></div>)}
+          <div className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30 shadow-2xl shadow-violet-950/30">
+            <video className="aspect-video w-full bg-black object-cover" controls playsInline preload="metadata" poster={withBasePath("/catherine-sq.jpg")} aria-label="Catherine speaking in an early HeyGen avatar prototype">
+              <source src={withBasePath("/video/catherine-intro.mp4")} type="video/mp4"/>
+              Your browser does not support this video.
+            </video>
+            <div className="flex items-center justify-between gap-4 border-t border-white/10 px-4 py-3">
+              <div><p className="text-sm font-semibold text-white">Meet Catherine</p><p className="mt-0.5 text-xs text-slate-400">Pre-generated HeyGen prototype</p></div>
+              <span className="rounded-full bg-emerald-300/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-200">With voice</span>
+            </div>
           </div>
         </div>
       </Reveal>
