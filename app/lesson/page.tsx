@@ -38,6 +38,7 @@ import { loadPersona, type Persona } from "@/lib/persona";
 import { loadSharedMemory, saveSharedMemory, type SharedMemory } from "@/lib/memory";
 import { loadJourneyMeta, type JourneyMeta } from "@/lib/journey";
 import { completeCollectionLesson, getCollectionProgress, loadLessonCollection } from "@/lib/collections";
+import { playMiniMaxStream } from "@/lib/minimaxAudio";
 
 /** Joints stored per motion frame — must match the studio's packing. */
 const MOTION_JOINTS = [
@@ -78,6 +79,7 @@ function LessonInner() {
   const [collectionState, setCollectionState] = useState<{ id: string; position: number; title: string } | null>(null);
   const [locked, setLocked] = useState(false);
   const [interactive, setInteractive] = useState<{ title: string; prompt: string; options: string[]; answer: number; success: string } | null>(null);
+  const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
   const collectionCompletedRef = useRef(false);
 
   // Player state
@@ -347,9 +349,42 @@ function LessonInner() {
   };
 
   const speak = useCallback((text: string, after?: () => void) => {
+    const mentorVoice = personaRef.current?.voiceIdentity;
+    const finish = (() => {
+      let completed = false;
+      return () => {
+        if (completed) return;
+        completed = true;
+        setSpeaking(false);
+        after?.();
+      };
+    })();
+
+    // A published teacher with a verified voice always narrates in their own
+    // voice. We deliberately do not fall back to a generic system voice if
+    // that protected voice fails: the lesson text stays visible instead.
+    if (mentorVoice?.status === "ready" && mentorVoice.mentorVoiceId) {
+      setVoiceNotice(null);
+      void playMiniMaxStream({
+        mentorVoiceId: mentorVoice.mentorVoiceId,
+        language: mentorVoice.language,
+        courseId: courseId ?? undefined,
+        text,
+        onStart: () => setSpeaking(true),
+        onEnd: finish,
+        onError: () => {
+          setVoiceNotice("Your Mentor’s voice is temporarily unavailable. You can keep reading this part of the story.");
+          finish();
+        },
+      }).catch(() => {
+        // onError already makes the experience safe and non-blocking.
+      });
+      return;
+    }
+
     const synth = window.speechSynthesis;
     if (!synth || !text) {
-      after?.();
+      finish();
       return;
     }
     synth.cancel();
@@ -358,20 +393,13 @@ function LessonInner() {
     u.lang = voiceRef.current?.lang ?? "en-GB";
     u.rate = 0.85;
     u.pitch = 1.12;
-    let done = false;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      setSpeaking(false);
-      after?.();
-    };
     u.onstart = () => setSpeaking(true);
     u.onend = finish;
     u.onerror = finish;
     synth.speak(u);
     // Safety net in case the platform never fires onend
     setTimeout(finish, Math.min(20000, Math.max(3500, text.length * 120)));
-  }, []);
+  }, [courseId, voiceLang]);
 
   const goto = useCallback(
     (i: number) => {
@@ -738,6 +766,7 @@ function LessonInner() {
           </div>
         </div>
         {camError && <p className="mt-2 text-xs text-amber-300">{camError}</p>}
+        {voiceNotice && <p className="mt-2 rounded-lg border border-amber-300/20 bg-amber-300/[0.08] px-3 py-2 text-xs leading-relaxed text-amber-100">{voiceNotice}</p>}
         {interactive && (
           <Link
             href={`/play/?lesson=${encodeURIComponent(JSON.stringify(interactive))}`}
@@ -822,6 +851,11 @@ function LessonInner() {
               </span>
             </span>
           </div>
+          {persona?.voiceIdentity.status === "ready" ? (
+            <p className="mt-1 text-[11px] font-medium text-emerald-200">Speaking in {teacher.name}&apos;s verified voice</p>
+          ) : (
+            <p className="mt-1 text-[11px] text-slate-300">Story narration</p>
+          )}
 
           {speaking && (
             <div className="mt-1.5 flex items-end gap-[3px]" aria-hidden>
