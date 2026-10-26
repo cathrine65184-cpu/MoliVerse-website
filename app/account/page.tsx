@@ -104,7 +104,7 @@ export default function AccountPage() {
                 href={me.role === "teacher" ? "/teach/" : "/learn/"}
                 className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90"
               >
-                {me.role === "teacher" ? "Open educator workspace" : "Explore learning journeys"}
+                {me.role === "teacher" ? "Open Mentor Studio" : "Create a learning game"}
               </Link>
               {me.role === "teacher" && <Link href="/chat/" className="rounded-xl border border-white/10 bg-white/[0.04] px-6 py-2.5 text-sm font-semibold text-slate-200 transition-all hover:border-white/25">Educator conversations</Link>}
             </div>

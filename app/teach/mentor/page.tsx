@@ -360,8 +360,8 @@ export default function CreateMentorPage() {
             <Link href="/teach/studio/" className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 font-semibold text-slate-950 transition hover:bg-amber-100">
               Design your story presence <Sparkles size={17} />
             </Link>
-            <Link href="/teach/collections/" className="inline-flex items-center justify-center rounded-full border border-white/15 px-5 py-3 font-semibold text-white transition hover:border-white/35 hover:bg-white/5">
-              Build your first course
+            <Link href="/teach/studio/" className="inline-flex items-center justify-center rounded-full border border-white/15 px-5 py-3 font-semibold text-white transition hover:border-white/35 hover:bg-white/5">
+              Build a learning game with Moli
             </Link>
           </div>
           <p className="mt-7 text-sm leading-6 text-slate-400">
