@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:library": "node scripts/test-learning-library.cjs"
   },
   "dependencies": {
     "@google/model-viewer": "^4.3.1",

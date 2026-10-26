@@ -7,10 +7,10 @@ import { UserRound } from "lucide-react";
 import { withBasePath } from "@/lib/paths";
 
 const links = [
+  { label: "Read", href: "/read/" },
+  { label: "Sing", href: "/sing/" },
   { label: "Create", href: "/teach/studio/?mode=young-creator" },
   { label: "Play", href: "/moli-journey/" },
-  { label: "Educators", href: "/#educators" },
-  { label: "Workshops", href: "/#workshops" },
 ];
 
 export default function Navbar() {

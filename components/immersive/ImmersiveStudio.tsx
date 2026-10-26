@@ -8,6 +8,7 @@ import { applyLearningConfig, applyPatches, blankCourse, CoursePatch, CourseWorl
 import { readStudio, StudioRecord, writeStudio } from "@/lib/immersive/storage";
 import { getMyProfile, supabase } from "@/lib/supabase";
 import { retrieveRelevantSources, sanitizeForPlaytest } from "@/lib/immersive/sources";
+import { consumeContentHandoff, courseFromContentHandoff } from "@/lib/contentHandoff";
 import LearningPanel from "./LearningPanel";
 import LanguageSettingsPanel from "./LanguageSettingsPanel";
 import SourceLibraryPanel from "./SourceLibraryPanel";
@@ -77,7 +78,15 @@ export default function ImmersiveStudio() {
         }
         const saved = await readStudio(key);
         if (cancelled) return;
-        if (saved) {
+        const handoffToken = new URLSearchParams(window.location.search).get('handoff');
+        const handoff = handoffToken ? consumeContentHandoff(handoffToken) : null;
+        if (handoff) {
+          const proposed = withMoliGuide(courseFromContentHandoff(handoff));
+          setCourse(proposed);
+          setHistory(saved ? [...saved.history, saved.draft].slice(-20).map(withMoliGuide) : []);
+          setRelease(saved?.release ? withMoliGuide(saved.release) : null);
+          setMessages([{ role: 'agent', text: `I opened a private, editable story proposal from “${handoff.title}”. Its ${handoff.language} goals and source notes are attached to this draft. Nothing is published—play it, then tell me one change.` }]);
+        } else if (saved) {
           setCourse(withMoliGuide(saved.draft));
           setHistory(saved.history.map(withMoliGuide));
           setRelease(saved.release ? withMoliGuide(saved.release) : null);
