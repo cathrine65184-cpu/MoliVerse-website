@@ -3,17 +3,94 @@ export type Task = { id: string; title: string; kind: 'intro' | 'match' | 'find'
 export type Material = { id: string; name: string; kind: 'text' | 'image'; text: string; image?: string; status: string };
 export type CourseWorld = {
   schemaVersion: 1; id: string; revision: number; title: string; ages: string; level: string; minutes: number;
-  objectives: string[]; source: 'demo' | 'agent' | 'edited'; warmth: number;
+  objectives: string[]; source: 'blank' | 'demo' | 'agent' | 'edited'; warmth: number;
+  theme: 'blank' | 'market' | 'bakery' | 'forest' | 'ocean' | 'space' | 'city' | 'castle' | 'library';
   objects: SceneObject[]; tasks: Task[]; materials: Material[];
   dna: { personality: string; teaching_style: string; stories: string; memories: string; values: string; course_world: string };
   mentor: { name: string; photo: string; voiceId: string; style: string; opening: string; correction: string; hintStrength: number; humanMoment: string };
 };
 
+export function blankCourse(): CourseWorld {
+  return {
+    schemaVersion: 1, id: 'untitled-world', revision: 1, title: 'Untitled world', ages: '6–12', level: 'Beginner English', minutes: 10,
+    source: 'blank', theme: 'blank', warmth: 0.7, objectives: ['Create the first playable story moment.'],
+    dna: { personality: 'Curious, warm and playful', teaching_style: 'Let children explore first, then offer one useful clue.', stories: '', memories: '', values: 'Curiosity, kindness and cultural respect.', course_world: 'A new world' },
+    mentor: { name: 'Moli', photo: '/mascot.png', voiceId: '', style: 'A lively deer companion who notices, wonders and celebrates each try.', opening: 'What shall we create together?', correction: 'Celebrate the try, offer one clear visual clue, then invite another choice.', hintStrength: 1, humanMoment: 'Invite a parent, guardian or teacher to review the world before sharing it.' },
+    objects: [{ id: 'mentor', label: 'Moli', kind: 'mentor', x: 0, z: 0, color: '#a9c77f', dialogue: 'Tell me one place, one character and one small challenge.' }],
+    tasks: [{ id: 'welcome', title: 'Begin the story', kind: 'intro', objectId: 'mentor', prompt: 'Meet Moli and begin your story.', options: [], answer: 'mentor', hint: 'Choose Moli.', feedback: 'Your world has begun.' }],
+    materials: [],
+  };
+}
+
+function titleFromIdea(idea: string) {
+  const clean = idea.trim().replace(/[.!?。！？]+$/, '').replace(/^(please |can you |help me |make |create |build |帮我|请|做一个|制作一个)/i, '').trim();
+  if (/bakery|面包|烘焙|croissant/i.test(idea)) return 'The Magic Bakery';
+  if (/ocean|sea|海洋|海底|pirate/i.test(idea)) return 'The Secret Ocean';
+  if (/moon|space|planet|月球|太空|星球/i.test(idea)) return 'The Moonlight Mission';
+  if (/forest|jungle|森林|丛林/i.test(idea)) return 'The Whispering Forest';
+  if (/castle|kingdom|城堡|王国/i.test(idea)) return 'The Hidden Castle';
+  if (/library|book|图书馆|书店/i.test(idea)) return 'The Library of Lost Words';
+  if (/market|night market|夜市|市集/i.test(idea)) return 'The Night-Market Mystery';
+  return clean.slice(0, 64) || 'My MoliVerse Story';
+}
+
+function themeFromIdea(idea: string): CourseWorld['theme'] {
+  if (/bakery|面包|烘焙|croissant/i.test(idea)) return 'bakery';
+  if (/ocean|sea|海洋|海底|pirate/i.test(idea)) return 'ocean';
+  if (/moon|space|planet|月球|太空|星球/i.test(idea)) return 'space';
+  if (/forest|jungle|森林|丛林/i.test(idea)) return 'forest';
+  if (/castle|kingdom|城堡|王国/i.test(idea)) return 'castle';
+  if (/library|book|图书馆|书店/i.test(idea)) return 'library';
+  if (/market|night market|夜市|市集/i.test(idea)) return 'market';
+  return 'city';
+}
+
+export function createWorldFromIdea(idea: string): CourseWorld {
+  const theme = themeFromIdea(idea);
+  const title = titleFromIdea(idea);
+  const french = /French|法语|巴黎|Paris/i.test(idea);
+  const spanish = /Spanish|西班牙语|Spain|墨西哥/i.test(idea);
+  const target = french ? 'French' : spanish ? 'Spanish' : 'English';
+  const placeNames: Record<Exclude<CourseWorld['theme'], 'blank'>, [string, string, string, string]> = {
+    market: ['Lantern gate', 'Fruit stall', 'Flower stall', 'Recipe stand'],
+    bakery: ['Bakery door', 'Flour table', 'Recipe shelf', 'Magic oven'],
+    forest: ['Forest gate', 'Mushroom path', 'Story tree', 'Firefly clearing'],
+    ocean: ['Shell beach', 'Coral garden', 'Treasure map', 'Moonlit boat'],
+    space: ['Launch gate', 'Word planet', 'Star library', 'Moon café'],
+    city: ['Story gate', 'Word garden', 'Little library', 'Friendship café'],
+    castle: ['Castle gate', 'Potion garden', 'Map room', 'Great hall'],
+    library: ['Library door', 'Whispering shelf', 'Map table', 'Story window'],
+  };
+  const [gate, first, second, finale] = placeNames[theme === 'blank' ? 'city' : theme];
+  const palette: Record<Exclude<CourseWorld['theme'], 'blank'>, string[]> = {
+    market: ['#d99b53','#d17875','#e8b75e'], bakery: ['#d79a62','#95a777','#e5b766'], forest: ['#7fa36b','#bf8a9b','#e2bd63'], ocean: ['#5ba9b5','#7c8fc7','#efbc73'], space: ['#7b70c7','#4fa6b6','#e2a45e'], city: ['#e4a957','#93b2aa','#d68c99'], castle: ['#9677b5','#6c91a7','#d8ab67'], library: ['#b7875c','#718f86','#d1a65c'],
+  };
+  const colors = palette[theme === 'blank' ? 'city' : theme];
+  return {
+    ...blankCourse(), id: `world-${Date.now()}`, revision: 1, title, source: 'agent', theme, level: `Beginner ${target}`,
+    objectives: [`Notice and use three ${target} words.`, 'Ask one short question in the story.', 'Make one choice that changes the ending.'],
+    dna: { ...blankCourse().dna, stories: idea.trim(), course_world: title },
+    mentor: { ...blankCourse().mentor, opening: `Welcome to ${title}! I’m Moli. Let’s find our first clue together.` },
+    objects: [
+      { id: 'mentor', label: gate, kind: 'mentor', x: -4.8, z: 3.5, color: '#a9c77f', dialogue: `Welcome to ${title}. Our story begins here.` },
+      { id: 'fruit', label: first, kind: 'fruit', x: -3.6, z: -1.2, color: colors[0], dialogue: 'Three useful words are hiding here. Tap each clue and say it aloud.' },
+      { id: 'books', label: second, kind: 'books', x: 0.2, z: -2.2, color: colors[1], dialogue: 'A short question will reveal the next part of the story.' },
+      { id: 'ice', label: finale, kind: 'ice', x: 4.2, z: -1.2, color: colors[2], dialogue: 'Use what you learned to choose how the story ends.' },
+    ],
+    tasks: [
+      { id: 'welcome', title: 'Enter the world', kind: 'intro', objectId: 'mentor', prompt: `Meet Moli at ${gate}.`, options: [], answer: 'mentor', hint: 'Choose the place marked by Moli.', feedback: 'You stepped into the story.' },
+      { id: 'words', title: 'Find three words', kind: 'match', objectId: 'fruit', prompt: 'Discover three words that belong in this world.', options: ['hello', 'please', 'thank you'], answer: 'all', hint: 'Use the pictures and try one word at a time.', feedback: 'Those words are now part of your story.' },
+      { id: 'question', title: 'Ask for a clue', kind: 'dialogue', objectId: 'books', prompt: 'Which question moves the story forward?', options: ['Where is the clue?', 'I will not ask.'], answer: 'Where is the clue?', hint: 'Choose the curious, helpful question.', feedback: 'Your question opened a new path.' },
+      { id: 'ending', title: 'Create the ending', kind: 'create', objectId: 'ice', prompt: 'Choose two ideas for your ending.', options: ['help', 'share', 'explore', 'celebrate'], answer: 'two-fruits', hint: 'Any two thoughtful choices can shape the ending.', feedback: 'You changed the world with your own choice.' },
+    ],
+  };
+}
+
 export const fruit = [{ word: 'bonjour', icon: '👋' }, { word: 'ami', icon: '🤝' }, { word: 'merci', icon: '💛' }, { word: 'ensemble', icon: '✨' }];
 export function demoCourse(): CourseWorld {
   return {
     schemaVersion: 1, id: 'molis-journey', revision: 1, title: "Moli's Journey: A New Friend", ages: '8–14', level: 'Beginner French', minutes: 12,
-    source: 'demo', warmth: 0.7,
+    source: 'demo', theme: 'city', warmth: 0.7,
     objectives: ['Greet a new friend with bonjour.', 'Recognise ami, merci and ensemble.', 'Choose a kind response in a short conversation.', 'Create a small friendship promise.'],
     dna: { personality: 'Curious, warm and playful', teaching_style: 'Let children explore first, then offer one useful clue.', stories: 'An original story about Moli meeting a new friend in a little French town.', memories: '', values: 'Friendship, courage, curiosity and cultural respect.', course_world: "Moli's French Story Town" },
     mentor: { name: 'Moli', photo: '/mascot.png', voiceId: '', style: 'A lively deer companion who notices, wonders and celebrates each try.', opening: 'Bonjour, explorer! I’m Moli. A new friend is waiting somewhere in this little town. Shall we find her together?', correction: 'Celebrate the try, show one visual clue, then invite another choice.', hintStrength: 1, humanMoment: 'At the end, invite the child to share their friendship promise with a parent, teacher or friend. Nothing is sent automatically.' },
@@ -38,6 +115,7 @@ export function demoCourse(): CourseWorld {
 /** Upgrade older local drafts from teacher-avatar Mentor UI to the Moli guide. */
 export function withMoliGuide(course: CourseWorld): CourseWorld {
   const next = structuredClone(course);
+  next.theme = next.theme || 'city';
   const wasLegacyGuide = next.mentor.name !== 'Moli' || next.mentor.photo !== '/mascot.png';
   next.mentor = {
     ...next.mentor,
@@ -61,6 +139,7 @@ export function validateCourse(value: unknown): string[] {
   const c = value as CourseWorld; const errors: string[] = [];
   if (!c || c.schemaVersion !== 1) return ['Unsupported course format.'];
   if (typeof c.id !== 'string' || !Number.isInteger(c.revision) || c.revision < 1 || typeof c.ages !== 'string' || typeof c.level !== 'string' || !Number.isFinite(c.minutes) || c.minutes < 5 || c.minutes > 60) errors.push('Invalid course metadata.');
+  if (!['blank','market','bakery','forest','ocean','space','city','castle','library'].includes(c.theme)) errors.push('Choose a supported world theme.');
   if (typeof c.title !== 'string' || !c.title.trim() || c.title.length > 180) errors.push('Add a title under 180 characters.');
   if (!Number.isFinite(c.warmth) || c.warmth < 0 || c.warmth > 1) errors.push('Lighting must be between 0 and 1.');
   if (!Array.isArray(c.objects) || c.objects.length < 1 || c.objects.length > 20) return [...errors, 'Use 1–20 scene objects.'];
@@ -92,11 +171,12 @@ export function applyPatches(course: CourseWorld, patches: CoursePatch[]): Cours
   if (!Array.isArray(patches) || patches.length > 20) throw new Error('Use at most 20 edits at once.');
   const next = structuredClone(course);
   for (const p of patches) {
-    const fields = { world: ['title','warmth'], object: ['label','x','z','color','dialogue'], task: ['title','prompt','hint','feedback'], mentor: ['name','style','opening','correction','hintStrength','humanMoment'] };
+    const fields = { world: ['title','warmth','theme'], object: ['label','x','z','color','dialogue'], task: ['title','prompt','hint','feedback'], mentor: ['name','style','opening','correction','hintStrength','humanMoment'] };
     if (!fields[p.target]?.includes(p.field) || (typeof p.value !== 'string' && typeof p.value !== 'number')) throw new Error('Unsupported course change.');
     const numeric = ['warmth', 'x', 'z', 'hintStrength'].includes(p.field);
     if (numeric ? typeof p.value !== 'number' || !Number.isFinite(p.value) : typeof p.value !== 'string' || p.value.length > 4000) throw new Error('Invalid field value.');
     if (p.field === 'hintStrength' && p.value !== 1 && p.value !== 2) throw new Error('Choose hint strength 1 or 2.');
+    if (p.field === 'theme' && !['market','bakery','forest','ocean','space','city','castle','library'].includes(String(p.value))) throw new Error('Choose a supported world theme.');
     const target = p.target === 'world' ? next : p.target === 'mentor' ? next.mentor : p.target === 'object' ? next.objects.find(o => o.id === p.id) : next.tasks.find(t => t.id === p.id);
     if (!target) throw new Error('The selected course element no longer exists.');
     (target as unknown as Record<string, unknown>)[p.field] = p.value;
@@ -108,7 +188,16 @@ export function applyPatches(course: CourseWorld, patches: CoursePatch[]): Cours
 
 // Explicit, offline editing commands. This is not presented as LLM generation.
 export function offlineEdit(c: CourseWorld, request: string, selected: string): CoursePatch[] {
+  const themes: Array<[RegExp, CourseWorld['theme'], string]> = [
+    [/bakery|面包|烘焙|croissant/i, 'bakery', 'The Magic Bakery'], [/ocean|sea|海洋|海底|pirate/i, 'ocean', 'The Secret Ocean'],
+    [/moon|space|planet|月球|太空|星球/i, 'space', 'The Moonlight Mission'], [/forest|jungle|森林|丛林/i, 'forest', 'The Whispering Forest'],
+    [/castle|kingdom|城堡|王国/i, 'castle', 'The Hidden Castle'], [/library|book|图书馆|书店/i, 'library', 'The Library of Lost Words'],
+    [/market|night market|夜市|市集/i, 'market', 'The Night-Market Mystery'],
+  ];
+  const setting = themes.find(([pattern]) => pattern.test(request));
+  if (setting && setting[1] !== c.theme) return [{ target: 'world', field: 'theme', value: setting[1] }, { target: 'world', field: 'title', value: setting[2] }];
   if (/暖|warm/i.test(request)) return [{ target: 'world', field: 'warmth', value: Math.min(1, c.warmth + 0.15) }];
+  if (/magic|magical|梦幻|魔法/i.test(request)) return [{ target: 'world', field: 'warmth', value: Math.min(1, c.warmth + 0.1) }, { target: 'mentor', field: 'opening', value: `Welcome to ${c.title}. Look closely — something magical has just appeared.` }];
   if (/简单|simpl/i.test(request)) return [{ target: 'object', id: selected, field: 'dialogue', value: 'Hello! Can I help you? Look here. Thank you!' }];
   if (/图片|picture/i.test(request)) return [{ target: 'mentor', field: 'correction', value: 'Show a fruit picture first. Then model one word and invite another try.' }, { target: 'mentor', field: 'hintStrength', value: 2 }];
   if (/开场|introduc|opening/i.test(request)) return [{ target: 'mentor', field: 'opening', value: 'Hello! I am Moli, your story guide. Grandma needs her recipe. Let’s find four fruits and follow the clues together!' }];

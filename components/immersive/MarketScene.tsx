@@ -12,10 +12,22 @@ export default function MarketScene({ course, selected, target, onSelect, flat }
     const el=host.current; let renderer: THREE.WebGLRenderer;
     try { renderer=new THREE.WebGLRenderer({antialias:true,alpha:true}); } catch { setFailed(true); return; }
     setFailed(false);
+    const worlds: Record<CourseWorld['theme'], {sky:string;fog:string;ground:string;path:string;building:string[];window:string}> = {
+      blank:{sky:'#eef2e8',fog:'#eef2e8',ground:'#dfe7d8',path:'#f4eee0',building:['#d8dfd1'],window:'#f8e8b5'},
+      market:{sky:'#253d46',fog:'#253d46',ground:'#6f766b',path:'#cdb28c',building:['#687f76','#a38d78','#8e9d8f'],window:'#f2ca7d'},
+      bakery:{sky:'#765f6e',fog:'#765f6e',ground:'#948477',path:'#d9b98f',building:['#b18172','#8fa08b','#c19877'],window:'#ffe3a0'},
+      forest:{sky:'#274842',fog:'#274842',ground:'#58705a',path:'#bca77f',building:['#53705a','#6e8061','#7b6c59'],window:'#f5d98c'},
+      ocean:{sky:'#397b8c',fog:'#397b8c',ground:'#75a7a2',path:'#e2cfaa',building:['#5c9697','#6c83a6','#769a8d'],window:'#ffe7a9'},
+      space:{sky:'#171a3d',fog:'#171a3d',ground:'#4e4a6b',path:'#8d87a4',building:['#5d5b83','#4a6f88','#735f8c'],window:'#bde8ff'},
+      city:{sky:'#304c52',fog:'#304c52',ground:'#6d786e',path:'#c7b393',building:['#71847c','#a08d79','#85968b'],window:'#ead092'},
+      castle:{sky:'#4b4262',fog:'#4b4262',ground:'#706a78',path:'#c3b79d',building:['#81788b','#716b80','#938378'],window:'#f6d58d'},
+      library:{sky:'#3c4d4a',fog:'#3c4d4a',ground:'#756d61',path:'#c5aa83',building:['#816f60','#667b72','#997a61'],window:'#f5d18a'},
+    };
+    const world=worlds[course.theme] || worlds.city;
     renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); renderer.outputColorSpace=THREE.SRGBColorSpace;
-    renderer.setClearColor('#182b32'); el.appendChild(renderer.domElement);
+    renderer.setClearColor(world.sky); el.appendChild(renderer.domElement);
     renderer.domElement.setAttribute('aria-label','Interactive 3D story world. Drag to orbit, scroll to zoom. Use the location buttons for keyboard access.');
-    const scene=new THREE.Scene(); scene.fog=new THREE.Fog('#182b32',23,50);
+    const scene=new THREE.Scene(); scene.fog=new THREE.Fog(world.fog,23,50);
     const camera=new THREE.PerspectiveCamera(42,1,.1,100); camera.position.set(15,15,21);
     const controls=new OrbitControls(camera,renderer.domElement); controls.target.set(1,0,0); controls.enableDamping=true; controls.maxPolarAngle=Math.PI/2.25; controls.minDistance=12; controls.maxDistance=36; controls.enablePan=false;
     scene.add(new THREE.HemisphereLight('#ffe6bd','#324947',2.6));
@@ -27,10 +39,10 @@ export default function MarketScene({ course, selected, target, onSelect, flat }
     const ball=(g:THREE.Object3D,x:number,y:number,z:number,r:number,color:string)=>{const m=new THREE.Mesh(sphereGeo,mat(color));m.position.set(x,y,z);m.scale.setScalar(r);g.add(m);return m;};
     const textures:THREE.Texture[]=[]; const spriteMats:THREE.SpriteMaterial[]=[];
     const label=(g:THREE.Object3D,text:string,y:number)=>{const c=document.createElement('canvas');c.width=512;c.height=100;const ctx=c.getContext('2d')!;ctx.fillStyle='#fff4d8';ctx.beginPath();ctx.roundRect(0,0,512,100,25);ctx.fill();ctx.fillStyle='#3b3b35';ctx.font='bold 30px sans-serif';ctx.textAlign='center';ctx.fillText(text,256,62);const texture=new THREE.CanvasTexture(c); textures.push(texture);const m=new THREE.SpriteMaterial({map:texture,depthTest:false});spriteMats.push(m);const s=new THREE.Sprite(m);s.position.set(0,y,0);s.scale.set(2.8,.55,1);g.add(s);};
-    box(scene,1,-.3,0,21,.6,15,'#66736c'); box(scene,1,.02,2,19,.08,5,'#c2ad8b');
-    for(let x=-8;x<11;x+=1.2) for(let z=.3;z<4.4;z+=1.2) box(scene,x,.08,z,1.12,.04,1.12,((x+z)%2>1)?'#bda786':'#cab795');
+    box(scene,1,-.3,0,21,.6,15,world.ground); box(scene,1,.02,2,19,.08,5,world.path);
+    for(let x=-8;x<11;x+=1.2) for(let z=.3;z<4.4;z+=1.2) box(scene,x,.08,z,1.12,.04,1.12,((x+z)%2>1)?world.path:'#ead9b9');
     // Fictional shophouse silhouettes, decorative shutters, warm windows.
-    for(let i=0;i<7;i++){const x=-8+i*3;box(scene,x,2,-6.5,2.8,4,2,['#697f76','#a38d78','#8e9d8f'][i%3]);for(let j=0;j<2;j++){box(scene,x-.65+j*1.3,2.8,-5.46,.7,1,.08,'#e5c58a');box(scene,x-.65+j*1.3,2.8,-5.39,.06,1,.04,'#6e6556');}box(scene,x,4.1,-6.5,3,.25,2.4,'#615c55');}
+    for(let i=0;i<7;i++){const x=-8+i*3;box(scene,x,2,-6.5,2.8,4,2,world.building[i%world.building.length]);for(let j=0;j<2;j++){box(scene,x-.65+j*1.3,2.8,-5.46,.7,1,.08,world.window);box(scene,x-.65+j*1.3,2.8,-5.39,.06,1,.04,'#6e6556');}box(scene,x,4.1,-6.5,3,.25,2.4,'#615c55');}
     const clickable: THREE.Object3D[]=[]; const markers:THREE.Mesh[]=[]; const moliActors:THREE.Group[]=[];
     course.objects.forEach(o=>{
       const g=new THREE.Group();g.position.set(o.x,0,o.z);g.userData.objectId=o.id;scene.add(g);
@@ -73,6 +85,6 @@ export default function MarketScene({ course, selected, target, onSelect, flat }
     const animate=(t:number)=>{controls.update();if(!reduce.matches){markers.forEach(m=>m.position.y=4.15+Math.sin(t*.002)*.1);moliActors.forEach((m,i)=>{m.position.y=.1+Math.sin(t*.003+i)*.07;m.rotation.z=Math.sin(t*.0022+i)*.035;const head=m.children.find(c=>c.userData.moliHead);if(head)head.rotation.y=Math.sin(t*.0018)*.18;});}renderer.render(scene,camera);frame=requestAnimationFrame(animate);};frame=requestAnimationFrame(animate);
     const lost=(e:Event)=>{e.preventDefault();setFailed(true);};renderer.domElement.addEventListener('webglcontextlost',lost);
     return ()=>{cancelAnimationFrame(frame);resize.disconnect();controls.dispose();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());spriteMats.forEach(m=>m.dispose());wireMat.dispose();renderer.dispose();renderer.domElement.remove();};
-  },[course.objects,course.warmth,selected,target,flat]);
+  },[course.objects,course.warmth,course.theme,selected,target,flat]);
   return <div className="market-render"><div ref={host} className="market-canvas" style={{display:flat||failed?'none':'block'}} />{(flat||failed)&&<div className="market-flat"><p>{failed?'WebGL unavailable · accessible 2D mode':'2D learning map'}</p><div>{course.objects.map(o=><button key={o.id} onClick={()=>onSelect(o.id)} style={{borderColor:o.id===target?'#efc373':o.color}}><span>{({fruit:'🥭',flowers:'🌸',books:'📚',ice:'🍧',mentor:'🦌'})[o.kind]}</span>{o.label}{o.id===target&&<small>Next stop</small>}</button>)}</div></div>}</div>;
 }

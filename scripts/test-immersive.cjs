@@ -4,7 +4,16 @@ const assert = require('node:assert/strict');
 const code = ts.transpileModule(fs.readFileSync('lib/immersive/course.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 const moduleObject = { exports: {} };
 new Function('exports', 'module', code)(moduleObject.exports, moduleObject);
-const { demoCourse, validateCourse, applyPatches, offlineEdit, withMoliGuide } = moduleObject.exports;
+const { blankCourse, createWorldFromIdea, demoCourse, validateCourse, applyPatches, offlineEdit, withMoliGuide } = moduleObject.exports;
+const blank = blankCourse();
+assert.equal(blank.source, 'blank');
+assert.equal(blank.theme, 'blank');
+assert.deepEqual(validateCourse(blank), []);
+const bakery = createWorldFromIdea('A magical bakery in Paris where children learn French.');
+assert.equal(bakery.theme, 'bakery');
+assert.equal(bakery.level, 'Beginner French');
+assert.equal(bakery.title, 'The Magic Bakery');
+assert.deepEqual(validateCourse(bakery), []);
 const course = demoCourse();
 assert.deepEqual(validateCourse(course), []);
 assert.equal(course.tasks.length, 6);
@@ -23,6 +32,7 @@ for (const patch of [
   { target: 'object', id: 'missing', field: 'label', value: 'no' },
 ]) assert.throws(() => applyPatches(course, [patch]));
 assert.equal(applyPatches(course, offlineEdit(course, 'Make the lighting warmer', 'fruit')).warmth, .85);
+assert.equal(applyPatches(course, offlineEdit(course, 'Turn this into a moon library', 'fruit')).theme, 'space');
 assert.deepEqual(offlineEdit(course, 'unknown request', 'fruit'), []);
 const release = structuredClone(course);
 updated.objects[1].label = 'Later draft';
