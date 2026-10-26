@@ -10,12 +10,12 @@ const promises = [
   {
     icon: HeartHandshake,
     title: "AI for everyday practice. Humans for what matters.",
-    body: "AI Mentors carry the day-to-day story and practice. Educators define when a thoughtful human response is needed.",
+    body: "Moli helps children create and explore story games. Educators shape learning goals and step in when human judgment matters.",
   },
   {
     icon: ShieldCheck,
     title: "Designed for a child’s trust",
-    body: "No open child-to-educator direct messages. Families stay part of any request for a human response, and every Mentor is rooted in an educator’s stated approach.",
+    body: "Young creators use the AI assistant with adult guidance. Private playtests are saved locally and nothing is published automatically.",
   },
 ];
 
@@ -28,7 +28,7 @@ export default function FamiliesPage() {
         <section className="mx-auto max-w-3xl pt-20 text-center">
           <p className="text-xs font-medium uppercase tracking-[0.24em] text-violet-300">For families</p>
           <h1 className="mt-5 font-display text-4xl font-semibold tracking-tight text-white sm:text-6xl">A language journey your child can care about.</h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">MoliVerse helps children learn languages through culturally grounded stories, created by educators and supported by AI — with human connection kept where it matters most.</p>
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">MoliVerse helps children create and explore language stories with Moli, while families and educators remain part of the learning journey.</p>
           <div className="mt-9 flex flex-wrap justify-center gap-3"><Link href="/explore/" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_0_36px_-10px_rgba(139,92,246,0.8)]">Set up an Explorer <ArrowRight className="h-4 w-4" /></Link><Link href="/family/" className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-6 py-3.5 text-sm font-semibold text-slate-200 hover:border-cyan-400/30 hover:text-cyan-200">Family dashboard</Link></div>
         </section>
 
@@ -49,9 +49,9 @@ export default function FamiliesPage() {
           </div>
           <ul className="space-y-3 text-sm leading-relaxed text-slate-300">
             <li>• A clear world, story question and suggested age range before your child begins.</li>
-            <li>• A visible educator behind every published Mentor.</li>
+            <li>• Real educators and workshops remain visible alongside AI-assisted creation.</li>
             <li>• A small shared-memory card after a journey, so progress means more than a score.</li>
-            <li>• Parent-managed consent for AI chat, saved memories, voice practice, and a family-guided route for meaningful educator contact.</li>
+            <li>• Parent-managed consent for AI creation, saved worlds and any family-guided educator contact.</li>
             <li>• An optional weekly email with the world explored, a recent shared memory, and one suggested next journey.</li>
           </ul>
         </section>

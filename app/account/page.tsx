@@ -104,7 +104,7 @@ export default function AccountPage() {
                 href={me.role === "teacher" ? "/teach/" : "/learn/"}
                 className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90"
               >
-                {me.role === "teacher" ? "Open Mentor Studio" : "Create a learning game"}
+                {me.role === "teacher" ? "Open Creator Studio" : "Create a story game"}
               </Link>
               {me.role === "teacher" && <Link href="/chat/" className="rounded-xl border border-white/10 bg-white/[0.04] px-6 py-2.5 text-sm font-semibold text-slate-200 transition-all hover:border-white/25">Educator conversations</Link>}
             </div>
@@ -138,7 +138,7 @@ export default function AccountPage() {
                 >
                   <School className="h-5 w-5" />
                   <span className="text-sm font-medium">I’m a learner</span>
-                  <span className="text-[11px] text-slate-500">Explore worlds · enter stories · meet a Mentor</span>
+                  <span className="text-[11px] text-slate-500">Imagine worlds · create stories · play with Moli</span>
                 </button>
                 <button
                   type="button"
@@ -151,7 +151,7 @@ export default function AccountPage() {
                 >
                   <GraduationCap className="h-5 w-5" />
                   <span className="text-sm font-medium">I’m an educator</span>
-                  <span className="text-[11px] text-slate-500">Create Mentors · worlds · learning journeys</span>
+                  <span className="text-[11px] text-slate-500">Design worlds · shape learning · run workshops</span>
                 </button>
               </div>
             )}

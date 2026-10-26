@@ -37,7 +37,7 @@ export default function Hero() {
         >
           <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
           <span className="text-xs font-medium tracking-wide text-slate-300">
-            Built by language educators, for curious children everywhere
+            An AI story-game maker for curious minds
           </span>
         </motion.div>
 
@@ -48,10 +48,10 @@ export default function Hero() {
           custom={0.12}
           className="font-display text-5xl font-semibold leading-[1.05] tracking-tight text-white sm:text-7xl md:text-8xl"
         >
-          Learn Languages.
+          Imagine a World.
           <br />
           <span className="animate-shimmer bg-gradient-to-r from-indigo-300 via-violet-300 via-50% to-cyan-300 bg-[length:200%_auto] bg-clip-text text-transparent">
-            Build Memories.
+            Play What You Create.
           </span>
         </motion.h1>
 
@@ -62,7 +62,7 @@ export default function Hero() {
           custom={0.24}
           className="mt-8 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg"
         >
-          A living language universe built by educators: children enter cultural stories with AI Mentors, and return because the world remembers what matters to them.
+          Tell Moli an idea. Build an interactive language story together. Then step inside, make choices, solve challenges, and keep improving the world as you play.
         </motion.p>
 
         <motion.div
@@ -73,18 +73,18 @@ export default function Hero() {
           className="mt-10 flex flex-col items-center gap-4 sm:flex-row"
         >
           <Link
-            href="/moli-journey/"
+            href="/teach/studio/?mode=young-creator"
             className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-7 py-3.5 text-sm font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,0.6)] transition-all hover:shadow-[0_0_56px_-8px_rgba(139,92,246,0.8)]"
           >
-            Play Moli’s Journey
+            Create with Moli
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
           <Link
-            href="/teach/studio/"
+            href="/moli-journey/"
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-7 py-3.5 text-sm font-semibold text-slate-200 backdrop-blur-sm transition-all hover:border-white/25 hover:bg-white/[0.08]"
           >
             <Sparkles className="h-4 w-4" />
-            I’m an educator
+            Play Moli’s Journey
           </Link>
         </motion.div>
       </div>

@@ -7,10 +7,10 @@ import { UserRound } from "lucide-react";
 import { withBasePath } from "@/lib/paths";
 
 const links = [
+  { label: "Create", href: "/teach/studio/?mode=young-creator" },
   { label: "Play", href: "/moli-journey/" },
-  { label: "What is MoliVerse", href: "/#what" },
-  { label: "For Families", href: "/families/" },
-  { label: "Mentor Studio", href: "/teach/studio/" },
+  { label: "Educators", href: "/#educators" },
+  { label: "Workshops", href: "/#workshops" },
 ];
 
 export default function Navbar() {

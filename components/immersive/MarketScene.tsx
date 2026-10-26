@@ -14,7 +14,7 @@ export default function MarketScene({ course, selected, target, onSelect, flat }
     setFailed(false);
     renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); renderer.outputColorSpace=THREE.SRGBColorSpace;
     renderer.setClearColor('#182b32'); el.appendChild(renderer.domElement);
-    renderer.domElement.setAttribute('aria-label','Interactive 3D night market. Drag to orbit, scroll to zoom. Use the stall buttons for keyboard access.');
+    renderer.domElement.setAttribute('aria-label','Interactive 3D story world. Drag to orbit, scroll to zoom. Use the location buttons for keyboard access.');
     const scene=new THREE.Scene(); scene.fog=new THREE.Fog('#182b32',23,50);
     const camera=new THREE.PerspectiveCamera(42,1,.1,100); camera.position.set(15,15,21);
     const controls=new OrbitControls(camera,renderer.domElement); controls.target.set(1,0,0); controls.enableDamping=true; controls.maxPolarAngle=Math.PI/2.25; controls.minDistance=12; controls.maxDistance=36; controls.enablePan=false;

@@ -17,14 +17,14 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://moliverse.tech"),
-  title: "MoliVerse — Learn Languages. Live Stories.",
+  title: "MoliVerse — Imagine. Create. Play.",
   description:
-    "MoliVerse is an AI-powered RPG language universe where teachers worldwide create digital twins and story-quest courses, making human-guided language learning affordable for every child.",
+    "MoliVerse is an AI story-game maker where children and educators create immersive language worlds with Moli, then learn by playing what they imagined.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "MoliVerse — Learn Languages. Live Stories.",
+    title: "MoliVerse — Imagine. Create. Play.",
     description:
-      "A creator platform where real teachers build AI digital twins and immersive story-quests — human-guided language learning that every family can afford.",
+      "Create immersive language story games with Moli, play inside them, and improve the world as you learn.",
     url: "https://moliverse.tech",
     siteName: "MoliVerse",
     type: "website",
@@ -33,15 +33,15 @@ export const metadata: Metadata = {
         url: "/og.jpg",
         width: 1200,
         height: 630,
-        alt: "MoliVerse — Learn Languages. Live Stories.",
+        alt: "MoliVerse — Imagine. Create. Play.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MoliVerse — Learn Languages. Live Stories.",
+    title: "MoliVerse — Imagine. Create. Play.",
     description:
-      "A global AI education platform where educators create AI mentors — making quality education accessible and affordable for every child.",
+      "Create immersive language story games with Moli, then learn by playing what you imagined.",
     images: ["/og.jpg"],
   },
 };

@@ -1,25 +1,25 @@
-import { HeartHandshake, MapPinned, Sparkles } from "lucide-react";
+import { Gamepad2, HeartHandshake, Sparkles } from "lucide-react";
 import Reveal from "./ui/Reveal";
 import SectionHeading from "./ui/SectionHeading";
 
 const pieces = [
   {
-    icon: MapPinned,
-    title: "Cultural Worlds",
+    icon: Sparkles,
+    title: "Create by Talking",
     description:
-      "A night market, a football pitch, a folktale — language begins with a place a child genuinely wants to understand.",
+      "Describe a place, a character and a challenge. Moli helps turn the idea into a small playable story.",
   },
   {
-    icon: Sparkles,
-    title: "Educator-Made Mentors",
+    icon: Gamepad2,
+    title: "Learn Inside the Game",
     description:
-      "Language educators bring their voice, teaching approach, and cultural perspective into an AI Mentor — not a generic bot.",
+      "New words live inside clues, choices and conversations — not in a disconnected exercise list.",
   },
   {
     icon: HeartHandshake,
-    title: "Human Moments",
+    title: "Guided by Real People",
     description:
-      "AI carries everyday exploration. When a child needs encouragement, insight, or a real reply, the educator steps in.",
+      "Teachers and families can shape, review and share the experience while children stay at the centre of creation.",
   },
 ];
 
@@ -27,11 +27,11 @@ export default function WhatIs() {
   return (
     <section id="what" className="relative scroll-mt-24 px-6 py-28 sm:py-36">
       <div className="mx-auto max-w-5xl">
-        <SectionHeading eyebrow="What is MoliVerse" title="Not more lessons. A world worth returning to." />
+        <SectionHeading eyebrow="What is MoliVerse" title="A place to make stories you can step inside." />
 
         <Reveal delay={0.1} className="mx-auto mt-8 max-w-2xl text-center">
           <p className="text-base leading-relaxed text-slate-400 sm:text-lg">
-            MoliVerse turns curiosity into a cultural journey. Every experience connects story, language, relationship, and a memory children can carry forward.
+            MoliVerse is an AI-assisted game maker for language learning. Children and educators build interactive story worlds with Moli, then learn by exploring what they created.
           </p>
         </Reveal>
 

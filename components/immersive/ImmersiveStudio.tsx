@@ -1,56 +1,273 @@
 "use client";
-import { useEffect, useRef, useState } from 'react';
-import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { ArrowLeft, ArrowUp, Check, ChevronDown, Eye, Layers, Loader2, Paperclip, RotateCcw, Save, ShieldCheck, Sparkles, Undo2, Volume2 } from 'lucide-react';
-import { applyPatches, CoursePatch, CourseWorld, demoCourse, Material, validateCourse, withMoliGuide } from '@/lib/immersive/course';
-import { readStudio, StudioRecord, writeStudio } from '@/lib/immersive/storage';
-import { getMyProfile, supabase } from '@/lib/supabase';
-import { extractText } from '@/lib/extractText';
-import LearningPanel from './LearningPanel';
-import './studio.css';
-const MarketScene=dynamic(()=>import('./MarketScene'),{ssr:false,loading:()=> <div className="scene-loading">Preparing your night market…</div>});
-type Message={role:'teacher'|'agent';text:string};
-export default function ImmersiveStudio(){
-  const [course,setCourse]=useState<CourseWorld>(demoCourse);const [history,setHistory]=useState<CourseWorld[]>([]);const [release,setRelease]=useState<CourseWorld|null>(null);
-  const [owner,setOwner]=useState('guest');const [loaded,setLoaded]=useState(false);const [saveState,setSaveState]=useState('Opening local draft…');const [notice,setNotice]=useState('');
-  const [selected,setSelected]=useState('fruit');const [taskId,setTaskId]=useState('fruits');const [tab,setTab]=useState('scene');const [inspector,setInspector]=useState('object');
-  const [preview,setPreview]=useState(false);const [useRelease,setUseRelease]=useState(false);const [index,setIndex]=useState(0);const [visited,setVisited]=useState('');const [flat,setFlat]=useState(false);const [chapters,setChapters]=useState(false);
-  const [input,setInput]=useState('');const [busy,setBusy]=useState('');const [pending,setPending]=useState<CoursePatch[]|null>(null);
-  const [messages,setMessages]=useState<Message[]>([{role:'agent',text:'Tell me the learning game you imagine: a world, a character, a mystery or a challenge. I will help turn it into a small playable story.'}]);
-  const [publish,setPublish]=useState(false);const [defaultDna,setDefaultDna]=useState<CourseWorld['dna']|null>(null);const [speaking,setSpeaking]=useState(false);
-  const [youngCreator,setYoungCreator]=useState(false);const [adultReady,setAdultReady]=useState(false);const [profileRole,setProfileRole]=useState<'guest'|'student'|'teacher'>('guest');
-  const importRef=useRef<HTMLInputElement>(null);const fileRef=useRef<HTMLInputElement>(null);const saving=useRef(Promise.resolve());
-  useEffect(()=>{let cancelled=false;setYoungCreator(new URLSearchParams(window.location.search).get('mode')==='young-creator');void (async()=>{let key='guest';try{const p=await getMyProfile();if(p){key=p.id;if(!cancelled){setProfileRole(p.role);if(p.role==='student')setYoungCreator(true);}}if(p?.role==='teacher'){const {data:dna}=await supabase.from('teacher_dna').select('*').eq('teacher_id',p.id).maybeSingle();if(cancelled)return;if(dna)setDefaultDna(dna);const saved=await readStudio(key);if(saved){setCourse(withMoliGuide(saved.draft));setHistory(saved.history.map(withMoliGuide));setRelease(saved.release?withMoliGuide(saved.release):null);}else setCourse(c=>withMoliGuide({...c,dna:dna?{...c.dna,...dna}:c.dna}));}else{const saved=await readStudio(key);if(saved){setCourse(withMoliGuide(saved.draft));setHistory(saved.history.map(withMoliGuide));setRelease(saved.release?withMoliGuide(saved.release):null);}}if(!cancelled){setOwner(key);setLoaded(true);setSaveState('Saved on this device');}}catch{if(!cancelled){setNotice('Could not open local storage. Export your draft before leaving.');setSaveState('Storage unavailable');setLoaded(true);}}})();return()=>{cancelled=true;};},[]);
-  useEffect(()=>{if(!loaded)return;setSaveState('Saving…');const record:StudioRecord={draft:course,history,release,savedAt:new Date().toISOString()};saving.current=saving.current.catch(()=>{}).then(()=>writeStudio(owner,record)).then(()=>setSaveState('Saved on this device')).catch(()=>{setSaveState('Save failed · export a backup');});},[course,history,release,loaded,owner]);
-  function commit(next:CourseWorld){const errors=validateCourse(next);if(errors.length){setNotice(errors.join(' '));return;}setHistory(h=>[...h.slice(-19),course]);setCourse({...next,revision:course.revision+1,source:next.source==='demo'?'demo':'edited'});setPending(null);}
-  function edit(p:CoursePatch){try{commit(applyPatches(course,[p]));}catch(e){setNotice((e as Error).message);}}
-  function undo(){const last=history.at(-1);if(!last)return;setCourse(last);setHistory(h=>h.slice(0,-1));setPending(null);setNotice('Last edit undone.');}
-  function addClue(){const id='clue-'+Date.now();commit({...course,tasks:[...course.tasks.slice(0,3),{id,title:'A flower-side clue',kind:'find',objectId:'books',prompt:'Look next to the flower stall. Which stall has books?',options:[],answer:'books',hint:'Find the pink flowers first. Notice the books beside them.',feedback:'You noticed the book stall next to the flowers.'},...course.tasks.slice(3)],source:'edited'});setTaskId(id);setInspector('task');}
-  async function send(){if(!input.trim()||busy)return;if(youngCreator&&!adultReady){setNotice('Ask a parent, guardian or teacher to join you and approve the AI creation session first.');return;}const request=input.trim();setInput('');setMessages(m=>[...m,{role:'teacher',text:request}]);setBusy('Moli is planning and checking the game…');try{
-    const {data,error}=await supabase.functions.invoke('immersive-author',{body:{request,course,selected,history:messages.slice(-8)}});if(error){let detail='The connected creation agent is unavailable. Your local draft is unchanged; sign in and try again.';try{const body=await error.context?.json();detail=body?.message||detail;}catch{}throw new Error(detail);}if(!Array.isArray(data?.patches))throw new Error('The agent returned no valid game edits.');applyPatches(course,data.patches);setPending(data.patches.length?data.patches:null);setMessages(m=>[...m,{role:'agent',text:data.message||'Moli prepared a small, reviewable game edit.'}]);
-  }catch(e){setMessages(m=>[...m,{role:'agent',text:(e as Error).message}]);}finally{setBusy('');}}
-  async function upload(files:FileList|null){if(!files)return;setBusy('Reading teaching materials locally…');const materials:Material[]=[];for(const file of Array.from(files)){if(file.size>5*1024*1024){setNotice(file.name+': maximum 5 MB per file.');continue;}const image=/image\/(png|jpeg|webp)/.test(file.type);if(!image&&!/\.(pdf|docx|txt|md)$/i.test(file.name)){setNotice(file.name+': unsupported. Use PDF, DOCX, TXT, MD, PNG, JPG or WEBP.');continue;}try{const text=image?'':await extractText(file);const data=image?await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=reject;r.readAsDataURL(file);}):undefined;materials.push({id:crypto.randomUUID(),name:file.name,kind:image?'image':'text',text,image:data,status:image?'Reference image · no image understanding':text?'Text extracted · '+text.length+' characters':'No text layer found · OCR not supported'});}catch{setNotice('Could not read '+file.name);}}if(materials.length)commit({...course,materials:[...course.materials,...materials],source:'edited'});setBusy('');}
-  async function importCourse(file:File|undefined){if(!file)return;try{if(file.size>8000000)throw new Error('Course file is too large.');const draft=JSON.parse(await file.text());const errors=validateCourse(draft);if(errors.length)throw new Error(errors.join(' '));commit(draft);setPreview(false);setUseRelease(false);setNotice('Course opened. Your previous draft is available through Undo.');}catch(e){setNotice((e as Error).message);}}
-  function exportCourse(){const blob=new Blob([JSON.stringify(course,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='moliverse-course.json';a.click();URL.revokeObjectURL(url);}
-  async function voice(){setSpeaking(true);try{if(!window.speechSynthesis)throw new Error('Browser voice preview is unavailable.');window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(preview?(active.tasks[index]?.prompt||'Well done!'):course.mentor.opening);u.lang='en-GB';u.pitch=1.18;u.rate=.92;u.onend=()=>setSpeaking(false);u.onerror=()=>setSpeaking(false);window.speechSynthesis.speak(u);}catch(e){setSpeaking(false);setNotice((e as Error).message);}}
-  useEffect(()=>()=>{window.speechSynthesis?.cancel();},[]);
-  const active=useRelease&&release?release:course;const object=course.objects.find(o=>o.id===selected)||course.objects[0];const task=course.tasks.find(t=>t.id===taskId)||course.tasks[0];
-  return <main className="immersive-studio"><header className="studio-top"><Link href="/" className="studio-brand"><ArrowLeft size={17}/><span>MoliVerse<span className="brand-sub"> / Mentor Studio</span></span></Link><div className="top-title"><strong>{course.title}</strong><small>{youngCreator?'Young Creator draft':'Creator draft'} · {saveState} · v{course.revision}</small></div><div className="top-actions"><button onClick={undo} disabled={!history.length} title="Undo last change"><Undo2 size={16}/><span>Undo</span></button><button onClick={exportCourse} title="Export course JSON"><Save size={16}/><span>Export</span></button><button aria-label={preview?'Edit game':'Play game'} className={preview?'active':''} onClick={()=>{setPreview(v=>!v);setUseRelease(false);setIndex(0);setVisited('');setTab('scene');}}><Eye size={16}/><span>{preview?'Edit game':'Play game'}</span></button><button className="primary" onClick={()=>setPublish(true)}>{youngCreator?'Adult review':'Review playtest'}</button></div></header>
-    <nav className="mobile-tabs">{['agent','scene','properties'].map(t=><button key={t} aria-pressed={tab===t} onClick={()=>setTab(t)}>{t}</button>)}</nav>
-    <div className="studio-layout"><aside className={'agent-panel '+(tab==='agent'?'mobile-open':'')}><div className="panel-title"><Sparkles size={18}/><div><h2>Moli Game Maker</h2><small>Imagine it. Build it. Play it.</small></div></div><div className="deepseek-status"><span/> {youngCreator?'Young Creator · adult-guided local draft':profileRole==='teacher'?'DeepSeek creation agent · signed in':'DeepSeek creation agent · sign in to connect'}</div><div className="messages">{messages.map((m,i)=><div key={i} className={'message '+m.role}><small>{m.role==='agent'?'MOLI · GAME MAKER':'YOU'}</small><p>{m.text}</p></div>)}{busy&&<p className="progress-note"><Loader2 size={14} className="animate-spin"/>{busy}</p>}{pending&&<div className="patch-review"><strong>Moli proposes</strong>{pending.map((p,i)=><p key={i}>{p.target} {p.id} · {p.field}<br/><b>{String(p.value)}</b></p>)}<button className="primary" onClick={()=>{try{commit(applyPatches(course,pending));setMessages(m=>[...m,{role:'agent',text:'Done! The world and game changed. You can still undo it.'}]);}catch(e){setNotice((e as Error).message);}}}>Add to my game</button><button onClick={()=>setPending(null)}>Not this time</button></div>}</div><div className="agent-bottom"><div className="prompt-chips">{(youngCreator?['Make a cloud-city mystery','Add a funny clue','Make the game easier']:['Make the lighting warmer','Add a clue task','Simplify this dialogue']).map(s=><button key={s} onClick={()=>setInput(s)}>{s}</button>)}</div>{youngCreator&&<label className="adult-check"><input type="checkbox" checked={adultReady} onChange={e=>setAdultReady(e.target.checked)}/><ShieldCheck size={16}/><span>A parent, guardian or teacher is with me and approves this AI creation session.</span></label>}<form onSubmit={e=>{e.preventDefault();void send();}}><textarea aria-label="Tell Moli your game idea" value={input} onChange={e=>setInput(e.target.value)} placeholder="Try: Make a game in a floating library where we help a lost dragon learn three English words…"/><div><button type="button" onClick={()=>fileRef.current?.click()}><Paperclip size={17}/> Add ideas</button><button className="send-button" disabled={!!busy||!loaded||!input.trim()||(youngCreator&&!adultReady)} aria-label="Build with Moli"><ArrowUp size={18}/></button></div></form><input ref={fileRef} type="file" multiple hidden accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp" onChange={e=>{void upload(e.target.files);e.target.value='';}}/><small>Your words are sent to the connected DeepSeek service only when you press send. Drafts stay on this device until an adult reviews them.</small>{course.materials.map(m=><div className="material" key={m.id}>{m.image&&<img src={m.image} alt={m.name}/>}<span>{m.name}<small>{m.status}</small></span><button aria-label={'Remove '+m.name} onClick={()=>commit({...course,materials:course.materials.filter(x=>x.id!==m.id),source:'edited'})}>×</button></div>)}</div></aside>
-    <section className={'scene-panel '+(tab==='scene'?'mobile-open':'')}><div className="scene-toolbar"><span className="eyebrow">{preview?'STUDENT EXPERIENCE':'LIVE SCENE'} <span className="demo-pill">{useRelease?'LOCAL RELEASE · v'+active.revision:course.source==='demo'?'AUTHORED SAMPLE':'EDITED DRAFT'}</span></span><button onClick={()=>setFlat(v=>!v)}>{flat?'Switch to 3D':'2D mode'}</button></div><div className="scene-wrap"><MarketScene course={active} selected={selected} target={preview?active.tasks[index]?.objectId:undefined} flat={flat} onSelect={id=>{setSelected(id);setVisited(id);}}/><div className="world-caption"><span>✦ LETTERS FROM A LITTLE WORLD</span><h1>One warm evening.<br/>A little mystery.</h1><p>Penang Night Market · Fictional learning story</p></div><div className="scene-instructions">Drag to orbit · Scroll to zoom · Tap a stall</div></div><div className="stall-shortcuts" aria-label="Accessible scene navigation">{active.objects.map(o=><button key={o.id} aria-pressed={selected===o.id} onClick={()=>{setSelected(o.id);setVisited(o.id);}}>{o.label}{preview&&active.tasks[index]?.objectId===o.id&&<span> •</span>}</button>)}</div>
-    <div className="mentor-strip"><div className={'mentor-avatar moli-avatar '+(speaking?'speaking':'')}><img src="/mascot.png" alt="Moli the deer"/></div><div><strong>Moli <span>STORY GUIDE</span></strong><p>{preview?(index===0?active.mentor.opening:active.tasks[index]?.prompt||'You made something of your own.'):active.mentor.opening}</p></div><button disabled={speaking} onClick={()=>void voice()} title="Audio only starts when you click"><Volume2 size={17}/>Play Moli voice</button></div>
-    {preview?<LearningPanel key={index+'-'+active.id} course={active} index={index} visited={visited} onNext={()=>{setIndex(i=>i+1);setVisited('');}}/>:<div className="editor-note"><div><span className="eyebrow">Your idea becomes a playable world.</span><h2>Imagine. Build. Test. Improve.</h2><p>Talk to Moli or select an object, challenge or guide to edit it directly. Then play the whole game yourself.</p></div><button onClick={()=>{setPreview(true);setIndex(0);setVisited('');}}>Play my game →</button></div>}
-    <button className="chapter-toggle" onClick={()=>setChapters(v=>!v)}><Layers size={15}/> Story chapters · {active.tasks.length} tasks <ChevronDown size={15}/></button>{chapters&&<ol className="chapters">{active.tasks.map((t,i)=><li key={t.id}><button disabled={preview} onClick={()=>{setTaskId(t.id);setInspector('task');setTab('properties');}}><span>{preview&&i<index?<Check size={14}/>:String(i+1).padStart(2,'0')}</span>{t.title}</button></li>)}</ol>}{preview&&<button onClick={()=>{setIndex(0);setVisited('');}} className="restart"><RotateCcw size={14}/> Restart preview</button>}</section>
-    <aside className={'inspector '+(tab==='properties'?'mobile-open':'')}><div className="panel-title"><Layers size={17}/><h2>Make it yours</h2></div><nav>{['object','task','guide','game'].map(v=>{const key=v==='guide'?'mentor':v==='game'?'course':v;return <button key={v} aria-pressed={inspector===key} onClick={()=>setInspector(key)}>{v}</button>;})}</nav><p className="scope-note">Every direct edit and Moli suggestion changes the same local game draft.</p>
-    {inspector==='object'&&<><label>Selected object<select value={selected} onChange={e=>setSelected(e.target.value)}>{course.objects.map(o=><option key={o.id} value={o.id}>{o.label}</option>)}</select></label><Field label="Stall name" value={object.label} onChange={value=>edit({target:'object',id:object.id,field:'label',value})}/><label>Awning colour<input aria-label="Awning colour" type="color" value={object.color} onChange={e=>edit({target:'object',id:object.id,field:'color',value:e.target.value})}/></label>{(['x','z'] as const).map(axis=><label key={axis}>Position {axis}<input type="range" min="-9" max="9" step=".1" value={object[axis]} onChange={e=>edit({target:'object',id:object.id,field:axis,value:Number(e.target.value)})}/></label>)}<Field label="Stall dialogue" value={object.dialogue} onChange={value=>edit({target:'object',id:object.id,field:'dialogue',value})} multiline/><label>Lighting warmth<input type="range" min="0" max="1" step=".05" value={course.warmth} onChange={e=>edit({target:'world',field:'warmth',value:Number(e.target.value)})}/></label></>}
-    {inspector==='task'&&<><label>Learning task<select value={taskId} onChange={e=>setTaskId(e.target.value)}>{course.tasks.map(t=><option key={t.id} value={t.id}>{t.title}</option>)}</select></label>{(['title','prompt','hint','feedback'] as const).map(field=><Field key={field+task.id} label={'Task '+field} value={task[field]} multiline={field!=='title'} onChange={value=>edit({target:'task',id:task.id,field,value})}/>)}<p>Interaction: {task.kind}. Correct answer: {task.answer}.</p><button onClick={addClue}>+ Add a clue by the flowers</button></>}
-    {inspector==='mentor'&&<><div className="guide-card"><img src="/mascot.png" alt="Moli"/><div><strong>Moli</strong><p>Animated story guide</p></div></div>{(['style','opening','correction','humanMoment'] as const).map(field=><Field key={field} label={'Moli '+field} value={course.mentor[field]} multiline onChange={value=>edit({target:'mentor',field,value})}/>)}<label>Hint strength<select value={course.mentor.hintStrength} onChange={e=>edit({target:'mentor',field:'hintStrength',value:Number(e.target.value)})}><option value="1">Gentle verbal hint</option><option value="2">Picture + modelled language</option></select></label><p>Moli uses a clearly labelled browser voice preview. No teacher voice or digital human is implied.</p></>}
-    {inspector==='course'&&<><button onClick={()=>importRef.current?.click()}>Open game JSON</button><input hidden ref={importRef} type="file" accept=".json" onChange={e=>{void importCourse(e.target.files?.[0]);e.target.value='';}}/><button onClick={()=>{commit(demoCourse());setPreview(false);setUseRelease(false);}}>Start from the Penang example</button><Field label="Game title" value={course.title} onChange={value=>edit({target:'world',field:'title',value})}/>{(['ages','level'] as const).map(field=><Field key={field} label={field} value={course[field]} onChange={value=>commit({...course,[field]:value,source:'edited'})}/>)}<label>Play time (minutes)<input type="number" min="5" max="60" value={course.minutes} onChange={e=>commit({...course,minutes:Math.min(60,Math.max(5,Number(e.target.value))),source:'edited'})}/></label><h3>Creator notes</h3>{Object.entries(course.dna).filter(([k])=>['personality','teaching_style','stories','memories','values','course_world'].includes(k)).map(([field,value])=><Field key={field} label={field.replaceAll('_',' ')} value={value} multiline onChange={value=>commit({...course,dna:{...course.dna,[field]:value},source:'edited'})}/>)}{defaultDna&&<button onClick={()=>commit({...course,dna:defaultDna,source:'edited'})}>Use my saved educator style</button>}<p>These notes guide Moli&apos;s story, learning goal and feedback for this game only.</p></>}
-    </aside></div>
-    {notice&&<div role="status" className="studio-notice">{notice}<button onClick={()=>setNotice('')}>Dismiss</button></div>}
-    {publish&&<div className="modal-backdrop"><section role="dialog" aria-modal="true" aria-label="Adult review of game" className="release-modal"><span className="eyebrow">{youngCreator?'GROWN-UP REVIEW':'REVIEW BEFORE PLAYTEST'}</span><h2>Your world is ready for a test run.</h2><p>{course.title}</p><ul><li>{course.tasks.length} challenges · {course.objects.length} world objects</li><li>Ages {course.ages} · {course.level}</li><li>Moli · animated story guide</li></ul><p>{youngCreator?'A parent, guardian or teacher should check the story and challenges with you.':'Check the learning goal, story and feedback before making a playtest.'} This creates a local snapshot only. Nothing is posted to a public course marketplace.</p><button className="primary" onClick={()=>{const errors=validateCourse(course);if(errors.length){setNotice(errors.join(' '));return;}setRelease(structuredClone(course));setPublish(false);setPreview(true);setUseRelease(true);setIndex(0);setVisited('');setTab('scene');}}>Approve local playtest</button>{release&&<button onClick={()=>{setUseRelease(true);setPreview(true);setPublish(false);setIndex(0);setVisited('');setTab('scene');}}>Play previous version · v{release.revision}</button>}<button onClick={()=>setPublish(false)}>Back to editing</button></section></div>}
+
+import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { ArrowLeft, ArrowUp, Eye, Layers, Loader2, Paperclip, Play, Save, ShieldCheck, Sparkles, Undo2, Volume2, X } from "lucide-react";
+import { applyPatches, CoursePatch, CourseWorld, demoCourse, Material, offlineEdit, validateCourse, withMoliGuide } from "@/lib/immersive/course";
+import { readStudio, StudioRecord, writeStudio } from "@/lib/immersive/storage";
+import { getMyProfile, supabase } from "@/lib/supabase";
+import { extractText } from "@/lib/extractText";
+import LearningPanel from "./LearningPanel";
+import "./studio.css";
+
+const StoryScene = dynamic(() => import("./MarketScene"), { ssr: false, loading: () => <div className="scene-loading">Moli is opening your world…</div> });
+type Message = { role: "creator" | "agent"; text: string };
+type Panel = "world" | "moli" | "details";
+
+export default function ImmersiveStudio() {
+  const [course, setCourse] = useState<CourseWorld>(demoCourse);
+  const [history, setHistory] = useState<CourseWorld[]>([]);
+  const [release, setRelease] = useState<CourseWorld | null>(null);
+  const [owner, setOwner] = useState("guest");
+  const [loaded, setLoaded] = useState(false);
+  const [saveState, setSaveState] = useState("Opening your worlds…");
+  const [notice, setNotice] = useState("");
+  const [welcome, setWelcome] = useState(true);
+  const [idea, setIdea] = useState("");
+  const [panel, setPanel] = useState<Panel>("world");
+  const [drawer, setDrawer] = useState(false);
+  const [inspector, setInspector] = useState<"object" | "task" | "guide" | "game">("object");
+  const [selected, setSelected] = useState("mentor");
+  const [taskId, setTaskId] = useState("welcome");
+  const [preview, setPreview] = useState(false);
+  const [index, setIndex] = useState(0);
+  const [visited, setVisited] = useState("");
+  const [flat, setFlat] = useState(false);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState("");
+  const [pending, setPending] = useState<CoursePatch[] | null>(null);
+  const [messages, setMessages] = useState<Message[]>([{ role: "agent", text: "Hi, I’m Moli. Tell me what kind of world you want to make. We’ll build one small playable moment at a time." }]);
+  const [review, setReview] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [youngCreator, setYoungCreator] = useState(false);
+  const [adultReady, setAdultReady] = useState(false);
+  const [profileRole, setProfileRole] = useState<"guest" | "student" | "teacher">("guest");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const saving = useRef(Promise.resolve());
+
+  useEffect(() => {
+    let cancelled = false;
+    setYoungCreator(new URLSearchParams(window.location.search).get("mode") === "young-creator");
+    void (async () => {
+      let key = "guest";
+      try {
+        const profile = await getMyProfile();
+        if (profile) {
+          key = profile.id;
+          if (!cancelled) {
+            setProfileRole(profile.role);
+            if (profile.role === "student") setYoungCreator(true);
+          }
+        }
+        const saved = await readStudio(key);
+        if (cancelled) return;
+        if (saved) {
+          setCourse(withMoliGuide(saved.draft));
+          setHistory(saved.history.map(withMoliGuide));
+          setRelease(saved.release ? withMoliGuide(saved.release) : null);
+          setWelcome(false);
+        }
+        setOwner(key);
+        setLoaded(true);
+        setSaveState("Saved on this device");
+      } catch {
+        if (!cancelled) {
+          setNotice("Local saving is unavailable. Export a backup before leaving.");
+          setSaveState("Storage unavailable");
+          setLoaded(true);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!loaded || welcome) return;
+    setSaveState("Saving…");
+    const record: StudioRecord = { draft: course, history, release, savedAt: new Date().toISOString() };
+    saving.current = saving.current.catch(() => {}).then(() => writeStudio(owner, record)).then(() => setSaveState("Saved on this device")).catch(() => setSaveState("Save failed · export a backup"));
+  }, [course, history, release, loaded, owner, welcome]);
+
+  const object = course.objects.find((item) => item.id === selected) ?? course.objects[0];
+  const task = course.tasks.find((item) => item.id === taskId) ?? course.tasks[0];
+
+  function commit(next: CourseWorld) {
+    const errors = validateCourse(next);
+    if (errors.length) { setNotice(errors.join(" ")); return; }
+    setHistory((items) => [...items.slice(-19), course]);
+    setCourse({ ...next, revision: course.revision + 1, source: next.source === "demo" ? "demo" : "edited" });
+    setPending(null);
+  }
+
+  function edit(patch: CoursePatch) {
+    try { commit(applyPatches(course, [patch])); }
+    catch (error) { setNotice((error as Error).message); }
+  }
+
+  function undo() {
+    const previous = history.at(-1);
+    if (!previous) return;
+    setCourse(previous); setHistory((items) => items.slice(0, -1)); setPending(null); setNotice("Last change undone.");
+  }
+
+  async function askMoli(request: string) {
+    if (!request.trim() || busy) return;
+    if (youngCreator && !adultReady) { setNotice("Ask a parent, guardian or teacher to join you before using the AI creation assistant."); return; }
+    const text = request.trim();
+    setInput("");
+    setMessages((items) => [...items, { role: "creator", text }]);
+    const local = offlineEdit(course, text, selected);
+    if (local.length) {
+      setPending(local);
+      setMessages((items) => [...items, { role: "agent", text: "I prepared one small change. Check it before adding it to your world." }]);
+      return;
+    }
+    if (profileRole === "guest") {
+      setMessages((items) => [...items, { role: "agent", text: "Your idea is safe in this draft. Sign in as a learner or educator when you want me to rebuild the story with DeepSeek." }]);
+      return;
+    }
+    setBusy("Moli is shaping a playable change…");
+    try {
+      const { data, error } = await supabase.functions.invoke("immersive-author", { body: { request: text, course, selected, history: messages.slice(-8) } });
+      if (error) {
+        let detail = "The creation agent is unavailable. Your saved world is unchanged.";
+        try { const body = await error.context?.json(); detail = body?.message || detail; } catch {}
+        throw new Error(detail);
+      }
+      if (!Array.isArray(data?.patches)) throw new Error("Moli did not return a valid world change.");
+      applyPatches(course, data.patches);
+      setPending(data.patches.length ? data.patches : null);
+      setMessages((items) => [...items, { role: "agent", text: data.message || "I prepared a reviewable change." }]);
+    } catch (error) {
+      setMessages((items) => [...items, { role: "agent", text: (error as Error).message }]);
+    } finally { setBusy(""); }
+  }
+
+  function begin() {
+    if (!idea.trim()) { setNotice("Tell Moli one little idea first."); return; }
+    const seedTitle = idea.trim().replace(/[.!?。！？]+$/, "").slice(0, 72);
+    const seeded: CourseWorld = { ...course, title: seedTitle, revision: course.revision + 1, source: "edited", dna: { ...course.dna, stories: idea.trim(), course_world: seedTitle } };
+    setHistory((items) => [...items.slice(-19), course]);
+    setCourse(seeded);
+    setWelcome(false);
+    setPreview(false);
+    setPanel("moli");
+    void askMoli(idea);
+  }
+
+  async function upload(files: FileList | null) {
+    if (!files) return;
+    setBusy("Reading your ideas on this device…");
+    const materials: Material[] = [];
+    for (const file of Array.from(files)) {
+      if (file.size > 5 * 1024 * 1024) { setNotice(`${file.name}: maximum 5 MB.`); continue; }
+      const image = /image\/(png|jpeg|webp)/.test(file.type);
+      if (!image && !/\.(pdf|docx|txt|md)$/i.test(file.name)) { setNotice(`${file.name}: use PDF, DOCX, TXT, MD, PNG, JPG or WEBP.`); continue; }
+      try {
+        const text = image ? "" : await extractText(file);
+        const data = image ? await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(file); }) : undefined;
+        materials.push({ id: crypto.randomUUID(), name: file.name, kind: image ? "image" : "text", text, image: data, status: image ? "Reference image added" : text ? `${text.length} characters ready` : "No text layer found" });
+      } catch { setNotice(`Could not read ${file.name}.`); }
+    }
+    if (materials.length) commit({ ...course, materials: [...course.materials, ...materials], source: "edited" });
+    setBusy("");
+  }
+
+  function exportWorld() {
+    const blob = new Blob([JSON.stringify(course, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob); const anchor = document.createElement("a");
+    anchor.href = url; anchor.download = "my-moliverse-world.json"; anchor.click(); URL.revokeObjectURL(url);
+  }
+
+  function voice() {
+    if (!window.speechSynthesis) { setNotice("Browser voice preview is unavailable."); return; }
+    setSpeaking(true); window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(preview ? course.tasks[index]?.prompt || "Wonderful!" : course.mentor.opening);
+    utterance.lang = course.level.toLowerCase().includes("french") ? "fr-FR" : "en-GB";
+    utterance.pitch = 1.2; utterance.rate = 0.92;
+    utterance.onend = () => setSpeaking(false); utterance.onerror = () => setSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  }
+
+  useEffect(() => () => window.speechSynthesis?.cancel(), []);
+
+  return <main className="immersive-studio simple-studio" data-no-translate>
+    <header className="studio-top">
+      <Link href="/" className="studio-brand"><ArrowLeft size={17}/><span>MoliVerse <span className="brand-sub">Create</span></span></Link>
+      <div className="top-title"><strong>{course.title}</strong><small>{saveState} · v{course.revision}</small></div>
+      <div className="top-actions">
+        <button onClick={undo} disabled={!history.length}><Undo2 size={16}/><span>Undo</span></button>
+        <button onClick={() => setDrawer(true)}><Layers size={16}/><span>Edit details</span></button>
+        <button onClick={() => { setPreview((value) => !value); setIndex(0); setVisited(""); setPanel("world"); }} className={preview ? "active" : ""}><Eye size={16}/><span>{preview ? "Back to creating" : "Play"}</span></button>
+        <button className="primary" onClick={() => setReview(true)}>{youngCreator ? "Grown-up review" : "Review world"}</button>
+      </div>
+    </header>
+
+    <nav className="mobile-tabs">
+      <button aria-pressed={panel === "world"} onClick={() => setPanel("world")}>World</button>
+      <button aria-pressed={panel === "moli"} onClick={() => setPanel("moli")}>Create with Moli</button>
+      <button onClick={() => setDrawer(true)}>Details</button>
+    </nav>
+
+    <div className="studio-layout creator-layout">
+      <section className={`scene-panel ${panel === "world" ? "mobile-open" : ""}`}>
+        <div className="scene-toolbar"><span className="eyebrow">{preview ? "PLAYTEST" : "YOUR WORLD"} <span className="demo-pill">{course.source === "demo" ? "MOLI TEMPLATE" : "YOUR DRAFT"}</span></span><button onClick={() => setFlat((value) => !value)}>{flat ? "3D world" : "2D mode"}</button></div>
+        <div className="scene-wrap">
+          <StoryScene course={course} selected={selected} target={preview ? course.tasks[index]?.objectId : undefined} flat={flat} onSelect={(id) => { setSelected(id); setVisited(id); }}/>
+          <div className="world-caption"><span>✦ {course.dna.course_world.toUpperCase()}</span><h1>{course.title}</h1><p>{course.level} · Ages {course.ages}</p></div>
+          <div className="scene-instructions">Drag to look around · Tap something to explore</div>
+        </div>
+        <div className="stall-shortcuts" aria-label="World locations">{course.objects.map((item) => <button key={item.id} aria-pressed={selected === item.id} onClick={() => { setSelected(item.id); setVisited(item.id); }}>{item.label}{preview && course.tasks[index]?.objectId === item.id ? " · next" : ""}</button>)}</div>
+
+        <div className="mentor-strip">
+          <div className={`mentor-avatar moli-avatar ${speaking ? "speaking" : ""}`}><img src="/mascot.png" alt="Moli the deer"/></div>
+          <div><strong>Moli <span>STORY COMPANION</span></strong><p>{preview ? index === 0 ? course.mentor.opening : course.tasks[index]?.prompt || "Look what you made!" : "I can help you change the story, the challenges and this world."}</p></div>
+          <button disabled={speaking} onClick={voice}><Volume2 size={17}/>Hear Moli</button>
+        </div>
+
+        {preview ? <LearningPanel key={`${index}-${course.id}`} course={course} index={index} visited={visited} onNext={() => { setIndex((value) => value + 1); setVisited(""); }}/>
+          : <div className="creator-invite"><div><span className="eyebrow">ONE WORLD · MANY POSSIBILITIES</span><h2>Change it by talking to Moli.</h2><p>Try “make this a moon library”, “add a funny clue”, or select a place and edit its details.</p></div><button className="primary" onClick={() => setPanel("moli")}><Sparkles size={16}/>Create with Moli</button></div>}
+      </section>
+
+      <aside className={`agent-panel creator-agent ${panel === "moli" ? "mobile-open" : ""}`}>
+        <div className="panel-title"><div className="mini-moli"><img src="/mascot.png" alt=""/></div><div><h2>Create with Moli</h2><small>You imagine. Moli helps it become playable.</small></div></div>
+        <div className="deepseek-status"><span/> {profileRole === "guest" ? "Local draft · sign in for DeepSeek changes" : "DeepSeek creation assistant connected"}</div>
+        <div className="messages">
+          {messages.map((message, i) => <div key={i} className={`message ${message.role === "creator" ? "teacher" : "agent"}`}><small>{message.role === "agent" ? "MOLI" : "YOU"}</small><p>{message.text}</p></div>)}
+          {busy && <p className="progress-note"><Loader2 size={14} className="animate-spin"/>{busy}</p>}
+          {pending && <div className="patch-review"><strong>Moli suggests {pending.length} change{pending.length === 1 ? "" : "s"}</strong><p>Preview the idea, then add it to the same world draft. You can undo it afterwards.</p><button className="primary" onClick={() => { try { commit(applyPatches(course, pending)); setMessages((items) => [...items, { role: "agent", text: "Done! Your world changed — and Undo is still available." }]); } catch (error) { setNotice((error as Error).message); } }}>Add to my world</button><button onClick={() => setPending(null)}>Not this time</button></div>}
+        </div>
+        <div className="agent-bottom">
+          <div className="prompt-chips">{["Make it more magical", "Add a funny clue", "Make the words easier"].map((prompt) => <button key={prompt} onClick={() => setInput(prompt)}>{prompt}</button>)}</div>
+          {youngCreator && <label className="adult-check"><input type="checkbox" checked={adultReady} onChange={(event) => setAdultReady(event.target.checked)}/><ShieldCheck size={16}/><span>A parent, guardian or teacher is with me.</span></label>}
+          <form onSubmit={(event) => { event.preventDefault(); void askMoli(input); }}><textarea aria-label="Tell Moli your idea" value={input} onChange={(event) => setInput(event.target.value)} placeholder="Tell Moli what should happen next…"/><div><button type="button" onClick={() => fileRef.current?.click()}><Paperclip size={17}/>Add ideas</button><button className="send-button" disabled={!input.trim() || !!busy || (youngCreator && !adultReady)} aria-label="Send to Moli"><ArrowUp size={18}/></button></div></form>
+          <input ref={fileRef} type="file" multiple hidden accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp" onChange={(event) => { void upload(event.target.files); event.target.value = ""; }}/>
+          <small>Supported: PDF, DOCX, TXT, MD, PNG, JPG, WEBP · 5 MB each. Nothing is published automatically.</small>
+          {course.materials.map((material) => <div className="material" key={material.id}><span>{material.name}<small>{material.status}</small></span><button aria-label={`Remove ${material.name}`} onClick={() => commit({ ...course, materials: course.materials.filter((item) => item.id !== material.id), source: "edited" })}>×</button></div>)}
+        </div>
+      </aside>
+    </div>
+
+    <aside className={`inspector creator-drawer ${drawer ? "drawer-open" : ""}`} aria-hidden={!drawer}>
+      <div className="drawer-heading"><div><span className="eyebrow">MAKE IT YOURS</span><h2>World details</h2></div><button aria-label="Close details" onClick={() => setDrawer(false)}><X size={18}/></button></div>
+      <nav>{(["object", "task", "guide", "game"] as const).map((item) => <button key={item} aria-pressed={inspector === item} onClick={() => setInspector(item)}>{item}</button>)}</nav>
+      <p>Direct edits and Moli suggestions always update the same draft.</p>
+      {inspector === "object" && <><label>Place<select value={selected} onChange={(event) => setSelected(event.target.value)}>{course.objects.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label><Field label="Name" value={object.label} onChange={(value) => edit({ target: "object", id: object.id, field: "label", value })}/><label>Colour<input type="color" value={object.color} onChange={(event) => edit({ target: "object", id: object.id, field: "color", value: event.target.value })}/></label><Field label="What happens here?" value={object.dialogue} multiline onChange={(value) => edit({ target: "object", id: object.id, field: "dialogue", value })}/><label>World warmth<input type="range" min="0" max="1" step=".05" value={course.warmth} onChange={(event) => edit({ target: "world", field: "warmth", value: Number(event.target.value) })}/></label></>}
+      {inspector === "task" && <><label>Challenge<select value={taskId} onChange={(event) => setTaskId(event.target.value)}>{course.tasks.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>{(["title", "prompt", "hint", "feedback"] as const).map((field) => <Field key={`${task.id}-${field}`} label={field} value={task[field]} multiline={field !== "title"} onChange={(value) => edit({ target: "task", id: task.id, field, value })}/>)}</>}
+      {inspector === "guide" && <><div className="guide-card"><img src="/mascot.png" alt="Moli"/><div><strong>Moli</strong><p>Story companion</p></div></div>{(["style", "opening", "correction", "humanMoment"] as const).map((field) => <Field key={field} label={field} value={course.mentor[field]} multiline onChange={(value) => edit({ target: "mentor", field, value })}/>)}</>}
+      {inspector === "game" && <><Field label="World title" value={course.title} onChange={(value) => edit({ target: "world", field: "title", value })}/><Field label="Ages" value={course.ages} onChange={(value) => commit({ ...course, ages: value, source: "edited" })}/><Field label="Language level" value={course.level} onChange={(value) => commit({ ...course, level: value, source: "edited" })}/><button onClick={exportWorld}><Save size={15}/>Export my world</button><button onClick={() => { setCourse(demoCourse()); setHistory([]); setRelease(null); setPreview(false); setIndex(0); setWelcome(true); setDrawer(false); }}>Start a new world</button></>}
+    </aside>
+
+    {welcome && <div className="creator-welcome"><section><div className="welcome-moli"><img src="/mascot.png" alt="Moli"/></div><span className="eyebrow">MOLIVERSE CREATE</span><h1>What world shall we make today?</h1><p>Describe one place, one character and one small challenge. Moli will help turn it into a playable language story.</p><textarea autoFocus value={idea} onChange={(event) => setIdea(event.target.value)} placeholder="A moon library where a lost dragon learns three English words…"/><div className="idea-cards">{["A French friendship mystery", "A Spanish ocean treasure hunt", "An English cloud-city adventure"].map((example) => <button key={example} onClick={() => setIdea(example)}>{example}</button>)}</div>{youngCreator && <label className="adult-check"><input type="checkbox" checked={adultReady} onChange={(event) => setAdultReady(event.target.checked)}/><ShieldCheck size={17}/><span>A parent, guardian or teacher is creating with me.</span></label>}<div className="welcome-actions"><button className="primary" onClick={begin} disabled={!idea.trim() || (youngCreator && !adultReady)}><Sparkles size={17}/>Build this idea with Moli</button><button onClick={() => { setWelcome(false); setPreview(true); setIndex(0); setVisited(""); }}><Play size={17}/>Play Moli’s Journey first</button></div><small>You can create a local draft without publishing it. DeepSeek changes require sign-in.</small></section></div>}
+
+    {notice && <div role="status" className="studio-notice">{notice}<button onClick={() => setNotice("")}>Dismiss</button></div>}
+    {review && <div className="modal-backdrop"><section role="dialog" aria-modal="true" className="release-modal"><span className="eyebrow">{youngCreator ? "GROWN-UP REVIEW" : "REVIEW YOUR WORLD"}</span><h2>Ready for a private playtest?</h2><p>{course.title}</p><ul><li>{course.tasks.length} story challenges</li><li>{course.level} · Ages {course.ages}</li><li>Moli is clearly presented as an AI story companion</li></ul><p>This saves a local playtest snapshot. It does not publish to a marketplace or contact anyone.</p><button className="primary" onClick={() => { const errors = validateCourse(course); if (errors.length) { setNotice(errors.join(" ")); return; } setRelease(structuredClone(course)); setReview(false); setPreview(true); setIndex(0); setVisited(""); setPanel("world"); }}>Approve private playtest</button><button onClick={() => setReview(false)}>Keep creating</button></section></div>}
   </main>;
 }
-function Field({label,value,onChange,multiline=false}:{label:string;value:string;onChange:(value:string)=>void;multiline?:boolean}) {const [local,setLocal]=useState(value);useEffect(()=>setLocal(value),[value]);return <label>{label}{multiline?<textarea aria-label={label} value={local} onChange={e=>setLocal(e.target.value)} onBlur={()=>{if(local!==value)onChange(local);}}/>:<input aria-label={label} value={local} onChange={e=>setLocal(e.target.value)} onBlur={()=>{if(local!==value)onChange(local);}}/>}</label>;}
+
+function Field({ label, value, onChange, multiline = false }: { label: string; value: string; onChange: (value: string) => void; multiline?: boolean }) {
+  const [local, setLocal] = useState(value);
+  useEffect(() => setLocal(value), [value]);
+  return <label>{label}{multiline ? <textarea aria-label={label} value={local} onChange={(event) => setLocal(event.target.value)} onBlur={() => { if (local !== value) onChange(local); }}/> : <input aria-label={label} value={local} onChange={(event) => setLocal(event.target.value)} onBlur={() => { if (local !== value) onChange(local); }}/>}</label>;
+}

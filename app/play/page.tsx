@@ -1,17 +1,2 @@
-"use client";
-
-import { Suspense, useMemo, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Gamepad2, RotateCcw, Sparkles } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-
-type Game = { title: string; prompt: string; options: string[]; answer: number; success: string };
-function GameInner() {
-  const raw = useSearchParams().get("lesson");
-  const game = useMemo(() => { try { return JSON.parse(raw ?? "") as Game; } catch { return null; } }, [raw]);
-  const [choice, setChoice] = useState<number | null>(null);
-  if (!game || !Array.isArray(game.options)) return <main className="flex min-h-screen items-center justify-center text-slate-400">This interactive preview is not available.</main>;
-  const correct = choice === game.answer;
-  return <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-12"><div className="pointer-events-none absolute -left-24 top-8 h-80 w-80 rounded-full bg-cyan-400/20 blur-[110px]" /><div className="pointer-events-none absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-fuchsia-500/20 blur-[110px]" /><section className="relative w-full max-w-xl rounded-[2rem] border border-white/15 bg-slate-950/85 p-6 shadow-2xl sm:p-10"><Link href="/teach/collections/" className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white"><ArrowLeft className="h-3.5 w-3.5" />Back to Course Architect</Link><div className="mt-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500"><Gamepad2 className="h-6 w-6 text-white" /></div><p className="mt-5 text-xs font-semibold uppercase tracking-[.2em] text-cyan-200">Interactive story moment</p><h1 className="mt-2 font-display text-3xl font-semibold text-white">{game.title}</h1><p className="mt-5 text-lg leading-relaxed text-slate-200">{game.prompt}</p><div className="mt-7 grid gap-3">{game.options.map((option, index) => <button key={option} onClick={() => setChoice(index)} className={`rounded-2xl border px-5 py-4 text-left text-sm font-medium transition ${choice === index ? (correct ? "border-emerald-300 bg-emerald-300/15 text-emerald-50" : "border-rose-300 bg-rose-300/10 text-rose-50") : "border-white/10 bg-white/[.04] text-slate-100 hover:border-cyan-300/50"}`}><span className="mr-3 text-cyan-200">{String.fromCharCode(65 + index)}.</span>{option}</button>)}</div>{choice !== null && <div className={`mt-6 rounded-2xl border p-4 text-sm leading-relaxed ${correct ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-50" : "border-rose-300/25 bg-rose-300/[.07] text-rose-50"}`}>{correct ? <p className="flex gap-2"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" />{game.success}</p> : <p>Not quite — stories reward careful noticing. Try another clue.</p>}</div>}<div className="mt-7 flex items-center justify-between border-t border-white/10 pt-5"><p className="text-xs text-slate-500">A safe, editable H5 prototype — no code required.</p><button onClick={() => setChoice(null)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-200 hover:text-white"><RotateCcw className="h-3.5 w-3.5" />Try again</button></div><div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500"><Sparkles className="h-3.5 w-3.5 text-amber-200" />In the published lesson, this lives inside the child’s story journey.</div></section></main>;
-}
-export default function PlayPage() { return <Suspense fallback={<main className="flex min-h-screen items-center justify-center text-slate-400">Loading prototype…</main>}><GameInner /></Suspense>; }
+import { redirect } from "next/navigation";
+export default function RetiredPrototypePlayer() { redirect("/teach/studio/?mode=young-creator"); }

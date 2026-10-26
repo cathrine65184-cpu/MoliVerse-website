@@ -9,29 +9,28 @@ export type CourseWorld = {
   mentor: { name: string; photo: string; voiceId: string; style: string; opening: string; correction: string; hintStrength: number; humanMoment: string };
 };
 
-export const fruit = [{ word: 'mango', icon: '🥭' }, { word: 'banana', icon: '🍌' }, { word: 'lime', icon: '🍋‍🟩' }, { word: 'coconut', icon: '🥥' }];
+export const fruit = [{ word: 'bonjour', icon: '👋' }, { word: 'ami', icon: '🤝' }, { word: 'merci', icon: '💛' }, { word: 'ensemble', icon: '✨' }];
 export function demoCourse(): CourseWorld {
   return {
-    schemaVersion: 1, id: 'penang-recipe', revision: 1, title: 'The Missing Recipe at Penang Night Market', ages: '6–10', level: 'Beginner English', minutes: 15,
-    source: 'demo', warmth: 0.75,
-    objectives: ['Name mango, banana, lime and coconut.', 'Ask politely: Excuse me. Where is …? Thank you.', 'Follow next to and between clues.', 'Describe your own fruit ice in a short sentence.'],
-    dna: { personality: 'Gentle, curious and reflective', teaching_style: 'Story-led scaffolding; ask, model, then invite a try.', stories: 'An original fictional evening at a Penang night market.', memories: '', values: 'Empathy, careful observation and independent thought.', course_world: 'Penang Night Market' },
-    mentor: { name: 'Moli', photo: '/mascot.png', voiceId: '', style: 'Warm, playful story guide. One short question at a time.', opening: 'Hello, explorer! I’m Moli. Grandma has lost her recipe. Can we find the clues together?', correction: 'Show a picture hint first, then model a short answer. Let the child try again.', hintStrength: 1, humanMoment: 'After the fruit ice creation, invite the child to share it with a trusted adult. No message is sent automatically.' },
+    schemaVersion: 1, id: 'molis-journey', revision: 1, title: "Moli's Journey: A New Friend", ages: '8–14', level: 'Beginner French', minutes: 12,
+    source: 'demo', warmth: 0.7,
+    objectives: ['Greet a new friend with bonjour.', 'Recognise ami, merci and ensemble.', 'Choose a kind response in a short conversation.', 'Create a small friendship promise.'],
+    dna: { personality: 'Curious, warm and playful', teaching_style: 'Let children explore first, then offer one useful clue.', stories: 'An original story about Moli meeting a new friend in a little French town.', memories: '', values: 'Friendship, courage, curiosity and cultural respect.', course_world: "Moli's French Story Town" },
+    mentor: { name: 'Moli', photo: '/mascot.png', voiceId: '', style: 'A lively deer companion who notices, wonders and celebrates each try.', opening: 'Bonjour, explorer! I’m Moli. A new friend is waiting somewhere in this little town. Shall we find her together?', correction: 'Celebrate the try, show one visual clue, then invite another choice.', hintStrength: 1, humanMoment: 'At the end, invite the child to share their friendship promise with a parent, teacher or friend. Nothing is sent automatically.' },
     objects: [
-      { id: 'mentor', label: 'Meet Moli', kind: 'mentor', x: 0, z: 4.6, color: '#a9c77f', dialogue: 'Hi! I’m Moli. Welcome to our story market.' },
-      { id: 'fruit', label: 'Fruit stall', kind: 'fruit', x: -4, z: 0, color: '#e4a957', dialogue: 'Hello! These fruits may help us find the recipe.' },
-      { id: 'flowers', label: 'Flower stall', kind: 'flowers', x: 0, z: -2.2, color: '#d68c99', dialogue: 'The next clue is between my flowers and Grandma’s stall.' },
-      { id: 'books', label: 'Book stall', kind: 'books', x: 3.3, z: -2.2, color: '#93b2aa', dialogue: 'Excuse me. Where is the recipe? Look inside the blue book!' },
-      { id: 'ice', label: 'Grandma’s fruit ice', kind: 'ice', x: 6.6, z: -2.2, color: '#e9bb65', dialogue: 'You found it! Let’s make a fruit ice of your own.' },
+      { id: 'mentor', label: 'Moli at the gate', kind: 'mentor', x: 0, z: 4.6, color: '#a9c77f', dialogue: 'Bonjour! I’m Moli. Every good story begins with one brave hello.' },
+      { id: 'fruit', label: 'Word garden', kind: 'fruit', x: -4, z: 0, color: '#e4a957', dialogue: 'Four glowing words are hiding here: bonjour, ami, merci and ensemble.' },
+      { id: 'flowers', label: 'Flower path', kind: 'flowers', x: 0, z: -2.2, color: '#d68c99', dialogue: 'The flowers lean toward the place where stories live.' },
+      { id: 'books', label: 'Little library', kind: 'books', x: 3.3, z: -2.2, color: '#93b2aa', dialogue: 'A note says: “Un ami is a friend who walks beside you.”' },
+      { id: 'ice', label: 'Friendship café', kind: 'ice', x: 6.6, z: -2.2, color: '#e9bb65', dialogue: 'Emilie smiles. “Bonjour! Shall we make a friendship promise?”' },
     ],
     materials: [], tasks: [
-      { id: 'welcome', title: 'Meet Moli', kind: 'intro', objectId: 'mentor', prompt: 'Grandma needs our help. Find Moli at the market entrance.', options: [], answer: 'mentor', hint: 'Choose Meet Moli below the scene.', feedback: 'Our first stop is the fruit stall. Let’s notice four fruits.' },
-      { id: 'fruits', title: 'Four fruity clues', kind: 'match', objectId: 'fruit', prompt: 'Match each fruit picture to its English word.', options: fruit.map(f => f.word), answer: 'all', hint: 'Look carefully at the picture. Try one word at a time.', feedback: 'You named mango, banana, lime and coconut. A clue says: find the flowers!' },
-      { id: 'flower-clue', title: 'Next to the books', kind: 'find', objectId: 'flowers', prompt: 'Find the flower stall next to the book stall.', options: [], answer: 'flowers', hint: 'Look for pink flowers beside the green book stall.', feedback: 'Yes! The flower stall is next to the book stall.' },
-      { id: 'book-clue', title: 'Between two stalls', kind: 'find', objectId: 'books', prompt: 'Find the stall between the flowers and Grandma’s fruit ice.', options: [], answer: 'books', hint: 'Flowers are on one side. Grandma is on the other. What is in the middle?', feedback: 'You found the book stall between the flowers and Grandma’s stall.' },
-      { id: 'polite', title: 'Ask for a little help', kind: 'dialogue', objectId: 'books', prompt: 'How can we ask the bookseller politely?', options: ['Excuse me. Where is the recipe?', 'Give it to me!'], answer: 'Excuse me. Where is the recipe?', hint: 'Start with “Excuse me.” Then ask “Where is …?”', feedback: 'That was a polite question! The bookseller says: inside the blue book.' },
-      { id: 'recipe', title: 'The missing recipe', kind: 'recipe', objectId: 'books', prompt: 'Open the blue recipe card, then thank the bookseller.', options: ['Thank you.', 'Go away.'], answer: 'Thank you.', hint: 'Two small words show appreciation: Thank you.', feedback: 'Recipe found: choose fruit, add ice, and share your creation.' },
-      { id: 'creation', title: 'Make it your own', kind: 'create', objectId: 'ice', prompt: 'Choose two or more fruits for your fruit ice.', options: fruit.map(f => f.word), answer: 'two-fruits', hint: 'Choose your favourites. Start: My fruit ice has …', feedback: 'You named fruits, asked politely, followed clues and described your own creation.' },
+      { id: 'welcome', title: 'A brave hello', kind: 'intro', objectId: 'mentor', prompt: 'Meet Moli at the story gate.', options: [], answer: 'mentor', hint: 'Choose Moli at the gate below the scene.', feedback: 'You joined the story. Our first clue is in the word garden.' },
+      { id: 'words', title: 'Four glowing words', kind: 'match', objectId: 'fruit', prompt: 'Match each picture with a French friendship word.', options: fruit.map(f => f.word), answer: 'all', hint: 'Listen to the feeling of the picture, then try one word.', feedback: 'Bonjour, ami, merci, ensemble — four words can begin a friendship.' },
+      { id: 'path', title: 'Follow the flowers', kind: 'find', objectId: 'flowers', prompt: 'Find the flower path beside the little library.', options: [], answer: 'flowers', hint: 'Look for the pink flowers near the books.', feedback: 'The flowers point toward a quiet little library.' },
+      { id: 'note', title: 'A note about friendship', kind: 'dialogue', objectId: 'books', prompt: 'What does “ami” mean?', options: ['A friend', 'A goodbye'], answer: 'A friend', hint: 'The note describes someone who walks beside you.', feedback: 'Oui! Un ami means a friend.' },
+      { id: 'hello', title: 'Meet Emilie', kind: 'dialogue', objectId: 'ice', prompt: 'Emilie says “Bonjour!” What could you say?', options: ['Bonjour, Emilie!', 'Go away!'], answer: 'Bonjour, Emilie!', hint: 'Try the warm greeting you discovered first.', feedback: 'Your hello made the story warmer.' },
+      { id: 'creation', title: 'Your friendship promise', kind: 'create', objectId: 'ice', prompt: 'Choose two ideas for a friendship promise.', options: ['listen', 'help', 'share', 'explore'], answer: 'two-fruits', hint: 'Choose any two things you would love to do with a friend.', feedback: 'You created a promise of your own — that is how a shared story begins.' },
     ],
   };
 }
@@ -47,13 +46,13 @@ export function withMoliGuide(course: CourseWorld): CourseWorld {
     voiceId: '',
     style: next.mentor.style || 'Warm, playful story guide. One short question at a time.',
     opening: wasLegacyGuide || /Catherine|mentor/i.test(next.mentor.opening)
-      ? 'Hello, explorer! I’m Moli. Grandma has lost her recipe. Can we find the clues together?'
+      ? 'Bonjour, explorer! I’m Moli. Shall we create and explore a story together?'
       : next.mentor.opening,
   };
   const guide = next.objects.find(o => o.kind === 'mentor');
-  if (guide) { guide.label = 'Meet Moli'; guide.color = '#a9c77f'; guide.dialogue = 'Hi! I’m Moli. Welcome to our story market.'; }
+  if (guide) { guide.label = guide.label || 'Meet Moli'; guide.color = '#a9c77f'; guide.dialogue = guide.dialogue || 'Hi! I’m Moli. Welcome to our story world.'; }
   const intro = next.tasks.find(t => t.kind === 'intro');
-  if (intro) { intro.title = 'Meet Moli'; intro.prompt = 'Grandma needs our help. Find Moli at the market entrance.'; intro.hint = 'Choose Meet Moli below the scene.'; }
+  if (intro && /Catherine|Grandma|market entrance/i.test(intro.prompt)) { intro.title = 'Meet Moli'; intro.prompt = 'Find Moli at the story entrance.'; intro.hint = 'Choose Moli below the scene.'; }
   return next;
 }
 

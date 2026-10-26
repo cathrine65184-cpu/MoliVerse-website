@@ -7,7 +7,7 @@ const pillars = [
     icon: Coins,
     title: "Affordable by Design",
     description:
-      "A twin-led lesson costs a fraction of two hours with a private tutor — priced for families who could never afford one, without ever feeling like a lesser experience.",
+      "AI-assisted story worlds can make meaningful practice available beyond the hours of a live class — while educators remain part of the learning community.",
     accent: "text-amber-300",
   },
   {

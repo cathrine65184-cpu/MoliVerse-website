@@ -9,7 +9,7 @@ import type { Explorer, GuardianPreferences } from "@/lib/family";
 const defaults: Omit<GuardianPreferences, "explorer_id"> = { ai_mentor_enabled: true, save_memories: true, voice_input_enabled: false, educator_response_enabled: false, weekly_digest_enabled: false };
 
 const controls: { key: keyof Omit<GuardianPreferences, "explorer_id">; icon: typeof Sparkles; title: string; body: string }[] = [
-  { key: "ai_mentor_enabled", icon: Sparkles, title: "AI Mentor conversations", body: "Let your child talk with their educator-created language mentor." },
+  { key: "ai_mentor_enabled", icon: Sparkles, title: "Create with Moli", body: "Let your child use Moli’s AI creation assistant with adult guidance." },
   { key: "save_memories", icon: Heart, title: "Save shared memories", body: "Keep a small moment from each story so progress is more than a score." },
   { key: "voice_input_enabled", icon: Mic, title: "Voice practice", body: "Allow microphone-based pronunciation activities when a journey offers them." },
   { key: "educator_response_enabled", icon: MessageCircleHeart, title: "Ask for a human response", body: "Allow a family-guided request to the educator. No open child-to-adult messages." },
