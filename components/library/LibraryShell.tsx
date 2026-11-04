@@ -12,6 +12,7 @@ import { listImportedDrafts, type ImportedContentDraft } from '@/lib/contentImpo
 import Reader from "./Reader";
 import SongPlayer from "./SongPlayer";
 import PrivatePdfReader from './PrivatePdfReader';
+import PublicPdfReader from './PublicPdfReader';
 import "./library.css";
 import "./library-extra.css";
 import './private-pdf.css';
@@ -60,7 +61,7 @@ export default function LibraryShell({ mode }: { mode: ContentType }) {
   const items = useMemo(() => listLibraryContent(mode, language, theme), [mode, language, theme]);
   const languages = ['All', ...Array.from(new Set(all.map(item => item.language)))];
   const themes = ['All', ...Array.from(new Set(all.flatMap(item => item.themes)))];
-  useEffect(() => { setHydrated(true); void (async () => { const profile = await getMyProfile().catch(() => null); const owner = profile?.id || 'local-guest'; setOwnerId(owner); const drafts = await listImportedDrafts(owner).catch(() => []); setPrivateImports(drafts.filter(item => item.contentType === mode && !!item.fileBlob)); })(); }, [mode]);
+  useEffect(() => { setHydrated(true); void (async () => { const profile = await getMyProfile().catch(() => null); const owner = profile?.id || 'local-guest'; setOwnerId(owner); const drafts = await listImportedDrafts(owner).catch(() => []); const publicDocumentTitles = new Set(listLibraryContent(mode).filter(item => item.visibility === 'public' && item.document).map(item => item.title.toLowerCase())); setPrivateImports(drafts.filter(item => item.contentType === mode && !!item.fileBlob && !publicDocumentTitles.has(item.title.toLowerCase()))); })(); }, [mode]);
 
   function createWith(content: LibraryContent) {
     const token = saveContentHandoff(content);
@@ -76,7 +77,9 @@ export default function LibraryShell({ mode }: { mode: ContentType }) {
   if (selected) return <main className="library-app">
     <LibraryHeader active={mode}/>
     <button className="reader-back" onClick={() => setSelectedId('')}><ArrowLeft size={17}/>Back to {mode === 'read' ? 'Read' : 'Sing'}</button>
-    {mode === 'read'
+    {selected.document
+      ? <PublicPdfReader content={selected} progress={progress} onProgress={saveProgress}/>
+      : mode === 'read'
       ? <Reader content={selected} progress={progress} onProgress={saveProgress} onCreate={() => createWith(selected)}/>
       : <SongPlayer content={selected} progress={progress} onProgress={saveProgress} onCreate={() => createWith(selected)}/>
     }
@@ -97,11 +100,11 @@ export default function LibraryShell({ mode }: { mode: ContentType }) {
       {items.length ? items.map(item => {
         const raw = hydrated ? localStorage.getItem(progressKey('local', item.id, item.version)) : null;
         let saved: SavedContentProgress | null = null; if (raw) try { saved = JSON.parse(raw); } catch {}
-        const total = item.contentType === 'read' ? item.pages?.length || 1 : Math.ceil(item.audio?.duration || 1);
+        const total = item.contentType === 'read' ? item.document?.pageCount || item.pages?.length || 1 : Math.ceil(item.audio?.duration || 1);
         const percent = saved ? Math.min(100, Math.round((saved.position / Math.max(1, total - (item.contentType === 'read' ? 1 : 0))) * 100)) : 0;
         return <button className="content-card" key={item.id} onClick={() => setSelectedId(item.id)}>
-          <div className="content-cover" style={{ background: `linear-gradient(145deg, ${item.cover.from}, ${item.cover.to})` }}><span>{item.cover.emoji}</span><em>Demo · Original sample</em></div>
-          <div className="content-card-body"><div className="content-meta"><span>{item.language}</span><span>{item.suggestedAgeRange} years</span></div><h2>{item.title}</h2><p>{item.themes.join(' · ')}</p><div className="content-details"><span><Clock3 size={15}/>{item.minutes} min</span><span>{item.contentType === 'sing' ? <><Headphones size={15}/>{item.audio ? 'Melody + lyrics' : 'Lyrics only'}</> : <><BookOpen size={15}/>{item.pages?.length} pages</>}</span></div>{saved && <div className="card-progress"><i style={{ width: `${saved.completed ? 100 : percent}%` }}/><small>{saved.completed ? 'Completed' : `${percent}% saved locally`}</small></div>}</div>
+          <div className="content-cover" style={{ background: `linear-gradient(145deg, ${item.cover.from}, ${item.cover.to})` }}><span>{item.cover.emoji}</span><em>{item.demo ? 'Demo · Original sample' : item.source.rightsStatus === 'licensed' ? 'Licensed public reading' : 'Public reading'}</em></div>
+          <div className="content-card-body"><div className="content-meta"><span>{item.language}</span><span>{item.suggestedAgeRange} years</span></div><h2>{item.title}</h2><p>{item.themes.join(' · ')}</p><div className="content-details"><span><Clock3 size={15}/>{item.minutes} min</span><span>{item.contentType === 'sing' ? <><Headphones size={15}/>{item.audio ? 'Melody + lyrics' : 'Lyrics only'}</> : <><BookOpen size={15}/>{item.document?.pageCount || item.pages?.length} pages</>}</span></div>{saved && <div className="card-progress"><i style={{ width: `${saved.completed ? 100 : percent}%` }}/><small>{saved.completed ? 'Completed' : `${percent}% saved locally`}</small></div>}</div>
         </button>;
       }) : <div className="empty-state"><span>Nothing matches these filters yet.</span><button onClick={() => { setLanguage('All'); setTheme('All'); }}>Clear filters</button></div>}
     </section>

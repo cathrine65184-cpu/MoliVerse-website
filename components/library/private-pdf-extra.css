@@ -1,1 +1,5 @@
 .private-reader-note{display:block;margin-top:14px;color:#8a6936;font-weight:700}
+.public-reading-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;background:#dfeee2;color:#315f43;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}
+.public-source-note{display:flex;gap:12px;padding:16px 18px;background:#eaf4e8;border:1px solid #c9dfca;border-radius:16px;margin-bottom:18px;color:#365a41}
+.public-source-note svg{flex:none}
+.public-source-note p{font-size:13px;line-height:1.55;margin-top:3px}
