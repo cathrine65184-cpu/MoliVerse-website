@@ -22,13 +22,16 @@ export default function PrivatePdfReader({ draft, ownerId }: { draft: ImportedCo
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      if (!draft.fileBlob) { setStatus('The original file is not available on this device. Import it again from Educator Library.'); return; }
+      if (!draft.fileBlob) {
+        setStatus('The original file is not available on this device. Import it again from Educator Library.');
+        return;
+      }
       try {
         setDocumentReady(false);
-        const pdfjs = await import('pdfjs-dist');
+        const moduleUrl = withBasePath('/pdfjs/pdf.min.mjs');
+        const pdfjs = await import(/* webpackIgnore: true */ moduleUrl);
         pdfjs.GlobalWorkerOptions.workerSrc = withBasePath('/pdfjs/pdf.worker.min.mjs');
-        const task = pdfjs.getDocument({ data: await draft.fileBlob.arrayBuffer() });
-        const doc = await task.promise;
+        const doc = await pdfjs.getDocument({ data: await draft.fileBlob.arrayBuffer() }).promise;
         if (cancelled) { await doc.destroy(); return; }
         documentRef.current = doc;
         setPageCount(doc.numPages);
@@ -36,7 +39,10 @@ export default function PrivatePdfReader({ draft, ownerId }: { draft: ImportedCo
         setPage(Math.max(1, Math.min(doc.numPages, saved)));
         setDocumentReady(true);
         setStatus('');
-      } catch { setStatus('This PDF could not be opened. The private source remains saved in Educator Library.'); }
+      } catch (error) {
+        console.error('private PDF reader failed', error);
+        setStatus('This PDF could not be opened. The private source remains saved in Educator Library.');
+      }
     })();
     return () => { cancelled = true; renderRef.current?.cancel?.(); void documentRef.current?.destroy?.(); documentRef.current = null; };
   }, [draft, ownerId]);
@@ -44,7 +50,8 @@ export default function PrivatePdfReader({ draft, ownerId }: { draft: ImportedCo
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const doc = documentRef.current; const canvas = canvasRef.current;
+      const doc = documentRef.current;
+      const canvas = canvasRef.current;
       if (!documentReady || !doc || !canvas) return;
       try {
         renderRef.current?.cancel?.();
@@ -52,14 +59,18 @@ export default function PrivatePdfReader({ draft, ownerId }: { draft: ImportedCo
         if (cancelled) return;
         const viewport = pdfPage.getViewport({ scale });
         const ratio = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = Math.floor(viewport.width * ratio); canvas.height = Math.floor(viewport.height * ratio);
+        canvas.width = Math.floor(viewport.width * ratio);
+        canvas.height = Math.floor(viewport.height * ratio);
         canvas.style.aspectRatio = `${viewport.width}/${viewport.height}`;
-        const context = canvas.getContext('2d'); if (!context) return;
+        const context = canvas.getContext('2d');
+        if (!context) return;
         context.setTransform(ratio, 0, 0, ratio, 0, 0);
         renderRef.current = pdfPage.render({ canvasContext: context, viewport });
         await renderRef.current.promise;
         localStorage.setItem(savedPageKey(ownerId, draft), String(page));
-      } catch (error: any) { if (error?.name !== 'RenderingCancelledException') setStatus('This page could not be rendered. Try the previous or next page.'); }
+      } catch (error: any) {
+        if (error?.name !== 'RenderingCancelledException') setStatus('This page could not be rendered. Try the previous or next page.');
+      }
     })();
     return () => { cancelled = true; renderRef.current?.cancel?.(); };
   }, [page, scale, draft, ownerId, documentReady]);

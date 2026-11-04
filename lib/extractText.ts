@@ -61,6 +61,11 @@ async function fromPdfDetailed(file: File): Promise<{ pages: Array<{ page: numbe
 
 export type StoryDocumentExtraction = { text: string; pageTexts?: Array<{ page: number; text: string }>; pageCount?: number; partial: boolean; error?: string };
 
+async function countUncompressedPdfPages(file: File) {
+  const source = new TextDecoder('latin1').decode(await file.arrayBuffer());
+  return source.match(/\/Type\s*\/Page\b/g)?.length || undefined;
+}
+
 /** Reliable source ingestion for the story-card flow: pasted text, TXT and text-layer PDFs only. */
 export async function extractStoryDocument(file: File): Promise<StoryDocumentExtraction> {
   const name = file.name.toLowerCase();
@@ -79,7 +84,8 @@ export async function extractStoryDocument(file: File): Promise<StoryDocumentExt
     return { text: "", partial: false, error: "This source reader currently supports TXT and text-layer PDF files. You can also paste an excerpt." };
   } catch (error) {
     console.error(`story source extraction failed for ${file.name}`, error);
-    return { text: "", partial: false, error: "The file could not be parsed. Paste the relevant excerpt instead." };
+    const pageCount = file.type === "application/pdf" || name.endsWith(".pdf") ? await countUncompressedPdfPages(file).catch(() => undefined) : undefined;
+    return { text: "", pageCount, partial: false, error: "The file could not be parsed as text. The original PDF remains available for private reading." };
   }
 }
 
