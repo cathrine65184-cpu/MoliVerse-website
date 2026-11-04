@@ -3,14 +3,19 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, BookOpen, Clock3, Headphones, Library, Music2, Sparkles } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock3, Headphones, Library, LockKeyhole, Music2, Sparkles } from "lucide-react";
 import { getLibraryContent, listLibraryContent, progressKey, type ContentType, type LibraryContent } from "@/lib/contentLibrary";
 import { saveContentHandoff } from "@/lib/contentHandoff";
 import { withBasePath } from "@/lib/paths";
+import { getMyProfile } from '@/lib/supabase';
+import { listImportedDrafts, type ImportedContentDraft } from '@/lib/contentImportStorage';
 import Reader from "./Reader";
 import SongPlayer from "./SongPlayer";
+import PrivatePdfReader from './PrivatePdfReader';
 import "./library.css";
 import "./library-extra.css";
+import './private-pdf.css';
+import './private-pdf-extra.css';
 
 export type SavedContentProgress = { position: number; completed: boolean; activity: string[]; updatedAt: string };
 
@@ -44,6 +49,9 @@ function LibraryHeader({ active }: { active: ContentType }) {
 export default function LibraryShell({ mode }: { mode: ContentType }) {
   const [hydrated, setHydrated] = useState(false);
   const [selectedId, setSelectedId] = useState('');
+  const [ownerId, setOwnerId] = useState('local-guest');
+  const [privateImports, setPrivateImports] = useState<ImportedContentDraft[]>([]);
+  const [privateSelected, setPrivateSelected] = useState<ImportedContentDraft | null>(null);
   const [language, setLanguage] = useState('All');
   const [theme, setTheme] = useState('All');
   const selected = getLibraryContent(selectedId);
@@ -52,12 +60,18 @@ export default function LibraryShell({ mode }: { mode: ContentType }) {
   const items = useMemo(() => listLibraryContent(mode, language, theme), [mode, language, theme]);
   const languages = ['All', ...Array.from(new Set(all.map(item => item.language)))];
   const themes = ['All', ...Array.from(new Set(all.flatMap(item => item.themes)))];
-  useEffect(() => setHydrated(true), []);
+  useEffect(() => { setHydrated(true); void (async () => { const profile = await getMyProfile().catch(() => null); const owner = profile?.id || 'local-guest'; setOwnerId(owner); const drafts = await listImportedDrafts(owner).catch(() => []); setPrivateImports(drafts.filter(item => item.contentType === mode && !!item.fileBlob)); })(); }, [mode]);
 
   function createWith(content: LibraryContent) {
     const token = saveContentHandoff(content);
     window.location.href = withBasePath(`/teach/studio/?handoff=${encodeURIComponent(token)}`);
   }
+
+  if (privateSelected) return <main className="library-app">
+    <LibraryHeader active={mode}/>
+    <button className="reader-back" onClick={() => setPrivateSelected(null)}><ArrowLeft size={17}/>Back to Read</button>
+    <PrivatePdfReader draft={privateSelected} ownerId={ownerId}/>
+  </main>;
 
   if (selected) return <main className="library-app">
     <LibraryHeader active={mode}/>
@@ -91,5 +105,6 @@ export default function LibraryShell({ mode }: { mode: ContentType }) {
         </button>;
       }) : <div className="empty-state"><span>Nothing matches these filters yet.</span><button onClick={() => { setLanguage('All'); setTheme('All'); }}>Clear filters</button></div>}
     </section>
+    {mode === 'read' && privateImports.length > 0 && <section className="private-imports"><div className="private-imports-head"><div><span className="eyebrow">YOUR PRIVATE LIBRARY</span><h2>Read on this device.</h2></div><p>Only visible in this browser. Nothing here is public.</p></div><div className="content-grid">{privateImports.map(item => <button className="content-card private-card" key={item.id} onClick={() => setPrivateSelected(item)}><div className="content-cover"><span>📘</span><em>Private · imported file</em></div><div className="content-card-body"><div className="content-meta"><span>{item.language}</span><span>{item.suggestedAgeRange} years</span></div><h2>{item.title}</h2><p>{item.source || 'Private teacher material'}</p><div className="content-details"><span><BookOpen size={15}/>{item.pageCount ? `${item.pageCount} pages` : 'PDF reader'}</span><span><LockKeyhole size={15}/>This device</span></div>{item.processingStatus === 'failed' && <small className="private-reader-note">Scan available to read · OCR not ready</small>}</div></button>)}</div></section>}
   </main>;
 }
