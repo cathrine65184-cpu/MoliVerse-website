@@ -34,15 +34,20 @@ Production-style offline verification
   work on a never-visited device without first downloading the public app assets.
 
 Data format / adding a second story later (none added in this change)
-- Add a LibraryContent record to ORIGINAL_LIBRARY in lib/contentLibrary.ts.
-- Give it a stable id and version, contentType read, public visibility, original
-  rights status, and pages with id/page/text. Optional translation stays labelled.
-- Add game.vocabulary (8–12 items): word, meaning, exact sentence from a page,
-  page number, optional emoji. Meanings should be short and child-friendly.
-- Add game.events (4–5 items) in chronological order: id, text, page, optional emoji.
-  Events are story-based paraphrases, not presented as quotations.
-- The library, final-page game button and studio resolve this data automatically.
-  The source contract includes id/version/title/language/full pages/vocabulary/events.
+- The canonical pilot record is lib/stories/lantern-seed.json. It stores the
+  stable id/version, multilingual title and meanings, learning language, age
+  and level separately, themes, original-material licence, page text and
+  optional translation, image/audio nulls, vocab IDs and source page refs,
+  chronological plot events, a clearly fictional culture note and game types.
+- lib/stories/adapter.ts converts this one record to existing Read/Studio data.
+  lib/contentLibrary.ts contains only the adapter call, not a second text copy.
+- For another story, create and review its own JSON record, register it via
+  storyToLibraryContent in contentLibrary.ts, and extend source-integrity tests.
+  Do not copy unsupported image/audio paths or fabricated source sentences.
+- Meanings should be short and child-friendly. Each source sentence must be a
+  verbatim substring of the cited page. Story events are paraphrases, not quotes.
+- The existing source contract carries id/version/title/language/full pages,
+  vocabulary and plot events. The reader and games use that converted record.
 - Only a short story ID is in the URL. No raw text or storage handoff token is needed.
 - Update data-integrity tests for the new story and increment its version when changed.
 

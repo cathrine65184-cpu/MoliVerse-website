@@ -16,7 +16,35 @@ require.extensions['.css'] = () => {};
 const pilot = require('../lib/storyPilot.ts');
 const { getLibraryContent } = require('../lib/contentLibrary.ts');
 const source = pilot.getStorySource('moli-lantern-seed');
+const story = require('../lib/stories/lantern-seed.json');
 assert(source);
+assert.equal(story.id, source.id, 'Keep links and saved progress compatible');
+assert.equal(story.version, source.version, 'Keep completed progress compatible');
+assert.equal(story.title.en, source.title);
+assert.equal(story.license.type, 'original');
+assert.equal(story.license.source, null);
+assert.deepEqual(story.games, ['word-match', 'story-order']);
+assert.deepEqual(story.ageRange, [6, 9]);
+assert.equal(story.learningLanguage, 'en');
+assert.equal(story.pages.length, source.pages.length);
+assert.equal(story.vocab.length, source.vocabulary.length);
+assert.equal(story.plotEvents.length, source.events.length);
+assert(!JSON.stringify(story).includes('…'), 'No placeholder story data');
+for (const page of story.pages) {
+  assert.equal(page.image, null, 'Do not invent assets');
+  assert.equal(page.audio, null, 'Do not claim a recording exists');
+  assert.equal(source.pages[page.n - 1].text, page.text);
+  for (const id of page.vocabIds) {
+    const entry = story.vocab.find(item => item.id === id);
+    assert(entry && entry.pageRefs.includes(page.n), `Missing page reference: ${id}, page ${page.n}`);
+    assert(page.text.includes(entry.word), `Word not in page text: ${id}, page ${page.n}`);
+  }
+}
+for (const entry of story.vocab) {
+  assert(entry.meaning.en && entry.meaning.zh && entry.meaning.pt);
+  assert.equal(entry.image, null);
+  for (const pageRef of entry.pageRefs) assert(story.pages[pageRef - 1].vocabIds.includes(entry.id));
+}
 assert.equal(source.pages.length, 5);
 assert(source.vocabulary.length >= 8 && source.vocabulary.length <= 12);
 assert.equal(source.events.length, 5);
