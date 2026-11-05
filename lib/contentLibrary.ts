@@ -1,3 +1,5 @@
+import type { GameSpec } from './storyGames';
+
 export type ContentType = 'read' | 'sing';
 export type RightsStatus = 'unknown' | 'private-use' | 'licensed' | 'public-domain' | 'original';
 export type Visibility = 'private' | 'class' | 'public';
@@ -64,6 +66,8 @@ export type LibraryContent = {
     answer: string[];
   };
   createBrief: string;
+  /** Extra tap-only games (hand-written or AI-written and reviewed). Always validated before use. */
+  games?: GameSpec[];
 };
 
 export const ORIGINAL_LIBRARY: LibraryContent[] = [
@@ -94,6 +98,14 @@ export const ORIGINAL_LIBRARY: LibraryContent[] = [
     ],
     postActivity: { type: 'sequence', title: 'Put the story path in order', prompt: 'Move the three moments into the order they happened.', items: [{ id: 'stay', label: 'Moli stays beside the seed.' }, { id: 'find', label: 'Moli finds a tiny seed.' }, { id: 'glow', label: 'The seed makes a path of light.' }], answer: ['find', 'stay', 'glow'] },
     createBrief: 'Create an original lantern-garden adventure where a child helps Moli care for a mysterious seed, follows a path of light and uses beginner English nature words.',
+    games: [{
+      id: 'my-seed-sentences', type: 'sentence-card', title: 'Make my own sentences', intro: 'Pick story words to finish new sentences. There is no wrong answer!',
+      frames: [
+        { id: 'f1', text: 'Moli found a tiny ___ beside the quiet ___.', blanks: [{ options: ['seed', 'leaf', 'path'] }, { options: ['path', 'garden', 'moon'] }] },
+        { id: 'f2', text: 'The ___ began to glow in the ___.', blanks: [{ options: ['seed', 'leaf', 'path'] }, { options: ['garden', 'moon', 'morning'] }] },
+        { id: 'f3', text: 'Moli ___ the shining path home.', blanks: [{ options: ['followed', 'returned', 'carried'] }] },
+      ],
+    }],
   },
   {
     id: 'salta-luna', version: 1, title: 'Salta, Luna', contentType: 'sing', language: 'Spanish', locale: 'es', supportLanguage: 'English',

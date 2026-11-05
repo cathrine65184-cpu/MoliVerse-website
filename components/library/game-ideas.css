@@ -1,0 +1,19 @@
+.game-ideas { margin-top: 18px; padding-top: 16px; border-top: 1px solid #dfe7da; display: grid; gap: 10px; }
+.game-ideas h3 { margin: 4px 0 0; font: 600 20px/1.3 Georgia, serif; }
+.game-ideas h4 { margin: 0 0 6px; font-size: 15px; }
+.game-ideas label { display: grid; gap: 4px; font-size: 14px; }
+.game-ideas input[type="text"], .game-ideas input:not([type]) { padding: 10px 12px; border: 1px solid #c9d6c4; border-radius: 10px; font: inherit; }
+.gi-help { margin: 0; color: #5b6d62; font-size: 13px; line-height: 1.5; }
+.gi-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.gi-actions button:disabled { opacity: .5; cursor: not-allowed; }
+.gi-message { margin: 0; padding: 8px 12px; background: #f4f8ee; border-radius: 10px; font-size: 14px; }
+.gi-list { display: grid; gap: 10px; }
+.gi-card { padding: 12px 14px; border: 1px solid #d3ddd0; border-radius: 12px; background: #fff; }
+.gi-card p { margin: 6px 0 4px; font-size: 14px; color: #3f5247; }
+.gi-card ul { margin: 0; padding-left: 18px; font-size: 14px; color: #223c30; }
+.gi-check { display: flex !important; grid-template-columns: none; align-items: center; gap: 8px; }
+.gi-check input { width: 18px; height: 18px; flex: none; }
+.gi-check span { margin-left: auto; font-size: 12px; color: #6b7d72; }
+.gi-notes { font-size: 13px; color: #6b4c1e; }
+.gi-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; font-size: 14px; }
+.gi-row button { border: 0; background: none; cursor: pointer; color: #8a3b2d; min-width: 36px; min-height: 36px; }

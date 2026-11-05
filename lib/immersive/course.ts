@@ -1,6 +1,6 @@
 export type SceneObject = { id: string; label: string; kind: 'fruit' | 'flowers' | 'books' | 'ice' | 'mentor'; x: number; z: number; color: string; dialogue: string };
 export type Provenance = { sourceId: string; chunkIds: string[]; kind: 'source-adaptation' | 'original-extension' };
-export type Task = { id: string; title: string; kind: 'intro' | 'match' | 'find' | 'dialogue' | 'recipe' | 'create'; objectId: string; prompt: string; options: string[]; answer: string; hint: string; feedback: string; provenance?: Provenance };
+export type Task = { id: string; title: string; kind: 'intro' | 'match' | 'find' | 'dialogue' | 'recipe' | 'create'; objectId: string; prompt: string; options: string[]; answer: string; hint: string; feedback: string; provenance?: Provenance; clues?: Record<string, string> };
 export type SourceChunk = { id: string; chapter?: string; paragraphStart: number; paragraphEnd: number; pdfPageStart?: number; pdfPageEnd?: number; printedPage?: string; text: string };
 export type StoryCard = { processedRange: string; summary: string; characters: string[]; relationships: string[]; events: string[]; themes: string[]; sceneIdeas: string[]; uncertainties: string[]; teacherCorrection: string };
 export type Material = {

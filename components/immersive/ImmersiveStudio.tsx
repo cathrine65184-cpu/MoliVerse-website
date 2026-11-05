@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowLeft, ArrowUp, BookOpen, CircleHelp, Eye, Languages, Layers, Loader2, Save, ShieldCheck, Sparkles, Undo2, Volume2, X } from "lucide-react";
 import { applyLearningConfig, applyPatches, blankCourse, CoursePatch, CourseWorld, createWorldFromIdea, createWorldFromStarter, learningConfigFromIdea, offlineEdit, starterForIdea, STORY_WORLD_STARTERS, validateCourse, withMoliGuide, worldIdeaQuestion } from "@/lib/immersive/course";
@@ -12,9 +11,10 @@ import { consumeContentHandoff, courseFromContentHandoff } from "@/lib/contentHa
 import LearningPanel from "./LearningPanel";
 import LanguageSettingsPanel from "./LanguageSettingsPanel";
 import SourceLibraryPanel from "./SourceLibraryPanel";
+import StoryBoard from "./StoryBoard";
 import "./studio.css";
+import "./story-board.css";
 
-const StoryScene = dynamic(() => import("./MarketScene"), { ssr: false, loading: () => <div className="scene-loading">Moli is opening your world…</div> });
 type Message = { role: "creator" | "agent"; text: string };
 type Panel = "world" | "moli" | "details";
 
@@ -50,7 +50,6 @@ export default function ImmersiveStudio() {
   const [preview, setPreview] = useState(false);
   const [index, setIndex] = useState(0);
   const [visited, setVisited] = useState("");
-  const [flat, setFlat] = useState(false);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState("");
   const [messages, setMessages] = useState<Message[]>([{ role: "agent", text: "Hi, I’m Moli. Tell me what kind of world you want to make. We’ll build one small playable moment at a time." }]);
@@ -242,12 +241,11 @@ export default function ImmersiveStudio() {
 
     <div className="studio-layout creator-layout">
       <section className={`scene-panel ${panel === "world" ? "mobile-open" : ""}`}>
-        <div className="scene-toolbar"><span className="eyebrow">{preview ? "PLAYTEST" : "YOUR WORLD"} <span className="demo-pill">{course.source === "blank" ? "EMPTY CANVAS" : "LIVE DRAFT"}</span></span><button disabled={course.source === "blank"} onClick={() => setFlat((value) => !value)}>{flat ? "3D world" : "2D mode"}</button></div>
+        <div className="scene-toolbar"><span className="eyebrow">{preview ? "PLAYTEST" : "YOUR WORLD"} <span className="demo-pill">{course.source === "blank" ? "EMPTY CANVAS" : "LIVE DRAFT"}</span></span></div>
         <div className={`scene-wrap ${course.source === "blank" ? "is-blank" : ""}`}>
           {course.source === "blank" ? <div className="blank-world"><div className="blank-orbit"><img src="/mascot.png" alt="Moli"/></div><span>YOUR FIRST SCENE STARTS HERE</span><h1>Describe a world to Moli.</h1><p>Try a place, a character and one small challenge. The canvas will change as soon as you send it.</p><button className="primary" onClick={() => setPanel("moli")}><Sparkles size={16}/>Start with an idea</button></div> : <>
-            <StoryScene course={course} selected={selected} target={preview ? course.tasks[index]?.objectId : undefined} flat={flat} onSelect={(id) => { setSelected(id); setVisited(id); }}/>
+            <StoryBoard course={course} selected={selected} target={preview ? course.tasks[index]?.objectId : undefined} onSelect={(id) => { setSelected(id); setVisited(id); }}/>
             <div className="world-caption"><span>✦ {course.theme.toUpperCase()} STORY WORLD</span><h1>{course.title}</h1><p>{course.level} · Ages {course.ages}</p></div>
-            <div className="scene-instructions">Drag to look around · Tap something to explore</div>
           </>}
         </div>
         {course.source !== "blank" && <div className="stall-shortcuts" aria-label="World locations">{course.objects.map((item) => <button key={item.id} aria-pressed={selected === item.id} onClick={() => { setSelected(item.id); setVisited(item.id); }}>{item.label}{preview && course.tasks[index]?.objectId === item.id ? " · next" : ""}</button>)}</div>}
@@ -262,18 +260,18 @@ export default function ImmersiveStudio() {
           : <div className="creator-invite"><div><span className="eyebrow">ONE WORLD · MANY POSSIBILITIES</span><h2>Change it by talking to Moli.</h2><p>Try “make this a moon library”, “add a funny clue”, or select a place and edit its details.</p></div><button className="primary" onClick={() => setPanel("moli")}><Sparkles size={16}/>Create with Moli</button></div>}
       </section>
 
-      <aside className={`agent-panel creator-agent ${panel === "moli" ? "mobile-open" : ""}`}>
+      <aside className={`agent-panel creator-agent ${panel === "moli" ? "mobile-open" : ""} ${course.source === "blank" ? "is-blank" : ""}`}>
         <div className="panel-title"><div className="mini-moli"><img src="/mascot.png" alt=""/></div><div><h2>Create with Moli</h2><small>You imagine. Moli helps it become playable.</small></div></div>
         <button className="how-button" onClick={() => setHelpOpen(value => !value)} aria-expanded={helpOpen}><CircleHelp size={15}/>How to create a world</button>
         {helpOpen && <div className="how-card"><ol><li><strong>Describe the story.</strong><span>Give Moli a place, a character and one small mission.</span></li><li><strong>Set the learning goal.</strong><span>Choose the game language, level, words and sentence patterns.</span></li><li><strong>Add a source when needed.</strong><span>Paste or upload text if Moli must follow a specific book or version.</span></li><li><strong>Play, then refine.</strong><span>Select a place and ask for one visible change at a time.</span></li></ol><p><strong>Example:</strong> “做一个海底音乐故事，给 8 岁英语初学者。学习 shell、coral 和 ‘Can you hear…?’，最后让孩子创作一段海洋歌曲。”</p><small>For protected characters or books, use material you own or are authorised to adapt. Public worlds should use original characters and clearly labelled inspiration.</small></div>}
         <div className="deepseek-status"><span/> {profileRole === "guest" ? "Local draft · sign in for DeepSeek changes" : "DeepSeek creation assistant connected"}</div>
         <div className={`evidence-status evidence-${sourceContext.mode}`}><BookOpen size={14}/><span>{sourceContext.mode === 'sources' ? `${sourceContext.evidence.length} relevant source passages available` : sourceContext.mode === 'insufficient' ? 'Source needs a readable excerpt' : 'No source linked · general knowledge mode'}</span></div>
+        {course.source === 'blank' && <div className="panel-starters"><div className="starter-worlds"><span>START FROM ONE OF YOUR STORY WORLDS</span>{STORY_WORLD_STARTERS.map(starter => <button key={starter.id} onClick={() => openStarter(starter.id)}><small>{starter.eyebrow}</small><strong>{starter.title}</strong><p>{starter.description}</p></button>)}</div></div>}
         <div className="messages">
           {messages.map((message, i) => <div key={i} className={`message ${message.role === "creator" ? "teacher" : "agent"}`}><small>{message.role === "agent" ? "MOLI" : "YOU"}</small><p>{message.text}</p></div>)}
           {busy && <p className="progress-note"><Loader2 size={14} className="animate-spin"/>{busy}</p>}
         </div>
         <div className="agent-bottom">
-          {course.source === 'blank' && <div className="starter-worlds"><span>START FROM ONE OF YOUR STORY WORLDS</span>{STORY_WORLD_STARTERS.map(starter => <button key={starter.id} onClick={() => openStarter(starter.id)}><small>{starter.eyebrow}</small><strong>{starter.title}</strong><p>{starter.description}</p></button>)}</div>}
           <div className="prompt-chips">{["Make it more magical", "Add a funny clue", "Make the words easier"].map((prompt) => <button key={prompt} onClick={() => setInput(prompt)}>{prompt}</button>)}</div>
           {youngCreator && <label className="adult-check"><input type="checkbox" checked={adultReady} onChange={(event) => setAdultReady(event.target.checked)}/><ShieldCheck size={16}/><span>A parent, guardian or teacher is with me.</span></label>}
           <form onSubmit={(event) => { event.preventDefault(); void askMoli(input); }}><textarea aria-label="Tell Moli your idea" value={input} onChange={(event) => setInput(event.target.value)} placeholder="Tell Moli what should happen next…"/><div><span className="prompt-helper">Describe, then refine</span><button className="send-button" disabled={!input.trim() || !!busy || (youngCreator && !adultReady)} aria-label="Send to Moli"><ArrowUp size={18}/></button></div></form>

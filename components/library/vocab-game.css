@@ -1,0 +1,21 @@
+.vocab-game .vocab-note { color: #5b6d62; font-size: 14px; margin-top: 10px; }
+.vocab-game .vocab-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 18px 0 4px; }
+.vocab-game .vocab-actions .quiet-button { align-self: auto; display: inline-flex; align-items: center; gap: 6px; padding: 12px 15px; font-size: 14px; }
+.vocab-sentence { margin: 18px 0; padding: 16px 20px; border-left: 4px solid #7d9c69; background: #f4f7ef; border-radius: 0 14px 14px 0; font: 500 21px/1.6 Georgia, serif; color: #223c30; }
+.vocab-sentence mark { background: #ffe9a8; color: inherit; padding: 1px 5px; border-radius: 6px; font-weight: 700; }
+.vocab-sentence small { display: block; margin-top: 6px; font: 12px var(--font-inter), sans-serif; color: #78877e; }
+.vocab-choices { display: grid; gap: 10px; margin: 16px 0; }
+.vocab-choice { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 14px 18px; text-align: left; font-size: 17px; line-height: 1.4; color: #223c30; background: #fff; border: 2px solid #d3ddd0; border-radius: 16px; transition: border-color .15s, background .15s; }
+.vocab-choice:not(:disabled):hover { border-color: #7d9c69; background: #f4f8ee; }
+.vocab-choice:disabled { cursor: default; }
+.vocab-choice.right { background: #e4f1d8; border-color: #5f9250; }
+.vocab-choice.wrong { background: #fbe9e1; border-color: #c98156; }
+.vocab-choice svg { flex: none; width: 22px; height: 22px; }
+.vocab-group { margin: 20px 0; }
+.vocab-group h3 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: #6b866d; margin-bottom: 8px; }
+.vocab-group ul { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.vocab-group li { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; font-size: 15px; }
+.vocab-group li.ok { background: #e4f1d8; color: #2d573c; }
+.vocab-group li.again { flex-direction: column; align-items: flex-start; gap: 2px; border-radius: 14px; background: #fff3e6; color: #7a4a22; }
+.vocab-group li.again span { font-size: 13px; opacity: .85; }
+@media (prefers-reduced-motion: reduce) { .vocab-choice { transition: none; } }

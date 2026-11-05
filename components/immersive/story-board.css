@@ -1,0 +1,45 @@
+/* 2D story board (replaces the 3D scene) */
+.story-board { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: inherit; }
+.sb-decor span { position: absolute; opacity: .5; pointer-events: none; user-select: none; }
+.sb-path { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.sb-path path { fill: none; stroke: #fff4da; stroke-opacity: .65; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 7; vector-effect: non-scaling-stroke; }
+.sb-stops { list-style: none; margin: 0; padding: 0; }
+.sb-stops li { position: absolute; transform: translate(-50%, -50%); }
+.sb-stop { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 104px; min-height: 96px; padding: 10px 6px 8px; border-radius: 22px; border: 3px solid transparent; background: #fffaf0; color: #2e4137; box-shadow: 0 8px 22px #0003; cursor: pointer; transition: transform .15s, border-color .15s; }
+.sb-stop:hover { transform: translateY(-3px); }
+.sb-stop.is-selected { border-color: var(--stop, #7d9c69); box-shadow: 0 0 0 4px #fff4da66, 0 10px 26px #0004; }
+.sb-stop.is-target { border-color: #efc373; animation: sb-pulse 1.8s ease-in-out infinite; }
+.sb-icon { display: grid; place-items: center; width: 46px; height: 46px; font-size: 34px; line-height: 1; }
+.sb-icon img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; }
+.sb-label { font: 600 13px/1.2 var(--font-inter), sans-serif; text-align: center; overflow-wrap: anywhere; }
+.sb-stop small { font-size: 10px; font-weight: 700; color: #8a5b12; background: #fdeab8; padding: 2px 7px; border-radius: 999px; }
+.sb-bubble { position: absolute; left: 16px; right: 16px; bottom: 14px; max-height: 38%; overflow: auto; padding: 12px 16px; border-radius: 16px; background: #fffaf0f2; color: #2e4137; box-shadow: 0 8px 24px #0003; }
+.sb-bubble strong { display: block; font: 600 14px var(--font-inter), sans-serif; margin-bottom: 2px; }
+.sb-bubble p { margin: 0; font: 500 15px/1.5 Georgia, serif; }
+.story-board button:focus-visible { outline: 3px solid #6d77d8; outline-offset: 3px; }
+@keyframes sb-pulse { 50% { box-shadow: 0 0 0 8px #efc37355, 0 10px 26px #0004; } }
+@media (prefers-reduced-motion: reduce) { .sb-stop, .sb-stop.is-target { transition: none; animation: none; } .sb-stop:hover { transform: none; } }
+@media (max-width: 800px) {
+  .sb-stop { width: 84px; min-height: 84px; padding: 8px 4px 6px; border-radius: 18px; }
+  .sb-bubble { max-height: 30%; }
+  .sb-icon, .sb-icon img { width: 38px; height: 38px; font-size: 28px; }
+  .sb-label { font-size: 12px; }
+  .sb-bubble { left: 10px; right: 10px; bottom: 10px; padding: 10px 12px; }
+  .sb-bubble p { font-size: 14px; }
+}
+
+/* Learning panel: meaning clue under the picture */
+.learning-panel .clue-text { font-size: 15px; font-weight: 600; text-align: center; color: #355744; margin: 4px 0 10px; }
+
+/* Create with Moli panel: fix overlapping header, floating starter list and the misaligned adult checkbox */
+.creator-agent .how-button { margin: 0 0 12px; align-self: flex-start; }
+.creator-agent .panel-starters { margin: 4px 0 14px; }
+.creator-agent .starter-worlds { max-height: none; overflow: visible; margin-bottom: 0; padding-right: 0; }
+.immersive-studio .creator-agent .adult-check { align-items: center; }
+.immersive-studio .creator-agent .adult-check input[type=checkbox] { display: inline-block; width: 18px; height: 18px; flex: none; margin: 0; padding: 0; }
+.immersive-studio .creator-agent .adult-check span { flex: 1; font-size: 12px; }
+/* Empty state: the input area scrolls with the panel instead of floating over the starter list */
+.creator-agent.is-blank .agent-bottom { position: static; margin: 0; padding: 14px 0 0; background: none; }
+.creator-agent.is-blank .messages { min-height: 0; }
+/* Keep the title compact so it never crowds the stops */
+.scene-panel .world-caption h1 { font-size: clamp(26px, 3.2vw, 42px); }

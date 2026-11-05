@@ -64,6 +64,7 @@ export default function LearningPanel({ course, index, visited, onNext }: { cour
         {(task.kind === "intro" || task.kind === "find") && <button className="primary" onClick={() => finish(task.feedback)}>{task.kind === "intro" ? "Enter the story" : "I found it!"}</button>}
         {task.kind === "match" && <>
           <div className="fruit-picture" aria-label={`Picture clue for ${task.options[step] ?? "complete"}`}>{picture[task.options[step]] ?? "🔎"}</div>
+          {task.clues?.[task.options[step]] && <p className="clue-text">Clue: {task.clues[task.options[step]]}</p>}
           <div className="choice-grid">{task.options.map((option) => <button key={option} disabled={chosen.includes(option)} onClick={() => match(option)}>{option}</button>)}</div>
           <p>{chosen.length}/{task.options.length} discovered {chosen.join(" · ")}</p>
         </>}

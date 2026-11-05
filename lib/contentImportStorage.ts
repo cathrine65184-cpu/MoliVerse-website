@@ -1,3 +1,4 @@
+import type { GameSpec, StoryWord } from './storyGames';
 import type { ContentType, RightsStatus, Visibility } from './contentLibrary';
 
 export type ImportedContentDraft = {
@@ -26,6 +27,12 @@ export type ImportedContentDraft = {
   text: string;
   pageTexts?: Array<{ page: number; text: string }>;
   pageCount?: number;
+  /** Focus words typed by the educator and games the educator approved (always re-validated before use). */
+  focusWords?: string[];
+  games?: GameSpec[];
+  /** Words the educator approved, with meanings (from the book assistant or typed by hand). */
+  vocab?: StoryWord[];
+  bookSummary?: string;
   fileBlob?: Blob;
   audioBlob?: Blob;
   updatedAt: string;

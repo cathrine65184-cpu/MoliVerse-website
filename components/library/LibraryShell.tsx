@@ -63,8 +63,8 @@ export default function LibraryShell({ mode }: { mode: ContentType }) {
   const themes = ['All', ...Array.from(new Set(all.flatMap(item => item.themes)))];
   useEffect(() => { setHydrated(true); void (async () => { const profile = await getMyProfile().catch(() => null); const owner = profile?.id || 'local-guest'; setOwnerId(owner); const drafts = await listImportedDrafts(owner).catch(() => []); const publicDocumentTitles = new Set(listLibraryContent(mode).filter(item => item.visibility === 'public' && item.document).map(item => item.title.toLowerCase())); setPrivateImports(drafts.filter(item => item.contentType === mode && !!item.fileBlob && !publicDocumentTitles.has(item.title.toLowerCase()))); })(); }, [mode]);
 
-  function createWith(content: LibraryContent) {
-    const token = saveContentHandoff(content);
+  function createWith(content: LibraryContent, focusWords: string[] = []) {
+    const token = saveContentHandoff(content, focusWords);
     window.location.href = withBasePath(`/teach/studio/?handoff=${encodeURIComponent(token)}`);
   }
 
@@ -80,7 +80,7 @@ export default function LibraryShell({ mode }: { mode: ContentType }) {
     {selected.document
       ? <PublicPdfReader content={selected} progress={progress} onProgress={saveProgress}/>
       : mode === 'read'
-      ? <Reader content={selected} progress={progress} onProgress={saveProgress} onCreate={() => createWith(selected)}/>
+      ? <Reader content={selected} progress={progress} onProgress={saveProgress} onCreate={focusWords => createWith(selected, focusWords)}/>
       : <SongPlayer content={selected} progress={progress} onProgress={saveProgress} onCreate={() => createWith(selected)}/>
     }
   </main>;

@@ -5,7 +5,8 @@ The previous identity workbench is retained at `/teach/identity/`.
 
 ## Implemented
 
-- Structured `CourseWorld` data drives the raw Three.js scene, inspector, task player and constrained edit commands.
+- Structured `CourseWorld` data drives the 2D story board (`StoryBoard.tsx`), inspector, task player and constrained edit commands. The earlier raw Three.js scene was removed from Create to keep it light and fast on phones and low-bandwidth networks.
+- When a world is opened from a Read story (`lib/contentHandoff.ts`), its stops, clues and questions are built from that story's own words and sentences.
 - Seven sequential activities in an original Penang night-market sample: introduction, four picture/word matches, two spatial clues, polite dialogue, recipe discovery, ingredient selection and sentence creation.
 - Orbit controls and raycast selection; procedural assets (no third-party model licensing dependency), reduced-motion marker handling, mobile tabs, keyboard-accessible scene shortcuts and equivalent 2D mode.
 - Teacher course snapshots reuse saved Teacher DNA where signed in. Course editing never writes teacher defaults.
