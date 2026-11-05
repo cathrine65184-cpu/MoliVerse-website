@@ -3,3 +3,6 @@
 .public-source-note{display:flex;gap:12px;padding:16px 18px;background:#eaf4e8;border:1px solid #c9dfca;border-radius:16px;margin-bottom:18px;color:#365a41}
 .public-source-note svg{flex:none}
 .public-source-note p{font-size:13px;line-height:1.55;margin-top:3px}
+.content-cover.has-image{height:260px;background:#f1eee6!important}
+.content-cover-image{object-fit:contain;padding:10px}
+.content-cover.has-image em{z-index:1;box-shadow:0 4px 14px rgba(34,52,42,.12)}

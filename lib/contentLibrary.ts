@@ -46,7 +46,7 @@ export type LibraryContent = {
   source: ContentSource;
   visibility: Visibility;
   processingStatus: 'ready' | 'processing' | 'partial' | 'failed';
-  cover: { emoji: string; from: string; to: string };
+  cover: { emoji: string; from: string; to: string; image?: string };
   learningObjectives: string[];
   relatedWorldIds: string[];
   followUpActivity: string;
@@ -71,7 +71,7 @@ export const ORIGINAL_LIBRARY: LibraryContent[] = [
     id: 'a-second-is-a-hiccup', version: 1, title: 'A Second Is a Hiccup', contentType: 'read', language: 'English', locale: 'en', supportLanguage: 'English',
     suggestedAgeRange: '6–9', proficiencyLevel: 'Beginner / A1', thinkingLevel: 'Notice how time can be described through everyday moments', themes: ['Time', 'Rhythm', 'Everyday Life'], minutes: 8,
     ownerId: 'moliverse-library', source: { name: 'McGraw-Hill Education', author: 'Hazel Hutchins; illustrated by Kady MacDonald Denton', edition: 'ISBN 978-0-02-119598-5', rightsStatus: 'licensed', rightsNotes: 'Published on MoliVerse following the uploader’s confirmation that public display is authorised. Text and illustrations remain copyrighted by their respective rights holders.' },
-    visibility: 'public', processingStatus: 'ready', cover: { emoji: '⏱️', from: '#f4c9c5', to: '#b9d8ef' },
+    visibility: 'public', processingStatus: 'ready', cover: { emoji: '⏱️', from: '#f4c9c5', to: '#b9d8ef', image: '/library/a-second-is-a-hiccup-cover.jpg' },
     learningObjectives: ['Read an illustrated English text about time', 'Notice rhythm and repeated time expressions', 'Connect time words with everyday moments'], relatedWorldIds: [], followUpActivity: 'Talk about what can happen in one second', demo: false,
     document: { kind: 'pdf', url: '/library/a-second-is-a-hiccup.pdf', pageCount: 40 },
     preQuestion: 'What do you think can happen in just one second?',
