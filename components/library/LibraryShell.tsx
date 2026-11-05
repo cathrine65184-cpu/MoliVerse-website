@@ -13,6 +13,7 @@ import Reader from "./Reader";
 import SongPlayer from "./SongPlayer";
 import PrivatePdfReader from './PrivatePdfReader';
 import PublicPdfReader from './PublicPdfReader';
+import StoryPilotReader from '@/components/story-pilot/StoryPilotReader';
 import "./library.css";
 import "./library-extra.css";
 import './private-pdf.css';
@@ -22,17 +23,21 @@ export type SavedContentProgress = { position: number; completed: boolean; activ
 
 function useSavedProgress(content: LibraryContent | undefined) {
   const [progress, setProgress] = useState<SavedContentProgress>({ position: 0, completed: false, activity: [], updatedAt: '' });
+  const [storageAvailable, setStorageAvailable] = useState(true);
   useEffect(() => {
     if (!content) return;
     setProgress({ position: 0, completed: false, activity: [], updatedAt: '' });
-    const raw = localStorage.getItem(progressKey('local', content.id, content.version));
-    if (raw) try { setProgress(JSON.parse(raw)); } catch {}
+    try {
+      const raw = localStorage.getItem(progressKey('local', content.id, content.version));
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed && Number.isFinite(parsed.position) && Array.isArray(parsed.activity)) setProgress(parsed);
+    } catch { setStorageAvailable(false); }
   }, [content]);
   function save(next: SavedContentProgress) {
     setProgress(next);
-    if (content) localStorage.setItem(progressKey('local', content.id, content.version), JSON.stringify(next));
+    try { if (content) localStorage.setItem(progressKey('local', content.id, content.version), JSON.stringify(next)); setStorageAvailable(true); } catch { setStorageAvailable(false); }
   }
-  return [progress, save] as const;
+  return [progress, save, storageAvailable] as const;
 }
 
 function LibraryHeader({ active }: { active: ContentType }) {
@@ -56,12 +61,18 @@ export default function LibraryShell({ mode }: { mode: ContentType }) {
   const [language, setLanguage] = useState('All');
   const [theme, setTheme] = useState('All');
   const selected = getLibraryContent(selectedId);
-  const [progress, saveProgress] = useSavedProgress(selected);
+  const [progress, saveProgress, storageAvailable] = useSavedProgress(selected);
   const all = useMemo(() => listLibraryContent(mode), [mode]);
   const items = useMemo(() => listLibraryContent(mode, language, theme), [mode, language, theme]);
   const languages = ['All', ...Array.from(new Set(all.map(item => item.language)))];
   const themes = ['All', ...Array.from(new Set(all.flatMap(item => item.themes)))];
-  useEffect(() => { setHydrated(true); void (async () => { const profile = await getMyProfile().catch(() => null); const owner = profile?.id || 'local-guest'; setOwnerId(owner); const drafts = await listImportedDrafts(owner).catch(() => []); const publicDocumentTitles = new Set(listLibraryContent(mode).filter(item => item.visibility === 'public' && item.document).map(item => item.title.toLowerCase())); setPrivateImports(drafts.filter(item => item.contentType === mode && !!item.fileBlob && !publicDocumentTitles.has(item.title.toLowerCase()))); })(); }, [mode]);
+  useEffect(() => { const id = new URLSearchParams(window.location.search).get('story'); if (id && getLibraryContent(id)?.game) setSelectedId(id); }, []);
+  useEffect(() => {
+    setHydrated(true);
+    const requested = new URLSearchParams(window.location.search).get('story');
+    if (requested && getLibraryContent(requested)?.game) return; // Public pilot never loads a profile or private imports.
+    void (async () => { const profile = await getMyProfile().catch(() => null); const owner = profile?.id || 'local-guest'; setOwnerId(owner); const drafts = await listImportedDrafts(owner).catch(() => []); const publicDocumentTitles = new Set(listLibraryContent(mode).filter(item => item.visibility === 'public' && item.document).map(item => item.title.toLowerCase())); setPrivateImports(drafts.filter(item => item.contentType === mode && !!item.fileBlob && !publicDocumentTitles.has(item.title.toLowerCase()))); })();
+  }, [mode]);
 
   function createWith(content: LibraryContent) {
     const token = saveContentHandoff(content);
@@ -80,7 +91,7 @@ export default function LibraryShell({ mode }: { mode: ContentType }) {
     {selected.document
       ? <PublicPdfReader content={selected} progress={progress} onProgress={saveProgress}/>
       : mode === 'read'
-      ? <Reader content={selected} progress={progress} onProgress={saveProgress} onCreate={() => createWith(selected)}/>
+      ? selected.game ? <StoryPilotReader content={selected} progress={progress} onProgress={saveProgress} storageAvailable={storageAvailable}/> : <Reader content={selected} progress={progress} onProgress={saveProgress} onCreate={() => createWith(selected)}/>
       : <SongPlayer content={selected} progress={progress} onProgress={saveProgress} onCreate={() => createWith(selected)}/>
     }
   </main>;
@@ -98,7 +109,8 @@ export default function LibraryShell({ mode }: { mode: ContentType }) {
     </section>
     <section className="content-grid" aria-live="polite">
       {items.length ? items.map(item => {
-        const raw = hydrated ? localStorage.getItem(progressKey('local', item.id, item.version)) : null;
+        let raw: string | null = null;
+        try { raw = hydrated ? localStorage.getItem(progressKey('local', item.id, item.version)) : null; } catch { /* Optional local progress. */ }
         let saved: SavedContentProgress | null = null; if (raw) try { saved = JSON.parse(raw); } catch {}
         const total = item.contentType === 'read' ? item.document?.pageCount || item.pages?.length || 1 : Math.ceil(item.audio?.duration || 1);
         const percent = saved ? Math.min(100, Math.round((saved.position / Math.max(1, total - (item.contentType === 'read' ? 1 : 0))) * 100)) : 0;

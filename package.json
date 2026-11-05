@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:library": "node scripts/test-learning-library.cjs"
+    "test:library": "node scripts/test-learning-library.cjs",
+    "test:story-pilot": "node scripts/test-story-pilot.cjs && node scripts/test-story-pilot-offline.cjs"
   },
   "dependencies": {
     "@google/model-viewer": "^4.3.1",

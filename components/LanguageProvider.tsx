@@ -145,14 +145,16 @@ export default function LanguageProvider({ children }: { children: React.ReactNo
   const localeRef = useRef<Locale>("en");
 
   useEffect(() => {
-    const saved = localStorage.getItem("moliverse-locale") as Locale | null;
-    if (saved && localeLabels[saved]) setLocale(saved);
+    try {
+      const saved = localStorage.getItem("moliverse-locale") as Locale | null;
+      if (saved && localeLabels[saved]) setLocale(saved);
+    } catch { /* Language selection still works when browser storage is blocked. */ }
   }, []);
 
   useEffect(() => {
     localeRef.current = locale;
     document.documentElement.lang = locale === "zh" ? "zh-CN" : locale;
-    localStorage.setItem("moliverse-locale", locale);
+    try { localStorage.setItem("moliverse-locale", locale); } catch { /* Session-only locale. */ }
     translateDocument(locale);
   }, [locale]);
 
