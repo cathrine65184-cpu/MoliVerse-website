@@ -29,6 +29,13 @@ export type LyricLine = {
   action: string;
 };
 
+export type StoryVocabulary = { word: string; meaning: string; sentence: string; page: number; emoji?: string };
+export type StoryGameData = {
+  vocabulary: StoryVocabulary[];
+  /** Canonical chronological order, not the order displayed in the game. */
+  events: Array<{ id: string; text: string; page: number; emoji?: string }>;
+};
+
 export type LibraryContent = {
   id: string;
   version: number;
@@ -52,6 +59,7 @@ export type LibraryContent = {
   followUpActivity: string;
   demo: boolean;
   pages?: StoryPage[];
+  game?: StoryGameData;
   document?: { kind: 'pdf'; url: string; pageCount: number };
   lyrics?: LyricLine[];
   audio?: { kind: 'synth-demo'; duration: number; label: string };
@@ -92,6 +100,27 @@ export const ORIGINAL_LIBRARY: LibraryContent[] = [
       { id: 'p4', page: 4, text: 'Then the seed began to glow. One golden leaf opened, then another. A line of light crossed the garden.', translation: '这时，种子开始发光。一片金色叶子展开了，又展开了另一片。一条光路穿过花园。', simplified: 'The seed glows and makes a path of light.', vocabulary: [{ word: 'glow', meaning: 'to shine with a soft light' }, { word: 'path', meaning: 'a way that you can walk along' }], moliMoment: 'What changed because Moli stayed?' },
       { id: 'p5', page: 5, text: 'Moli followed the shining path home. In the morning, he returned with water—and a new friend was waiting.', translation: 'Moli 沿着闪亮的小路回到了家。第二天早晨，他带着水回来，一位新朋友正在等他。', simplified: 'Moli comes back. The seed has become a friend.', vocabulary: [{ word: 'returned', meaning: 'came back' }] },
     ],
+    game: {
+      vocabulary: [
+        { word: 'tiny', meaning: 'very small', sentence: 'Moli found a tiny seed beside the quiet path.', page: 1, emoji: '🤏' },
+        { word: 'seed', meaning: 'a little part of a plant that can grow', sentence: 'Moli found a tiny seed beside the quiet path.', page: 1, emoji: '🌱' },
+        { word: 'quiet', meaning: 'with very little sound', sentence: 'Moli found a tiny seed beside the quiet path.', page: 1, emoji: '🤫' },
+        { word: 'path', meaning: 'a way you can walk along', sentence: 'Moli found a tiny seed beside the quiet path.', page: 1, emoji: '👣' },
+        { word: 'soft', meaning: 'not hard or rough', sentence: 'He carried it to the garden and made a soft bed of leaves.', page: 2, emoji: '🪶' },
+        { word: 'leaves', meaning: 'the flat parts that grow on a plant', sentence: 'He carried it to the garden and made a soft bed of leaves.', page: 2, emoji: '🍃' },
+        { word: 'cloud', meaning: 'a white or grey shape in the sky', sentence: 'A cloud covered the moon.', page: 3, emoji: '☁️' },
+        { word: 'moon', meaning: 'the round world we often see in the night sky', sentence: 'A cloud covered the moon.', page: 3, emoji: '🌙' },
+        { word: 'glow', meaning: 'to shine with a soft light', sentence: 'Then the seed began to glow.', page: 4, emoji: '✨' },
+        { word: 'returned', meaning: 'came back', sentence: 'In the morning, he returned with water—and a new friend was waiting.', page: 5, emoji: '↩️' },
+      ],
+      events: [
+        { id: 'find', text: 'Moli finds a tiny seed beside the path.', page: 1, emoji: '🌱' },
+        { id: 'bed', text: 'Moli makes a soft bed of leaves.', page: 2, emoji: '🍃' },
+        { id: 'stay', text: 'A cloud covers the moon. Moli stays with the seed.', page: 3, emoji: '☁️' },
+        { id: 'glow', text: 'The seed glows and lights the garden.', page: 4, emoji: '✨' },
+        { id: 'return', text: 'Moli goes home, then returns with water.', page: 5, emoji: '💧' },
+      ],
+    },
     postActivity: { type: 'sequence', title: 'Put the story path in order', prompt: 'Move the three moments into the order they happened.', items: [{ id: 'stay', label: 'Moli stays beside the seed.' }, { id: 'find', label: 'Moli finds a tiny seed.' }, { id: 'glow', label: 'The seed makes a path of light.' }], answer: ['find', 'stay', 'glow'] },
     createBrief: 'Create an original lantern-garden adventure where a child helps Moli care for a mysterious seed, follows a path of light and uses beginner English nature words.',
   },
