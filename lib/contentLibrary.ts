@@ -1,5 +1,4 @@
 import type { GameSpec } from './storyGames';
-import { LANTERN_SEED, storyToLibraryContent } from './stories/adapter';
 
 export type ContentType = 'read' | 'sing';
 export type RightsStatus = 'unknown' | 'private-use' | 'licensed' | 'public-domain' | 'original';
@@ -90,17 +89,6 @@ export const ORIGINAL_LIBRARY: LibraryContent[] = [
     preQuestion: 'What do you think can happen in just one second?',
     postActivity: { type: 'sequence', title: 'Think about time', prompt: 'Talk with a grown-up about one moment from the book.', items: [], answer: [] },
     createBrief: 'Create an original language activity about noticing seconds, minutes and everyday moments. Do not reproduce the book text or illustrations.',
-  },
-  {
-    ...storyToLibraryContent(LANTERN_SEED),
-    games: [{
-      id: 'my-seed-sentences', type: 'sentence-card', title: 'Make my own sentences', intro: 'Pick story words to finish new sentences. There is no wrong answer!',
-      frames: [
-        { id: 'f1', text: 'Moli found a tiny ___ beside the quiet ___.', blanks: [{ options: ['seed', 'leaf', 'path'] }, { options: ['path', 'garden', 'moon'] }] },
-        { id: 'f2', text: 'The ___ began to glow in the ___.', blanks: [{ options: ['seed', 'leaf', 'path'] }, { options: ['garden', 'moon', 'morning'] }] },
-        { id: 'f3', text: 'Moli ___ the shining path home.', blanks: [{ options: ['followed', 'returned', 'carried'] }] },
-      ],
-    }],
   },
   {
     id: 'salta-luna', version: 1, title: 'Salta, Luna', contentType: 'sing', language: 'Spanish', locale: 'es', supportLanguage: 'English',

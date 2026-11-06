@@ -35,7 +35,7 @@ const game = load(path.join(root, 'lib', 'vocabGame.ts'));
 const handoffLib = load(path.join(root, 'lib', 'contentHandoff.ts'));
 const courseLib = load(path.join(root, 'lib', 'immersive', 'course.ts'));
 const boardLib = load(path.join(root, 'lib', 'storyBoardLayout.ts'));
-const story = ORIGINAL_LIBRARY.find(item => item.id === 'moli-lantern-seed');
+const story = load(path.join(root, 'scripts/fixtures/pilot.ts')).pilotFixture;
 
 // ---- vocabulary collection -------------------------------------------------
 const vocab = game.collectVocab(story);

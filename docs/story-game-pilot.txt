@@ -2,6 +2,8 @@ MoliVerse story-to-game pilot
 ============================
 
 Scope
+Historical implementation notes: this example is retired from the public
+library and studio. Its data now lives only in scripts/fixtures for tests.
 - One original sample: Moli and the Lantern Seed, English, ages 6–9, five pages.
 - Read -> source-linked Create studio -> word matching / story sequencing -> review.
 - No AI, login, microphone, personal-data forms, new remote assets or new dependencies.

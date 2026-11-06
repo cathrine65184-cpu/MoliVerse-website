@@ -26,8 +26,7 @@ function same(a, b, message) { assert(JSON.stringify(a) === JSON.stringify(b), `
 const root = path.join(__dirname, '..');
 const G = load(path.join(root, 'lib', 'storyGames.ts'));
 const V = load(path.join(root, 'lib', 'vocabGame.ts'));
-const { ORIGINAL_LIBRARY } = load(path.join(root, 'lib', 'contentLibrary.ts'));
-const lantern = ORIGINAL_LIBRARY.find(item => item.id === 'moli-lantern-seed');
+const lantern = load(path.join(root, 'scripts/fixtures/pilot.ts')).pilotFixture;
 const story = { title: lantern.title, pages: lantern.pages.map(p => ({ page: p.page, text: p.text })), vocab: V.collectVocab(lantern).map(({ word, meaning, page }) => ({ word, meaning, page })) };
 
 // ---- text helpers ---------------------------------------------------------

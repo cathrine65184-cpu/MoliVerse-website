@@ -1,3 +1,4 @@
+import { InkBreak } from "@/components/universe/InkSeam";
 import Link from "next/link";
 import { ArrowRight, HeartHandshake, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 
@@ -21,7 +22,7 @@ const promises = [
 
 export default function FamiliesPage() {
   return (
-    <main className="relative min-h-screen overflow-hidden px-6 py-14">
+    <main className="family-ink relative min-h-screen overflow-hidden px-6 py-14">
       <div className="pointer-events-none absolute left-1/2 top-[-12rem] h-[36rem] w-[44rem] -translate-x-1/2 rounded-full bg-violet-600/15 blur-[130px]" />
       <div className="relative mx-auto max-w-5xl pb-24">
         <Link href="/" className="text-sm text-slate-400 transition-colors hover:text-white">← MoliVerse</Link>
@@ -32,7 +33,8 @@ export default function FamiliesPage() {
           <div className="mt-9 flex flex-wrap justify-center gap-3"><Link href="/explore/" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_0_36px_-10px_rgba(139,92,246,0.8)]">Set up an Explorer <ArrowRight className="h-4 w-4" /></Link><Link href="/family/" className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-6 py-3.5 text-sm font-semibold text-slate-200 hover:border-cyan-400/30 hover:text-cyan-200">Family dashboard</Link></div>
         </section>
 
-        <section className="mt-20 grid gap-5 md:grid-cols-3">
+        <InkBreak/>
+        <section className="mt-12 grid gap-5 md:grid-cols-3">
           {promises.map((item) => (
             <article key={item.title} className="glass-card p-7">
               <item.icon className="h-5 w-5 text-cyan-300" />
@@ -42,7 +44,8 @@ export default function FamiliesPage() {
           ))}
         </section>
 
-        <section className="glass-card mt-16 grid gap-8 border-amber-300/15 p-8 md:grid-cols-[1fr,1.2fr] md:p-10">
+        <InkBreak/>
+        <section className="glass-card mt-8 grid gap-8 border-amber-300/15 p-8 md:grid-cols-[1fr,1.2fr] md:p-10">
           <div>
             <UsersRound className="h-6 w-6 text-amber-200" />
             <h2 className="mt-4 font-display text-2xl font-semibold text-white">What you can expect</h2>

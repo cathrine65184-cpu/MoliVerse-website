@@ -9,7 +9,7 @@ import { buildIdeaMessages, normalizeGames, parseIdeaResponse, type StoryInput }
 // Deploy:  supabase functions deploy story-game-ideas
 // Secret:  supabase secrets set DEEPSEEK_KEY=...   (the same key immersive-author uses)
 
-const DEMO_STORIES = ['moli-lantern-seed'];
+const DEMO_STORIES: string[] = [];
 const MAX_BODY = 250_000;
 
 async function callDeepSeek(key: string, messages: Array<{ role: string; content: string }>) {

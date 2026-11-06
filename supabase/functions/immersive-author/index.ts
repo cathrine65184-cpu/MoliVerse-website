@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     if (body.mode === 'content-companion') {
       const context = body.contentContext;
       if (typeof request !== 'string' || request.length > 1200 || !context || typeof context.id !== 'string' || typeof context.segment !== 'string' || context.segment.length > 3000 || typeof context.segmentLabel !== 'string') return reply(400, { message: 'Invalid reading or song context.' });
-      const publicDemo = context.demo === true && ['moli-lantern-seed', 'salta-luna'].includes(context.id) && Number(context.version) === 1;
+      const publicDemo = context.demo === true && context.id === 'salta-luna' && Number(context.version) === 1;
       if (!publicDemo) {
         const { data: owned } = await client.from('learning_contents').select('id,version,owner_id,visibility').eq('id', context.id).eq('version', Number(context.version)).maybeSingle();
         if (!owned || (owned.owner_id !== user.id && owned.visibility !== 'public')) return reply(403, { message: 'This material is not available to this account.' });

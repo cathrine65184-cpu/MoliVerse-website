@@ -34,7 +34,7 @@ function setup(over: any = {}) {
   Deno.env.set('DEEPSEEK_KEY', 'sk-test-secret');
 }
 const post = (body: unknown, raw?: string) => handler(new Request('http://x/', { method: 'POST', headers: { authorization: 'Bearer t', origin: 'https://moliverse.tech' }, body: raw ?? JSON.stringify(body) }));
-const base = { contentId: 'moli-lantern-seed', version: 1, story, focusWords: ['glow'], language: 'English', ageRange: '6–9', level: 'A1' };
+const base = { localDraft: true, declaredRights: 'original', contentId: 'test-reading', version: 1, story, focusWords: ['glow'], language: 'English', ageRange: '6–9', level: 'A1' };
 
 let passed = 0;
 async function check(name: string, fn: () => Promise<void>) { try { await fn(); passed += 1; console.log('  ok  ', name); } catch (e) { console.log('  FAIL', name, '->', (e as Error).message); Deno.exitCode = 1; } }
@@ -60,7 +60,7 @@ await check('own material with a cleared rights status is allowed', async () => 
 });
 await check('local drafts: only an educator-declared cleared status reaches the AI; someone else\'s saved row is still refused', async () => {
   for (const rights of ['private-use', 'unknown', undefined]) { setup(); fakeDeepSeek('{}'); eq((await post({ ...base, contentId: 'draft-1', localDraft: true, declaredRights: rights })).status, 403, String(rights)); eq(deepSeekCalls.length, 0, `${rights}: nothing may reach the AI`); }
-  setup(); fakeDeepSeek('{}'); eq((await post({ ...base, contentId: 'draft-1', declaredRights: 'original' })).status, 403, 'no localDraft flag'); eq(deepSeekCalls.length, 0, 'no AI call');
+  setup(); fakeDeepSeek('{}'); eq((await post({ ...base, contentId: 'draft-1', localDraft: false, declaredRights: 'original' })).status, 403, 'no localDraft flag'); eq(deepSeekCalls.length, 0, 'no AI call');
   setup({ owned: { id: 'x', owner_id: 'someone-else', rights_status: 'original' } }); fakeDeepSeek('{}'); eq((await post({ ...base, contentId: 'draft-1', localDraft: true, declaredRights: 'original' })).status, 403, 'saved row of another owner'); eq(deepSeekCalls.length, 0, 'no AI call');
   setup(); fakeDeepSeek(JSON.stringify({ games: [goodGame] })); eq((await post({ ...base, contentId: 'draft-1', localDraft: true, declaredRights: 'original' })).status, 200, 'declared original');
 });

@@ -15,8 +15,10 @@ for (const extension of ['.ts', '.tsx']) require.extensions[extension] = (module
 require.extensions['.css'] = () => {};
 const pilot = require('../lib/storyPilot.ts');
 const { getLibraryContent } = require('../lib/contentLibrary.ts');
+assert.equal(pilot.getStorySource('moli-lantern-seed'), null, 'Retired story must not resolve in production');
+require('../lib/contentLibrary.ts').ORIGINAL_LIBRARY.push(require('./fixtures/pilot.ts').pilotFixture);
 const source = pilot.getStorySource('moli-lantern-seed');
-const story = require('../lib/stories/lantern-seed.json');
+const story = require('./fixtures/lantern-seed.json');
 assert(source);
 assert.equal(story.id, source.id, 'Keep links and saved progress compatible');
 assert.equal(story.version, source.version, 'Keep completed progress compatible');

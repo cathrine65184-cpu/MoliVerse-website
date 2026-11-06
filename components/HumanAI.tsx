@@ -1,5 +1,6 @@
 "use client";
 
+import { InkBreak } from "@/components/universe/InkSeam";
 import Image from "next/image";
 import { Camera, Gamepad2, Mic2, Users } from "lucide-react";
 import { withBasePath } from "@/lib/paths";
@@ -17,6 +18,7 @@ const educators = [
 
 export default function HumanAI() {
   return <>
+    <InkBreak/>
     <section id="educators" className="relative scroll-mt-24 border-y border-white/[0.06] bg-white/[0.015] px-6 py-28 sm:py-36">
       <div className="mx-auto max-w-6xl">
         <SectionHeading eyebrow="Real educators" title="Technology creates worlds. Teachers give them meaning." />
@@ -38,6 +40,7 @@ export default function HumanAI() {
       </div>
     </section>
 
+    <InkBreak/>
     <section id="v2" className="relative scroll-mt-24 overflow-hidden px-6 py-28 sm:py-36">
       <div className="absolute left-1/2 top-1/2 h-[30rem] w-[30rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-600/10 blur-[120px]"/>
       <Reveal className="relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-violet-300/15 bg-gradient-to-br from-violet-500/[0.09] to-cyan-400/[0.04] p-8 sm:p-12">

@@ -1,4 +1,3 @@
-import lanternSeed from './lantern-seed.json';
 import type { LibraryContent } from '../contentLibrary';
 
 export type StoryRecord = {
@@ -18,10 +17,6 @@ export type StoryRecord = {
   preQuestion: string;
   createBrief: string;
 };
-
-// JSON imports widen tuple and string-literal types; test-story-pilot validates
-// the complete file and its links before relying on this schema boundary.
-export const LANTERN_SEED: StoryRecord = lanternSeed as unknown as StoryRecord;
 
 /** Existing Read and Studio components consume one reviewed source record. */
 export function storyToLibraryContent(story: StoryRecord): LibraryContent {

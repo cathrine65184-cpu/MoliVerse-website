@@ -20,7 +20,7 @@ function fakeDeepSeek(content: string | null, status = 200) {
 }
 function setup(over: any = {}) { g.__fake = { user: { id: 'u1' }, profile: { role: 'teacher' }, owned: null, ...over }; Deno.env.set('DEEPSEEK_KEY', 'sk-test-secret'); }
 const post = (body: unknown, raw?: string) => handler(new Request('http://x/', { method: 'POST', headers: { authorization: 'Bearer t', origin: 'https://moliverse.tech' }, body: raw ?? JSON.stringify(body) }));
-const base = { contentId: 'moli-lantern-seed', version: 1, title: 'Moli', pages, windowIndex: 0, language: 'English', ageRange: '6–9', level: 'A1' };
+const base = { localDraft: true, declaredRights: 'original', contentId: 'test-reading', version: 1, title: 'Moli', pages, windowIndex: 0, language: 'English', ageRange: '6–9', level: 'A1' };
 
 let passed = 0;
 async function check(name: string, fn: () => Promise<void>) { try { await fn(); passed += 1; console.log('  ok  ', name); } catch (e) { console.log('  FAIL', name, '->', (e as Error).message); Deno.exitCode = 1; } }
@@ -34,7 +34,7 @@ await check('rights gate: private/unknown/foreign/undeclared never reach the AI'
   for (const rights of ['private-use', 'unknown']) { setup({ owned: { id: 'x', owner_id: 'u1', rights_status: rights } }); fakeDeepSeek('{}'); eq((await post({ ...base, contentId: 'c1' })).status, 403, rights); }
   setup({ owned: { id: 'x', owner_id: 'someone', rights_status: 'original' } }); eq((await post({ ...base, contentId: 'c1' })).status, 403, 'foreign row');
   for (const declared of ['private-use', 'unknown', undefined]) { setup(); eq((await post({ ...base, contentId: 'd1', localDraft: true, declaredRights: declared })).status, 403, String(declared)); }
-  setup(); eq((await post({ ...base, contentId: 'd1', declaredRights: 'original' })).status, 403, 'no localDraft flag'); eq(calls.length, 0, 'the book text must not reach the AI');
+  setup(); eq((await post({ ...base, contentId: 'd1', localDraft: false, declaredRights: 'original' })).status, 403, 'no localDraft flag'); eq(calls.length, 0, 'the book text must not reach the AI');
 });
 await check('a declared local draft with cleared rights is processed', async () => {
   setup(); fakeDeepSeek(JSON.stringify(goodAnswer)); eq((await post({ ...base, contentId: 'd1', localDraft: true, declaredRights: 'public-domain' })).status, 200, 'status');

@@ -1,5 +1,6 @@
 "use client";
 
+import { InkBreak } from "@/components/universe/InkSeam";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
@@ -106,6 +107,7 @@ export default function LibraryShell({ mode }: { mode: ContentType }) {
       <div><span className="eyebrow">{mode === 'read' ? 'READ WITH MOLI' : 'SING WITH MOLI'}</span><h1>{mode === 'read' ? 'Small stories. Big wondering.' : 'Listen, move and make it yours.'}</h1><p>{mode === 'read' ? 'Read quietly, ask when you need help, then carry one idea into a world of your own.' : 'Play a song when you are ready, move with its words and change one part of the story.'}</p></div>
       <Image src={withBasePath('/mascot.png')} width={150} height={150} alt="Moli the deer"/>
     </section>
+    <InkBreak/>
     <section className="library-controls" aria-label="Content filters">
       <label>Learning language<select value={language} onChange={event => setLanguage(event.target.value)}>{languages.map(value => <option key={value}>{value}</option>)}</select></label>
       <label>Theme<select value={theme} onChange={event => setTheme(event.target.value)}>{themes.map(value => <option key={value}>{value}</option>)}</select></label>

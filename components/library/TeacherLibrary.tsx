@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import { InkBreak } from '@/components/universe/InkSeam';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, BookOpen, CheckCircle2, FileAudio, FileText, Loader2, Music2, ShieldCheck, Upload } from 'lucide-react';
 import { extractStoryDocument } from '@/lib/extractText';
@@ -68,6 +69,7 @@ export default function TeacherLibrary() {
     <div className="teacher-library-wrap">
       <Link className="reader-back" href="/read/"><ArrowLeft size={17}/>Back to the library</Link>
       <section className="import-intro"><span className="eyebrow">EDUCATOR LIBRARY</span><h1>Bring one story or song at a time.</h1><p>Review the extracted text, learning goal and rights before it enters a world. Drafts stay private on this device in this first release.</p></section>
+      <InkBreak/>
       <div className="import-layout">
         <section className="import-form">
           <div className="type-switch"><button className={draft.contentType === 'read' ? 'active' : ''} onClick={() => update({ contentType: 'read' })}><BookOpen/>Reading</button><button className={draft.contentType === 'sing' ? 'active' : ''} onClick={() => update({ contentType: 'sing' })}><Music2/>Song</button></div>

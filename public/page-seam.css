@@ -1,14 +1,14 @@
-/* The following section physically travels up over the cover; there is no
-   viewport overlay, scroll listener, or animation on route entry. */
-@media (prefers-reduced-motion:no-preference) and (min-height:640px) {
- .universe:has(>.un-banner){isolation:isolate;timeline-scope:--chapter-entry}
- .universe>.un-banner{position:sticky;top:0;z-index:0;transform-origin:center top}
- .universe>.un-banner~*{position:relative;z-index:1;background-color:var(--paper)}
- .universe>.un-banner+*{view-timeline-name:--chapter-entry;box-shadow:0 -10px 26px -14px #453a2955}
- .universe>.un-banner+.un-section{max-width:none;padding-inline:max(1.5rem,calc((100% - 1152px)/2))}
- @supports(animation-timeline:view()){
-  .universe>.un-banner{animation:chapter-fold linear both;animation-timeline:--chapter-entry;animation-range:entry 0% entry 100%}
-  @keyframes chapter-fold{from{transform:none}to{transform:perspective(1800px) rotateX(-6deg) translateY(-3%);filter:brightness(.89)}}
- }
+/* Shared ink boundaries. Keep native scrolling and leave all controls clickable. */
+.ink-seam{position:absolute;bottom:calc(100% - 1px);left:0;width:100%;height:clamp(60px,8vw,118px);display:block;overflow:hidden;pointer-events:none;transform:scaleY(var(--wash-depth,.23));transform-origin:bottom}
+.ink-break{position:relative;height:clamp(24px,4vw,48px);pointer-events:none}
+.ink-break>.ink-seam{height:100%;bottom:0}
+.library-app{--ink-paper:#f7f4ea}
+.family-ink{--ink-paper:#080810}
+.universe:has(>.un-banner){isolation:isolate;overflow-x:clip}
+.universe>.un-banner~*{position:relative;z-index:1;background-color:var(--paper)}
+.universe>.un-banner+.un-section{max-width:none;padding-inline:max(1.5rem,calc((100% - 1152px)/2))}
+@media(prefers-reduced-motion:no-preference) and (min-height:640px){
+ .universe>.un-banner{position:sticky;top:0;z-index:0}
 }
-@media(max-width:720px) and (max-height:700px){.universe>.un-banner{position:relative;animation:none}}
+@media(max-width:720px) and (max-height:700px){.universe>.un-banner{position:relative}}
+@media(prefers-reduced-motion:reduce){.ink-seam{transform:scaleY(.28)}}

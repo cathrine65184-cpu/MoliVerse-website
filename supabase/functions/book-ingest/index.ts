@@ -10,7 +10,7 @@ import { buildIngestMessages, normalizeIngest, parseIngestResponse, WINDOW_PAGES
 // Deploy:  supabase functions deploy book-ingest
 // Secret:  supabase secrets set DEEPSEEK_KEY=...   (the same key as story-game-ideas)
 
-const DEMO_STORIES = ['moli-lantern-seed'];
+const DEMO_STORIES: string[] = [];
 const MAX_BODY = 60_000;
 
 async function callDeepSeek(key: string, messages: Array<{ role: string; content: string }>) {

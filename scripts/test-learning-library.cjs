@@ -12,13 +12,11 @@ function assert(value, message) { if (!value) throw new Error(message); }
 
 const library = require(path.join(__dirname, '..', 'lib', 'contentLibrary.ts'));
 const items = library.ORIGINAL_LIBRARY;
-assert(items.length === 3, 'Expected two original samples and one licensed public reading.');
+assert(items.length === 2, 'Expected the original song and licensed public reading.');
 const reader = items.find(item => item.id === 'moli-lantern-seed');
 const publicPdf = items.find(item => item.id === 'a-second-is-a-hiccup');
 const song = items.find(item => item.contentType === 'sing');
-assert(reader && reader.demo && reader.source.rightsStatus === 'original', 'Reader must be an original labelled demo.');
-assert(reader.pages.length >= 3 && reader.postActivity.type === 'sequence', 'Reader requires pages and a sequencing activity.');
-assert(reader.postActivity.answer.every(id => reader.postActivity.items.some(item => item.id === id)), 'Reader answer references missing items.');
+assert(!reader, 'Retired story must not appear in the catalog.');
 assert(publicPdf && publicPdf.visibility === 'public' && publicPdf.source.rightsStatus === 'licensed', 'Public PDF must be explicitly licensed and public.');
 assert(publicPdf.document?.kind === 'pdf' && publicPdf.document.pageCount === 40, 'Public PDF must include its readable document and verified page count.');
 assert(fs.existsSync(path.join(__dirname, '..', 'public', 'library', 'a-second-is-a-hiccup.pdf')), 'Public PDF asset is missing.');
