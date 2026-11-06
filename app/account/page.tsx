@@ -3,8 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { GraduationCap, Loader2, LogOut, School, Sparkles } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Eye, EyeOff, GraduationCap, Leaf, Loader2, LockKeyhole, Mail, ShieldCheck, Sparkles, Sprout, UserRound } from "lucide-react";
 import { supabase, getMyProfile, type Profile } from "@/lib/supabase";
+
+import { accountCopy } from "./copy";
+import { withBasePath } from "@/lib/paths";
+import "./account.css";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -18,11 +22,18 @@ export default function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [visible,setVisible] = useState(false);
+  const [locale,setLocale] = useState<keyof typeof accountCopy>("en");
+  const t = accountCopy[locale];
+  useEffect(()=>{
+    const sync=()=>{const lang=document.documentElement.lang.split("-")[0];setLocale(Object.hasOwn(accountCopy,lang)?lang as keyof typeof accountCopy:"en")};
+    sync();const observer=new MutationObserver(sync);observer.observe(document.documentElement,{attributes:true,attributeFilter:["lang"]});return ()=>observer.disconnect();
+  },[]);
+
   useEffect(() => {
     getMyProfile().then((p) => {
       setMe(p);
-      setChecking(false);
-    });
+    }).catch(()=>setMe(null)).finally(()=>setChecking(false));
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -53,11 +64,11 @@ export default function AccountPage() {
       const msg = err instanceof Error ? err.message : String(err);
       setError(
         msg.includes("already registered")
-          ? "This email already has an account. Please sign in instead."
+          ? t.taken
           : msg.includes("Invalid login")
-            ? "Your email or password is incorrect."
+            ? t.invalid
             : msg.includes("at least 6")
-              ? "Your password must be at least 6 characters."
+              ? t.tooShort
               : msg
       );
     } finally {
@@ -70,152 +81,44 @@ export default function AccountPage() {
     setMe(null);
   }
 
-  return (
-    <main className="relative min-h-screen">
-      <div className="pointer-events-none absolute left-1/2 top-0 h-[30rem] w-[44rem] max-w-full -translate-x-1/2 rounded-full bg-violet-600/10 blur-[130px]" />
-
-      <div className="relative mx-auto max-w-md px-6 pb-24 pt-14">
-        <Link href="/" className="text-sm text-slate-400 transition-colors hover:text-white">
-          ← MoliVerse
-        </Link>
-
-        {checking ? (
-          <div className="mt-24 flex justify-center text-slate-500">
-            <Loader2 className="h-6 w-6 animate-spin" />
+  const signup = mode === "signup";
+  return <main className="account-field" data-no-translate>
+    <div className="account-wrap">
+      <Link className="account-brand" href="/"><ArrowLeft aria-hidden/><Sprout aria-hidden/> MoliVerse</Link>
+      <div className="account-landmark" aria-hidden="true"><span>✦</span><img src={withBasePath("/moli-cutout.png")} alt=""/></div>
+      <section className="account-paper" aria-busy={checking || busy}>
+        {checking ? <p role="status" className="account-loading"><Loader2 aria-hidden/>{t.loading}</p> : me ? <>
+          <header className="account-intro"><Sprout aria-hidden/><div><h1>{t.welcome}</h1><p>{me.name}</p></div></header>
+          <div className="account-member">
+            {me.avatar_url && <img src={me.avatar_url} alt=""/>}
+            <Link className="account-primary" href={me.role==="teacher"?"/teach/":"/learn/"}>{me.role==="teacher"?t.studio:t.play}</Link>
+            {me.role==="teacher" && <Link href="/chat/">{t.chat}</Link>}
+            <button type="button" onClick={signOut}>{t.out}</button>
           </div>
-        ) : me ? (
-          <div className="glass-card mt-10 flex flex-col items-center gap-4 p-8 text-center">
-            <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-400 to-violet-400 text-xl font-bold text-white">
-              {me.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={me.avatar_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                me.name.slice(0, 1)
-              )}
-            </span>
-            <div>
-              <p className="font-display text-lg font-semibold text-white">{me.name}</p>
-              <p className="text-sm text-slate-400">
-                {me.role === "teacher" ? "🎓 Educator account" : "🌱 Learner account"}
-              </p>
+        </> : <>
+          <header className="account-intro"><Leaf aria-hidden/><div><h1>{signup?t.join:t.welcome}<i aria-hidden>✦</i></h1><p>{signup?t.invite:t.loginHint}</p></div></header>
+          <form onSubmit={submit}>
+            {signup && <fieldset className="account-roles"><legend className="sr-only">{t.role}</legend>
+              {(["student","teacher"] as const).map(value=><label className="account-role" key={value}>
+                <input type="radio" name="role" checked={role===value} onChange={()=>setRole(value)}/>
+                <span className="role-face">{role===value&&<Check className="role-check" aria-hidden/>}
+                  <span className="role-icon">{value==="student"?<BookOpen aria-hidden/>:<GraduationCap aria-hidden/>}</span>
+                  <strong>{value==="student"?t.learner:t.educator}</strong><small>{value==="student"?t.learnerNote:t.educatorNote}</small>
+                </span>
+              </label>)}
+            </fieldset>}
+            {signup&&<label className="account-input"><UserRound aria-hidden/><input aria-label={role==="teacher"?t.name:t.explorer} placeholder={role==="teacher"?t.name:t.explorer} autoComplete="nickname" required value={name} onChange={e=>setName(e.target.value)}/></label>}
+            <label className="account-input"><Mail aria-hidden/><input type="email" aria-label={t.email} placeholder={t.email} autoComplete="email" required value={email} onChange={e=>setEmail(e.target.value)}/></label>
+            <div className="account-input"><LockKeyhole aria-hidden/><input type={visible?"text":"password"} aria-label={t.password} placeholder={signup?t.newPassword:t.password} required minLength={signup?6:undefined} autoComplete={signup?"new-password":"current-password"} value={password} onChange={e=>setPassword(e.target.value)}/>
+              <button type="button" aria-label={visible?t.hide:t.show} aria-pressed={visible} onClick={()=>setVisible(!visible)}>{visible?<EyeOff aria-hidden/>:<Eye aria-hidden/>}</button>
             </div>
-            <div className="flex flex-wrap justify-center gap-3 pt-2">
-              <Link
-                href={me.role === "teacher" ? "/teach/" : "/learn/"}
-                className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90"
-              >
-                {me.role === "teacher" ? "Open Creator Studio" : "Create a story game"}
-              </Link>
-              {me.role === "teacher" && <Link href="/chat/" className="rounded-xl border border-white/10 bg-white/[0.04] px-6 py-2.5 text-sm font-semibold text-slate-200 transition-all hover:border-white/25">Educator conversations</Link>}
-            </div>
-            <button
-              onClick={signOut}
-              className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 transition-colors hover:text-rose-300"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Sign out
-            </button>
-          </div>
-        ) : (
-          <div className="glass-card mt-10 p-8">
-            <h1 className="font-display text-2xl font-semibold text-white">
-              {mode === "signup" ? "Join MoliVerse" : "Welcome back"}
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              {mode === "signup" ? "Create your account in under a minute." : "Sign in to your account."}
-            </p>
-
-            {mode === "signup" && (
-              <div className="mt-5 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRole("student")}
-                  className={`flex flex-col items-center gap-1.5 rounded-xl border p-4 transition-all ${
-                    role === "student"
-                      ? "border-cyan-400/50 bg-cyan-400/10 text-white"
-                      : "border-white/10 bg-white/[0.03] text-slate-400 hover:border-white/25"
-                  }`}
-                >
-                  <School className="h-5 w-5" />
-                  <span className="text-sm font-medium">I’m a learner</span>
-                  <span className="text-[11px] text-slate-500">Imagine worlds · create stories · play with Moli</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole("teacher")}
-                  className={`flex flex-col items-center gap-1.5 rounded-xl border p-4 transition-all ${
-                    role === "teacher"
-                      ? "border-violet-400/50 bg-violet-400/10 text-white"
-                      : "border-white/10 bg-white/[0.03] text-slate-400 hover:border-white/25"
-                  }`}
-                >
-                  <GraduationCap className="h-5 w-5" />
-                  <span className="text-sm font-medium">I’m an educator</span>
-                  <span className="text-[11px] text-slate-500">Design worlds · shape learning · run workshops</span>
-                </button>
-              </div>
-            )}
-
-            <form onSubmit={submit} className="mt-5 flex flex-col gap-3">
-              {mode === "signup" && (
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={role === "teacher" ? "Your name (for example, Catherine)" : "Your explorer name"}
-                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400/50"
-                />
-              )}
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
-                autoComplete="email"
-                className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400/50"
-              />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password (at least 6 characters)"
-                autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400/50"
-              />
-              {error && <p className="text-xs text-amber-300">{error}</p>}
-              <button
-                type="submit"
-                disabled={busy || !email || !password}
-                className="mt-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3 text-sm font-semibold text-white shadow-[0_0_32px_-8px_rgba(139,92,246,0.5)] transition-all enabled:hover:opacity-90 disabled:opacity-40"
-              >
-                {busy ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
-                {mode === "signup"
-                  ? role === "teacher"
-                    ? "Create educator account"
-                    : "Create learner account"
-                  : "Sign in"}
-              </button>
-            </form>
-
-            <button
-              onClick={() => {
-                setMode(mode === "signup" ? "login" : "signup");
-                setError(null);
-              }}
-              className="mt-4 w-full text-center text-xs text-slate-500 transition-colors hover:text-white"
-            >
-              {mode === "signup" ? "Already have an account? Sign in" : "New to MoliVerse? Create an account"}
-            </button>
-          </div>
-        )}
-
-        <p className="mt-6 text-center text-[11px] leading-relaxed text-slate-600">
-          Account data is stored securely in Supabase and passwords are encrypted. Children should use MoliVerse with a parent or guardian’s knowledge; MoliVerse never offers an open child-to-educator inbox.
-        </p>
-      </div>
-    </main>
-  );
+            {error&&<p role="alert" className="account-error">{error}</p>}
+            <button className="account-primary" disabled={busy} type="submit">{busy?<Loader2 className="animate-spin" aria-hidden/>:<Sparkles aria-hidden/>}{signup?(role==="teacher"?t.createEducator:t.createLearner):t.signIn}</button>
+          </form>
+          <p className="account-switch"><span>{signup?t.already:t.newHere} <button type="button" disabled={busy} onClick={()=>{setMode(signup?"login":"signup");setPassword("");setVisible(false);setError(null)}}>{signup?t.signIn:t.register}</button></span></p>
+        </>}
+      </section>
+      <footer className="account-privacy"><p><ShieldCheck aria-hidden/>{t.security}</p><p>{t.family}</p></footer>
+    </div>
+  </main>;
 }

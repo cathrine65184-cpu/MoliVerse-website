@@ -1,0 +1,36 @@
+.account-field {
+  position:relative; isolation:isolate; min-height:100svh; overflow:hidden; color:#33382d;
+  font:1rem/1.5 system-ui,sans-serif;
+  background:#f9edce url('/universe-valley.jpg') 62% center / cover no-repeat;
+}
+.account-field::before,.account-field::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+.account-field::before{background:linear-gradient(to bottom,#fff9ef15 55%,#fff3cfa9 94%),linear-gradient(90deg,#fff5e355,transparent 66%)}
+.account-field::after{background:url('/account-canopy.svg') center top / max(100%,850px) auto no-repeat}
+.account-wrap{position:relative;max-width:1460px;margin:auto;padding:clamp(1.3rem,3.4vw,3rem) clamp(1.1rem,8vw,8rem) 5rem;min-height:100svh}
+.account-brand{display:inline-flex;align-items:center;gap:.4rem;color:#2f3b2c;font:700 clamp(1.3rem,2vw,1.6rem) Georgia,serif;min-height:44px;margin-bottom:1rem}
+.account-brand svg:first-child{width:21px;margin-right:.35rem}.account-brand svg:nth-child(2){color:#537649}
+.account-paper,.account-privacy{position:relative;width:min(64%,640px)}
+.account-paper{border-radius:clamp(1.3rem,3.4vw,2.6rem);padding:clamp(1.4rem,3.4vw,3rem);background:#fffaf0f5;border:1px solid #fffdf5;box-shadow:0 14px 35px #5d582526,0 2px 6px #695c2717}
+.account-intro{display:flex;gap:.65rem;align-items:flex-start;margin-bottom:1.5rem}.account-intro>svg{color:#93a469;width:1.8rem;height:2.7rem;transform:rotate(-22deg)}
+.account-intro h1{margin:0;font:700 clamp(2rem,3.5vw,3.4rem)/1.08 Georgia,serif;letter-spacing:-.045em;color:#302d27}.account-intro h1 i{font:normal .48em Georgia,serif;color:#83a66d;margin-left:.4rem;vertical-align:middle}
+.account-intro p{margin:.35rem 0 0;color:#595748}.account-intro div::after{content:"";display:block;width:5.3rem;height:3px;border-radius:50%;background:#eabd57;transform:rotate(-3deg);margin:.55rem auto 0}
+.account-paper form{display:grid;gap:.7rem}
+.account-roles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;padding:0;border:0;margin:0 0 .45rem}
+.account-role{cursor:pointer;position:relative}.account-role input{position:absolute;width:1px;height:1px;clip-path:inset(50%)}
+.role-face{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;height:100%;padding:1.15rem .65rem 1.35rem;border:2px solid #ded4bd;border-radius:1.35rem;text-align:center;background:#fcf7ed}
+.role-face::before{content:"";position:absolute;z-index:-1;inset:45% 0 0;background:url('/universe-valley.jpg') 58% 90% / cover;opacity:.18;mask-image:linear-gradient(transparent,#000)}
+.account-role input:checked+.role-face{background:#edf2dc;border-color:#53764b;color:#234829;box-shadow:inset 0 0 0 1px #53764b}.account-role input:checked+.role-face::before{opacity:.4}
+.role-icon{font-size:1.8rem;color:#53824d}.role-icon svg{width:2.65rem;height:2.45rem;fill:#efda96;stroke-width:1.5}.account-role:nth-of-type(2) .role-icon svg{fill:#b0bfd5;stroke:#455670}
+.role-face strong{font:700 clamp(1.15rem,1.8vw,1.6rem)/1.16 Georgia,serif}.role-face small{font-size:.86rem;max-width:20ch}.role-check{position:absolute;right:.65rem;top:.65rem;width:1.23rem;height:1.23rem;color:white;background:#497444;border-radius:50%;padding:3px}
+.account-input{min-height:48px;border:1px solid #cfc9b5;border-radius:2rem;display:flex;align-items:center;gap:.75rem;padding:0 1rem;background:#fffdf6cc;color:#587053}.account-input>svg{width:18px;flex:none}
+.account-input input{flex:1;min-width:0;width:100%;padding:.7rem 0;color:#302f29;background:transparent;outline:none;font:inherit}.account-input input::placeholder{color:#69695f}.account-input button{width:44px;height:44px;display:grid;place-items:center}.account-input button svg{width:19px}
+.account-primary{display:flex;align-items:center;justify-content:center;gap:.6rem;margin-top:.5rem;min-height:52px;padding:.75rem 1rem;border-radius:2rem;background:linear-gradient(#678748,#476b38);color:white;font-weight:700;box-shadow:inset 0 1px 2px #edf5bb77}.account-primary svg{color:#ffe59b;width:19px}.account-primary:hover{background:#456b36}
+.account-field button:disabled{opacity:.62}.account-field :focus-visible,.account-role input:focus-visible+.role-face,.account-input:focus-within{outline:3px solid #64874d;outline-offset:2px}.account-input input:focus-visible{outline:none}
+.account-switch{display:flex;align-items:center;justify-content:center;gap:.8rem;text-align:center;font-size:.94rem;margin:.95rem 0 0}.account-switch:before,.account-switch:after{content:"";width:2rem;height:1px;background:#d8cfb9}.account-switch button{color:#3d6535;font-weight:700;min-height:44px}
+.account-landmark{position:absolute;right:4%;top:min(48%,28rem);width:clamp(190px,23vw,325px);pointer-events:none}.account-landmark img{width:100%;filter:drop-shadow(0 8px 7px #46563138)}.account-landmark span{position:absolute;top:-4%;left:8%;color:#f7d171;font-size:2.4rem}
+.account-privacy{text-align:center;margin-top:1rem;color:#373e30;font-size:.84rem;background:#fff8e5dc;border-radius:1rem;padding:.6rem 1rem}.account-privacy p+p{margin-top:.24rem}.account-privacy svg{display:inline-block;vertical-align:middle;margin-right:.35rem;width:15px}
+.account-error{background:#fae9dc;color:#833924;border-radius:.65rem;padding:.65rem}.account-member{display:grid;gap:.9rem}.account-member img{width:64px;height:64px;object-fit:cover;border-radius:50%}.account-member button,.account-member a:not(.account-primary){text-decoration:underline;width:fit-content;min-height:44px}.account-loading{display:flex;gap:.6rem;align-items:center}
+body:has(.account-field) .fixed.bottom-4.right-4>label{min-height:44px;border:1px solid #d6cfb7;border-radius:2rem;background:#fffaf1f5;color:#31462d;padding-inline:1rem}
+body:has(.account-field) .fixed.bottom-4.right-4>label svg{color:#526c49}
+@media(max-width:800px){.account-wrap{padding-inline:clamp(1rem,5vw,2.4rem)}.account-paper,.account-privacy{width:min(72%,580px)}.account-landmark{right:.8%;width:23%}}
+@media(max-width:600px){.account-field{background-position:65% center}.account-paper,.account-privacy{width:100%}.account-wrap{padding:1rem 1rem 5.4rem}.account-landmark{top:.3rem;right:1.6rem;width:3.7rem}.account-landmark span{font-size:1rem}.account-brand{margin-bottom:.8rem}.account-paper{padding:1.45rem 1rem}.account-intro{margin-bottom:1.1rem}.role-face{padding:1rem .4rem}.role-face small{font-size:.76rem}.account-switch{gap:.4rem}.account-switch:before,.account-switch:after{width:.9rem}}

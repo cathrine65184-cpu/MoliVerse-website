@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 110" fill="none">
+ <defs>
+  <linearGradient id="green" x2=".7" y2="1"><stop stop-color="#657446"/><stop offset=".55" stop-color="#97a463"/><stop offset="1" stop-color="#d5be70"/></linearGradient>
+  <g id="leaf"><path d="M0 0Q-11 13 4 34Q16 16 0 0Z" fill="url(#green)"/><path d="M0 1Q4 17 4 32" stroke="#798953" opacity=".65"/></g>
+  <g id="twig" fill="none"><path d="M0 0Q55 5 112 50" stroke="#7b784f" stroke-width="2"/><use href="#leaf" transform="translate(17 3) rotate(15)"/><use href="#leaf" transform="translate(36 9) rotate(-85)"/><use href="#leaf" transform="translate(50 15) rotate(14)"/><use href="#leaf" transform="translate(69 24) rotate(-82)"/><use href="#leaf" transform="translate(83 31) rotate(8)"/><use href="#leaf" transform="translate(103 43) rotate(-18)"/></g>
+ </defs>
+ <g opacity=".9"><use href="#twig" transform="translate(-14 -15) rotate(17) scale(1.5)"/><use href="#twig" transform="translate(160 -20) rotate(-4)"/><use href="#twig" transform="translate(390 -29) rotate(-7) scale(1.3)"/><use href="#twig" transform="translate(708 -30) rotate(4)"/><use href="#twig" transform="translate(1110 -16) scale(-1.4 1.3)"/><use href="#twig" transform="translate(1400 -16) scale(-1.6 1.6)"/></g>
+</svg>
