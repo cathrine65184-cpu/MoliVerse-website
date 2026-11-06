@@ -6,7 +6,7 @@ import "./discover.css";
 const paths = [
   {title:"Stories", body:"Read, listen and create your own stories.", href:"/read/", icon:BookOpen, image:"stories"},
   {title:"Culture", body:"Meet people and explore life around the world.", href:"#workshops", icon:Globe2, image:"culture"},
-  {title:"Creation", body:"Turn what you learn into art, games and projects.", href:"/teach/studio/?mode=young-creator", icon:Paintbrush, image:"creation"}
+  {title:"Creation", body:"Turn what you learn into art, games and projects.", href:"/create/", icon:Paintbrush, image:"creation"}
 ];
 
 export default function Discover(){

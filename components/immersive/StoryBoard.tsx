@@ -2,6 +2,7 @@
 
 import { CourseWorld } from "@/lib/immersive/course";
 import { layoutStops } from "@/lib/storyBoardLayout";
+import BoardStops from "./BoardStops";
 
 /**
  * 2D story board: a light, accessible replacement for the old 3D scene.
@@ -80,18 +81,15 @@ export default function StoryBoard({ course, selected, target, onSelect }: {
       {Array.from({ length: 9 }, (_, i) => <span key={i} style={{ left: `${(seed * (i + 3) * 37) % 92 + 2}%`, top: `${(seed * (i + 5) * 17) % 26 + 4}%`, fontSize: `${18 + ((seed >> i) % 3) * 8}px` }}>{decor[i % decor.length]}</span>)}
     </div>
     <svg className="sb-path" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d={path} /></svg>
-    <ol className="sb-stops" aria-label="Places in this story">
-      {spots.map(({ object, left, top }) => {
+    <BoardStops ids={spots.map(s=>s.object.id)} label="Places in this story">{(_,index) => {
+        const {object}=spots[index];
         const isTarget = object.id === target;
-        return <li key={object.id} style={{ left: `${left}%`, top: `${top}%` }}>
-          <button className={`sb-stop ${selected === object.id ? "is-selected" : ""} ${isTarget ? "is-target" : ""}`} aria-pressed={selected === object.id} onClick={() => onSelect(object.id)} style={{ ["--stop" as string]: object.color }}>
+        return <button className={`sb-stop ${selected === object.id ? "is-selected" : ""} ${isTarget ? "is-target" : ""}`} aria-pressed={selected === object.id} onClick={() => onSelect(object.id)} style={{ ["--stop" as string]: object.color }}>
             <span className="sb-icon">{object.kind === "mentor" ? <img src="/mascot.png" alt="" /> : iconFor(object.label, course.theme)}</span>
             <span className="sb-label">{object.label}</span>
             {isTarget && <small>Next stop</small>}
-          </button>
-        </li>;
-      })}
-    </ol>
+          </button>;
+      }}</BoardStops>
     {picked && <div className="sb-bubble" role="status" aria-live="polite"><strong>{picked.label}</strong><p>{picked.dialogue}</p></div>}
   </div>;
 }

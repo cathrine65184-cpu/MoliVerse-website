@@ -48,7 +48,7 @@ function LibraryHeader({ active }: { active: ContentType }) {
       <Link className={active === 'read' ? 'active' : ''} href="/read/"><BookOpen size={17}/>Read</Link>
       <Link className={active === 'sing' ? 'active' : ''} href="/sing/"><Music2 size={17}/>Sing</Link>
       <Link href="/moli-journey/"><Sparkles size={17}/>Play</Link>
-      <Link href="/teach/studio/?mode=young-creator"><Library size={17}/>Create</Link>
+      <Link href="/create/"><Library size={17}/>Create</Link>
     </nav>
   </header>;
 }

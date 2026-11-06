@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),ts=require('typescript');
+require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,f);
+const {empty,apply,restore,stage,reviewOrder,keyFor}=require('../lib/learner/bakery.ts');
+let p=empty();const doIt=a=>p=apply(p,a),answer=(choice,hinted=false)=>doIt({type:'answer',choice,hinted});
+answer('Bonjour !');assert.equal(p.greeted,false);doIt({type:'save'});assert.equal(p.shop,null);
+for(const food of ['baguette','baguette','croissant'])doIt({type:'explore',food});assert.equal(p.seen.length,2);
+answer('Merci !',true);assert.equal(p.greeted,false);assert.match(p.attempts[0].feedback,/thank you/);
+answer('Bonjour !');assert.equal(stage(p),'Create');doIt({type:'design',design:{...p.design,name:'La Lune Dorée',left:'croissant'}});
+assert.equal(p.practised.length,1);doIt({type:'save'});assert.equal(p.shop.left,'croissant');assert.equal(stage(p),'Reflect');
+doIt({type:'reflect',value:'I’d like another try.'});assert.deepEqual(restore(JSON.stringify(p)),p);assert.equal(stage(p),'Revisit');
+doIt({type:'design',design:{...p.design,name:'Le Jardin'}});assert.equal(p.shop.name,'La Lune Dorée');
+answer('baguette',true);assert.equal(p.reviewStep,0);answer('croissant');assert.equal(p.reviewStep,1);
+assert.deepEqual(restore(JSON.stringify(p)),p);answer('Bonjour !');answer('baguette');assert.equal(p.rounds,1);assert.equal(p.reviewStep,0);
+assert.deepEqual(new Set(p.practised),new Set(['hello','baguette','croissant']));assert.notDeepEqual(reviewOrder(0),reviewOrder(1));
+for(const raw of ['{','null',JSON.stringify({...p,reviewStep:9}),JSON.stringify({...p,seen:[]})])assert.deepEqual(restore(raw),empty());
+assert.notEqual(keyFor('user:a'),keyFor('user:b'));assert.notEqual(keyFor('guest'),keyFor('user:a:explorer:1'));
+console.log('Bakery: step guards, authored feedback, hints, creative choices, reflection, review, snapshot restore, corruption and scope keys passed.');
