@@ -14,6 +14,7 @@ export type GuardianPreferences = {
   explorer_id: string;
   ai_mentor_enabled: boolean;
   save_memories: boolean;
+  artwork_uploads?: boolean;
   voice_input_enabled: boolean;
   educator_response_enabled: boolean;
   weekly_digest_enabled: boolean;

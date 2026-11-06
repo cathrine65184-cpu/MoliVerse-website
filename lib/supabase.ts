@@ -4,8 +4,8 @@ import type { JourneyMeta } from "./journey";
 // The anon key is designed to be public — access control lives in
 // Postgres Row Level Security policies on the server.
 export const supabase = createClient(
-  "https://fiycuwnimmhnxnaiwvud.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpeWN1d25pbW1obnhuYWl3dnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzMDAzNjcsImV4cCI6MjA5OTg3NjM2N30.hstmt3LX4u_r7u0e9zs26k5wC7kEs9lJ-zfJydQh5ZY"
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fiycuwnimmhnxnaiwvud.supabase.co",
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpeWN1d25pbW1obnhuYWl3dnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzMDAzNjcsImV4cCI6MjA5OTg3NjM2N30.hstmt3LX4u_r7u0e9zs26k5wC7kEs9lJ-zfJydQh5ZY"
 );
 
 export type Profile = {

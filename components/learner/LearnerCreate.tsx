@@ -90,6 +90,6 @@ export default function LearnerCreate(){
  {guided?(scope===undefined?<p role="status">Opening your bakery…</p>:<Bakery key={scope??"session"} scope={scope} back={()=>setGuided(false)}/>):<>
  <small className="b-kicker">Create with Moli</small><h1>What shall we make?</h1><p className="b-goal">Follow a little adventure, or begin with an idea of your own.</p>
  <div className="b-modes"><article><small>Guided adventure · French</small><h2>Morning at the little bakery</h2><p>Explore two pastries, welcome a visitor, then set up your own shop. Come back for a new order.</p><button className="b-primary" onClick={()=>setGuided(true)}>Open the bakery →</button></article>
- <article><small>Free creation</small><h2>A world of your own</h2><p>Open the story board and make a place, a character or a game. No lesson or test required.</p><Link href="/teach/studio/?mode=young-creator">Open free creation →</Link></article></div></>}
+ <article><small>Free creation</small><h2>A world of your own</h2><p>Decorate your room, place a keepsake, or open the story board. No quiz required to build.</p><Link href="/create/world/">Build my world →</Link> <Link href="/teach/studio/?mode=young-creator">Open free creation →</Link></article></div></>}
  </div></main>;
 }
