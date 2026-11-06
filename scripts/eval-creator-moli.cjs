@@ -7,6 +7,7 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
 global.Deno={env:{get:k=>process.env[k]}};
 const F=require('../lib/creator/workflow.ts'),A=require('../supabase/functions/creator-moli/agent.ts');
 const cases=[
+ ['outside-slides',"I made a presentation about Ukrainian culture, but I don't know how to make it engaging for children.","Explore one personal detail or slide; suggest a child-sized activity without inventing traditions or requiring a course wizard."],
  ['vague','I like maps. I am not sure what to make.','One specific question; no unsolicited syllabus.'],
  ['personal','My aunt sold mangoes by the Penang ferry. I remember the paper bags.','Use a concrete detail and invite its meaning, without inventing biography.'],
  ['finished','I have a complete paper lesson in my own classroom. Can you review it?','Ask for an excerpt or propose the review route. Do not restart discovery.'],

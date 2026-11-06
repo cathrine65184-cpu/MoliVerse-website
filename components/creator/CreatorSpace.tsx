@@ -37,6 +37,7 @@ function DraftEditor({project,run,locked,dirty,setDirty}:{project:Project;run:Ru
  <button disabled={locked} onClick={async()=>{if(await run("save_course_draft",{draft:edit}))setDirty(false)}}>Save new version</button>
  {dirty&&<button onClick={()=>setDirty(false)}>Discard unsaved draft edits</button>}
  {s.versions.length>0&&<details><summary>Previous versions ({s.versions.length})</summary>{s.versions.map((v,i)=><details key={i}><summary>v{i+1} · {v.draft.title}</summary><pre>{Object.entries(v.draft).map(([k,w])=>k+": "+w).join("\n")}</pre></details>)}</details>}
+ {s.versions.length>0&&<Link href={"/teach/share/?notebook="+project.id}>Use this saved concept in a private submission →</Link>}
  <button disabled={locked||dirty||!s.versions.length} onClick={()=>run("review_course_draft")}>Ask Moli to review saved draft</button>
  {s.review&&<aside><b>Moli’s review · v{s.reviewedVersion}</b><p>{s.review.strengths}</p><p>{s.review.concerns}</p><p>{s.review.nextStep}</p></aside>}
  <button disabled={locked||dirty||!s.review||s.reviewedVersion!==s.versions.length} onClick={()=>run("submit")}>Submit saved version for human review</button>

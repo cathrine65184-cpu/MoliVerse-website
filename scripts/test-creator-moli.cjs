@@ -31,6 +31,7 @@ async function run(){
  uid='b';assert.equal((await act('get_project_state')).status,404);assert.equal((await act('save_course_draft',{draft})).status,404);assert.deepEqual((await (await api({action:'list'})).json()).projects,[]);uid='a';
  assert.equal((await act('submit')).status,409);assert.equal((await act('publish')).status,400);
  const scenarios=[
+ ['external-slides',"I made a presentation about Ukrainian culture, but I don't know how to make it engaging for children."],
  ['vague','I like maps but I do not have a course yet.'],['personal','My grandmother taught me to ask for mangoes in Penang.'],
  ['completed','I already teach this externally. Review my finished lesson.'],['correction','Not a market after all. Use the ferry.'],
  ['goals','Make a beginner fluent in one afternoon.'],['culture','Every family in my country celebrates in exactly the same way.'],
@@ -46,6 +47,7 @@ async function run(){
   if(label==='correction')await success('save_brainstorm_state',{edit:{confirm:{topic:'Ferry'}}});
   if(label==='return'){const saved=(await (await act('get_project_state')).json()).project;assert.deepEqual(saved,p);assert.equal(ctx.confirmed.topic,'Ferry')}
   if(label==='reject')await success('save_brainstorm_state',{edit:{dismiss:'topic'}});
+  if(label==='external-slides'){assert.equal(p.state.proposal,null);assert.equal(p.state.versions.length,0);assert(ctx.notes.some(n=>n.includes("culture")));assert.match(calls.at(-2).messages[0].content,/existing external course/);}
  }
  const rev=p.revision;failure=true;assert.match(await (await act('chat',{message:'Retry this idea'})).text(),/"error"/);
  assert.equal(projects.get(p.id).revision,rev);failure=false;limited=true;assert.equal((await act('chat',{message:'Hello'})).status,429);limited=false;
@@ -56,7 +58,7 @@ async function run(){
  await success('save_course_draft',{draft:{...draft,title:'Second revision'}});assert.equal((await act('submit')).status,409);
  await success('review_course_draft');await success('submit');assert.equal(queue.length,1);assert.equal(p.state.versions[0].draft.title,'My edited title');
  assert.equal((await act('save_course_draft',{draft})).status,409);assert.throws(()=>F.checkedDraft({title:'only'}));assert.throws(()=>F.checkedBoard({unknown:'x'}));
- console.log('Creator Moli: 10 contextual conversation scenarios, real stream parser, confirmation, authorization, failure recovery, concurrency, quota, versioned review and no publication passed (mocked provider/storage).');
+ console.log('Creator Moli: 11 contextual conversation scenarios (including external Ukrainian slides), stream parser, confirmation, authorization, recovery, versioned review and no publication passed (mocked provider/storage).');
 }
 if(require.main===module)run().catch(e=>{console.error(e);process.exitCode=1});
 module.exports={handler};
