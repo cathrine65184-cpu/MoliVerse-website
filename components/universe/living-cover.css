@@ -1,0 +1,26 @@
+.living-cover{--pan-x:0px;--pan-y:0px;isolation:isolate}
+.living-art,.living-daylight,.living-petals{position:absolute;pointer-events:none;z-index:-1}
+.living-petals{inset:0;width:100%;height:100%}
+@media(prefers-reduced-motion:reduce),(max-width:720px),(hover:none){.living-petals{display:none}}
+.living-art{inset:-5px;background-size:cover;background-position:center;transform:translate(var(--pan-x),var(--pan-y));transition:transform 650ms ease-out}
+.living-daylight{inset:0;background:radial-gradient(ellipse at 79% 17%,#ffedbf55,transparent 40%);opacity:.45}
+.living-guide{position:absolute;z-index:2;right:12%;bottom:5%;width:min(21vw,270px)}
+.living-guide summary{position:relative;cursor:pointer;list-style:none;border-radius:36%}
+.living-guide summary::-webkit-details-marker{display:none}
+.living-guide summary img{width:100%;filter:drop-shadow(0 12px 14px #314d332a);transform-origin:center bottom}
+.living-guide summary span{position:absolute;right:0;top:0;padding:.15rem .6rem;border-radius:1rem 1rem 1rem 0;background:#fffaf1;color:#345941;font:600 .85rem/1.5 system-ui}
+.moli-greeting{position:absolute;bottom:5%;right:97%;width:220px;background:#fffaf2;color:#284a36;padding:1rem;border:1px solid #d2d9bf;border-radius:1rem;box-shadow:0 8px 25px #31482c22}
+.moli-greeting strong{display:block;font:600 1.05rem/1.35 Georgia,serif;margin-bottom:.4rem}
+.moli-greeting a{display:block;padding:.55rem .65rem;font-weight:600;border-radius:.5rem}
+.moli-greeting a:hover,.moli-greeting a:focus-visible{background:#ebefdF}
+@media(prefers-reduced-motion:no-preference){
+.living-cover[data-moving=true] .living-daylight,.living-cover[data-moving=true] .living-guide summary img{animation-play-state:running}
+.living-daylight{animation:campus-light 18s ease-in-out infinite alternate paused}
+.living-guide summary img{animation:moli-breathe 7s ease-in-out infinite paused}
+@keyframes campus-light{to{opacity:.85;transform:translateX(1.5%)}}
+@keyframes moli-breathe{0%,48%,100%{transform:none}72%{transform:translateY(-1px) scale(1.009)}}
+@media(hover:hover) and (pointer:fine){.living-guide summary{transition:transform .4s;transform-origin:50% 90%}.living-guide summary:hover{transform:rotate(-2deg)}}
+}
+@media(max-width:720px){.living-art{background-position:62% center}.living-guide{width:90px;right:5%;bottom:1rem}.moli-greeting{bottom:0;width:min(210px,58vw)}}
+@media(max-width:420px){.living-cover:has(.living-guide[open]){padding-bottom:14rem}}
+@media(prefers-reduced-motion:reduce){.living-art{transform:none;transition:none}}

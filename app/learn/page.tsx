@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-
-export default function YoungCreatorEntry() {
-  redirect("/teach/studio/?mode=young-creator");
-}
+import Link from "next/link";
+import {Shell,Banner,PathCard} from "@/components/universe/Shell";
+import Catalog from "@/components/universe/Catalog";
+export default function Campus(){return <Shell><Banner label="WELCOME TO YOUR LEARNING CAMPUS" title="Hi, I’m Moli."><p>Shall we follow a glowing seed, make music in Spanish, or invent a world together?</p><div className="un-actions"><Link href="/explore/">Find an adventure →</Link></div></Banner><section className="un-section"><small>EXPLORE BY INTEREST</small><h2>What sounds fun today?</h2><div className="un-grid"><PathCard mark="READ" title="Stories & words" body="Find a story, turn the page and practise new words." href="/read/"/><PathCard mark="SING" title="Music & movement" body="Listen for a rhythm and try the actions." href="/sing/"/><PathCard mark="MY STUDIO" title="Make & play" body="Bring your own ideas into a playable story with Moli." href="/teach/studio/?mode=young-creator"/></div></section><section className="un-section"><small>MY LEARNING · ON THIS DEVICE</small><h2>Your adventures so far</h2><Catalog history/></section></Shell>}

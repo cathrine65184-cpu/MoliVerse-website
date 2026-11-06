@@ -1,0 +1,14 @@
+/* The following section physically travels up over the cover; there is no
+   viewport overlay, scroll listener, or animation on route entry. */
+@media (prefers-reduced-motion:no-preference) and (min-height:640px) {
+ .universe:has(>.un-banner){isolation:isolate;timeline-scope:--chapter-entry}
+ .universe>.un-banner{position:sticky;top:0;z-index:0;transform-origin:center top}
+ .universe>.un-banner~*{position:relative;z-index:1;background-color:var(--paper)}
+ .universe>.un-banner+*{view-timeline-name:--chapter-entry;box-shadow:0 -10px 26px -14px #453a2955}
+ .universe>.un-banner+.un-section{max-width:none;padding-inline:max(1.5rem,calc((100% - 1152px)/2))}
+ @supports(animation-timeline:view()){
+  .universe>.un-banner{animation:chapter-fold linear both;animation-timeline:--chapter-entry;animation-range:entry 0% entry 100%}
+  @keyframes chapter-fold{from{transform:none}to{transform:perspective(1800px) rotateX(-6deg) translateY(-3%);filter:brightness(.89)}}
+ }
+}
+@media(max-width:720px) and (max-height:700px){.universe>.un-banner{position:relative;animation:none}}

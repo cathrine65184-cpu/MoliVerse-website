@@ -1,57 +1,7 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import LanguageProvider from "@/components/LanguageProvider";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  display: "swap",
-});
-
-export const metadata: Metadata = {
-  metadataBase: new URL("https://moliverse.tech"),
-  title: "MoliVerse — Learn Languages. Live Stories.",
-  description:
-    "MoliVerse is an AI story-game maker where children and educators create immersive language worlds with Moli, then learn by playing what they imagined.",
-  alternates: { canonical: "/" },
-  openGraph: {
-    title: "MoliVerse — Learn Languages. Live Stories.",
-    description:
-      "Create immersive language story games with Moli, play inside them, and improve the world as you learn.",
-    url: "https://moliverse.tech",
-    siteName: "MoliVerse",
-    type: "website",
-    images: [
-      {
-        url: "/og.jpg",
-        width: 1200,
-        height: 630,
-        alt: "MoliVerse — Learn Languages. Live Stories.",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "MoliVerse — Learn Languages. Live Stories.",
-    description:
-      "Create immersive language story games with Moli, then learn by playing what you imagined.",
-    images: ["/og.jpg"],
-  },
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
-      <body className="font-sans"><LanguageProvider>{children}</LanguageProvider></body>
-    </html>
-  );
-}
+const title = "MoliVerse — A Little Universe of Learning";
+const description = "Learn languages, explore cultures and create stories with real teachers, young creators and Moli, your AI learning companion.";
+export const metadata: Metadata = {metadataBase:new URL("https://moliverse.tech"),title,description,alternates:{canonical:"/"},openGraph:{title,description,siteName:"MoliVerse",type:"website",images:[{url:"/universe-valley.jpg",alt:"An illustrated hillside learning village"}]},twitter:{card:"summary_large_image",title,description,images:["/universe-valley.jpg"]}};
+export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="en"><head><link rel="stylesheet" href="/page-seam.css"/></head><body style={{"--font-inter":"system-ui","--font-space-grotesk":"system-ui"} as React.CSSProperties} className="font-sans"><LanguageProvider>{children}</LanguageProvider></body></html>}

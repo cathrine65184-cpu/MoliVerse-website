@@ -1,5 +1,2 @@
-import { redirect } from "next/navigation";
-
-export default function TeachEntry() {
-  redirect("/teach/studio/");
-}
+import {Shell,Banner,PathCard} from "@/components/universe/Shell";
+export default function Teach(){return <Shell><Banner label="EDUCATOR & CREATOR STUDIO" title="Teach what you love."><p>Start with a learning goal or a story only you could tell. Shape it into something a child can read, try and make.</p></Banner><section className="un-section"><small>YOUR WORKTABLE</small><h2>Choose a starting point.</h2><div className="un-grid"><PathCard mark="01 · FOR EDUCATORS" title="Build a reading" body="Bring your own authorised text, review the activities and try them before sharing." href="/teach/library/"/><PathCard mark="02 · FOR CREATORS" title="Make a story world" body="Set the scene, design a challenge and playtest your 2D story board." href="/teach/studio/"/><PathCard mark="03 · WITH PEOPLE" title="Lead a workshop" body="See how language teachers turn a favourite activity into a learning experience." href="/#workshops"/></div><p>Drafts are not published automatically. Creating a world does not open a private messaging channel to children.</p></section></Shell>}

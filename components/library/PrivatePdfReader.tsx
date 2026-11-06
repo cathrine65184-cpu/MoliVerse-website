@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, LockKeyhole, Minus, Plus } from 'lucide-react';
 import type { ImportedContentDraft } from '@/lib/contentImportStorage';
 import { withBasePath } from '@/lib/paths';
+import { paintSheet } from './paperTurn';
 
 function savedPageKey(ownerId: string, draft: ImportedContentDraft) {
   return `moliverse:private-pdf-page:${ownerId}:${draft.id}:v${draft.version}`;
@@ -13,6 +14,7 @@ export default function PrivatePdfReader({ draft, ownerId }: { draft: ImportedCo
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const documentRef = useRef<any>(null);
   const renderRef = useRef<any>(null);
+  const shown = useRef<number | null>(null);
   const [page, setPage] = useState(1);
   const [pageCount, setPageCount] = useState(draft.pageCount || 0);
   const [scale, setScale] = useState(.45);
@@ -49,6 +51,7 @@ export default function PrivatePdfReader({ draft, ownerId }: { draft: ImportedCo
 
   useEffect(() => {
     let cancelled = false;
+    let finishTurn: (() => void) | undefined;
     void (async () => {
       const doc = documentRef.current;
       const canvas = canvasRef.current;
@@ -59,20 +62,23 @@ export default function PrivatePdfReader({ draft, ownerId }: { draft: ImportedCo
         if (cancelled) return;
         const viewport = pdfPage.getViewport({ scale });
         const ratio = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = Math.floor(viewport.width * ratio);
-        canvas.height = Math.floor(viewport.height * ratio);
-        canvas.style.aspectRatio = `${viewport.width}/${viewport.height}`;
-        const context = canvas.getContext('2d');
-        if (!context) return;
-        context.setTransform(ratio, 0, 0, ratio, 0, 0);
-        renderRef.current = pdfPage.render({ canvasContext: context, viewport });
+        const raster = document.createElement('canvas');
+        raster.width = Math.ceil(viewport.width * ratio);
+        raster.height = Math.ceil(viewport.height * ratio);
+        const context = raster.getContext('2d');
+        if (!context) throw new Error('Canvas unavailable');
+        renderRef.current = pdfPage.render({ canvasContext: context, viewport, transform: [ratio,0,0,ratio,0,0] });
         await renderRef.current.promise;
+        if (cancelled) return;
+        finishTurn = paintSheet(canvas, raster, shown.current === null ? 0 : Math.sign(page - shown.current));
+        shown.current = page;
+        setStatus('');
         localStorage.setItem(savedPageKey(ownerId, draft), String(page));
       } catch (error: any) {
         if (error?.name !== 'RenderingCancelledException') setStatus('This page could not be rendered. Try the previous or next page.');
       }
     })();
-    return () => { cancelled = true; renderRef.current?.cancel?.(); };
+    return () => { cancelled = true; finishTurn?.(); renderRef.current?.cancel?.(); };
   }, [page, scale, draft, ownerId, documentReady]);
 
   return <article className="private-pdf-reader">

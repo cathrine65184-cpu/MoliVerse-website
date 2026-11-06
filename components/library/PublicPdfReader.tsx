@@ -5,11 +5,13 @@ import { ArrowLeft, ArrowRight, BookOpenCheck, Minus, Plus } from 'lucide-react'
 import type { LibraryContent } from '@/lib/contentLibrary';
 import type { SavedContentProgress } from './LibraryShell';
 import { withBasePath } from '@/lib/paths';
+import { paintSheet } from './paperTurn';
 
 export default function PublicPdfReader({ content, progress, onProgress }: { content: LibraryContent; progress: SavedContentProgress; onProgress: (value: SavedContentProgress) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const documentRef = useRef<any>(null);
   const renderRef = useRef<any>(null);
+  const shown = useRef<number | null>(null);
   const expectedPages = content.document?.pageCount || 0;
   const [page, setPage] = useState(Math.min(expectedPages || 1, (progress.position || 0) + 1));
   const [pageCount, setPageCount] = useState(expectedPages);
@@ -48,6 +50,7 @@ export default function PublicPdfReader({ content, progress, onProgress }: { con
 
   useEffect(() => {
     let cancelled = false;
+    let finishTurn: (() => void) | undefined;
     void (async () => {
       const doc = documentRef.current;
       const canvas = canvasRef.current;
@@ -58,20 +61,23 @@ export default function PublicPdfReader({ content, progress, onProgress }: { con
         if (cancelled) return;
         const viewport = pdfPage.getViewport({ scale });
         const ratio = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = Math.floor(viewport.width * ratio);
-        canvas.height = Math.floor(viewport.height * ratio);
-        canvas.style.aspectRatio = `${viewport.width}/${viewport.height}`;
-        const context = canvas.getContext('2d');
-        if (!context) return;
-        context.setTransform(ratio, 0, 0, ratio, 0, 0);
-        renderRef.current = pdfPage.render({ canvasContext: context, viewport });
+        const raster = document.createElement('canvas');
+        raster.width = Math.ceil(viewport.width * ratio);
+        raster.height = Math.ceil(viewport.height * ratio);
+        const context = raster.getContext('2d');
+        if (!context) throw new Error('Canvas unavailable');
+        renderRef.current = pdfPage.render({ canvasContext: context, viewport, transform: [ratio,0,0,ratio,0,0] });
         await renderRef.current.promise;
+        if (cancelled) return;
+        finishTurn = paintSheet(canvas, raster, shown.current === null ? 0 : Math.sign(page - shown.current));
+        shown.current = page;
+        setStatus('');
         onProgress({ ...progress, position: page - 1, completed: page === pageCount, updatedAt: new Date().toISOString() });
       } catch (error: any) {
         if (error?.name !== 'RenderingCancelledException') setStatus('This page could not be rendered. Try the previous or next page.');
       }
     })();
-    return () => { cancelled = true; renderRef.current?.cancel?.(); };
+    return () => { cancelled = true; finishTurn?.(); renderRef.current?.cancel?.(); };
   }, [page, scale, documentReady]);
 
   return <article className="private-pdf-reader public-pdf-reader">

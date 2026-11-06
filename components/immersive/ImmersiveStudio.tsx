@@ -43,6 +43,7 @@ export default function ImmersiveStudio() {
   const [saveState, setSaveState] = useState("Opening your worlds…");
   const [notice, setNotice] = useState("");
   const [panel, setPanel] = useState<Panel>("world");
+  useEffect(() => { if (new URLSearchParams(location.search).get("panel") === "moli") setPanel("moli"); }, []);
   const [drawer, setDrawer] = useState(false);
   const [inspector, setInspector] = useState<"object" | "task" | "guide" | "learning" | "sources" | "game">("object");
   const [selected, setSelected] = useState("mentor");

@@ -55,6 +55,10 @@ export default function LibraryShell({ mode }: { mode: ContentType }) {
   const [privateSelected, setPrivateSelected] = useState<ImportedContentDraft | null>(null);
   const [language, setLanguage] = useState('All');
   const [theme, setTheme] = useState('All');
+  useEffect(() => {
+    const requested = getLibraryContent(new URLSearchParams(window.location.search).get('story') || '');
+    if (requested?.visibility === 'public' && requested.contentType === mode) setSelectedId(requested.id);
+  }, [mode]);
   const selected = getLibraryContent(selectedId);
   const [progress, saveProgress] = useSavedProgress(selected);
   const all = useMemo(() => listLibraryContent(mode), [mode]);

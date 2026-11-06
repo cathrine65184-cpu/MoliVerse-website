@@ -16,6 +16,7 @@ const copy: Record<string, Record<Locale, string>> = {
   "Create": { en: "Create", zh: "创作", pt: "Criar", es: "Crear" },
   "Play": { en: "Play", zh: "游玩", pt: "Jogar", es: "Jugar" },
   "Educators": { en: "Educators", zh: "教育者", pt: "Educadores", es: "Educadores" },
+  "Meet us": { en: "Meet us", zh: "认识我们", pt: "Conheça a equipe", es: "Conócenos" },
   "An AI story-game maker for curious minds": { en: "An AI story-game maker for curious minds", zh: "为好奇心而生的 AI 故事游戏创作器", pt: "Um criador de jogos narrativos com IA para mentes curiosas", es: "Un creador de juegos narrativos con IA para mentes curiosas" },
   "Create with Your Hands.": { en: "Create with Your Hands.", zh: "亲手创造。", pt: "Crie com suas próprias mãos.", es: "Crea con tus propias manos." },
   "Tell Moli an idea. Build an interactive language story together. Then step inside, make choices, solve challenges, and keep improving the world as you play.": { en: "Tell Moli an idea. Build an interactive language story together. Then step inside, make choices, solve challenges, and keep improving the world as you play.", zh: "告诉 Moli 一个想法，一起把它变成交互式语言故事。走进世界、做出选择、完成挑战，并在游玩中继续完善它。", pt: "Conte uma ideia à Moli e criem juntos uma história interativa de idiomas. Entre no mundo, faça escolhas, resolva desafios e continue melhorando enquanto joga.", es: "Cuéntale una idea a Moli y creen juntos una historia interactiva de idiomas. Entra al mundo, toma decisiones, resuelve desafíos y sigue mejorándolo mientras juegas." },
