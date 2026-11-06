@@ -1,0 +1,1 @@
+{"extends":"../../tsconfig.json","compilerOptions":{"target":"ES2022","incremental":false,"baseUrl":"../..","paths":{"https://esm.sh/@supabase/supabase-js@2":["node_modules/@supabase/supabase-js"]}},"include":["v2-deno.d.ts","../../supabase/functions/platform-media/**/*.ts","../../supabase/functions/world-moli/**/*.ts"],"exclude":[]}

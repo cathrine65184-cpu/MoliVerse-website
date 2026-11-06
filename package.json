@@ -10,6 +10,8 @@
     "test:library": "node scripts/test-learning-library.cjs",
     "test:bakery": "node scripts/test-learner-bakery.cjs",
     "test:creator": "node scripts/test-creator-moli.cjs",
+    "test:platform": "node scripts/test-platform-sql.cjs && node scripts/test-platform-media.cjs && node scripts/test-world-moli.cjs && npm --prefix services/platform-media test",
+    "test:platform:browser": "node scripts/test-platform-browser.cjs && node scripts/test-world-browser.cjs",
     "test:vocab": "node scripts/test-vocab-game.cjs",
     "test:games": "node scripts/test-story-games.cjs",
     "test:edge": "npx --yes deno run --allow-all --import-map=scripts/edge-test/import_map.json scripts/edge-test/story-game-ideas.test.ts && npx --yes deno run --allow-all --import-map=scripts/edge-test/import_map.json scripts/edge-test/book-ingest.test.ts",
