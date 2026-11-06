@@ -1,2 +1,2 @@
-import ImmersiveStudio from '@/components/immersive/ImmersiveStudio';
-export default function StudioPage(){ return <ImmersiveStudio/>; }
+import StudioEntry from '@/components/story-pilot/StudioEntry';
+export default function StudioPage(){ return <StudioEntry/>; }

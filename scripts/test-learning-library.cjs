@@ -1,19 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 const ts = require('typescript');
-const vm = require('vm');
 
-function loadTs(file) {
-  const source = fs.readFileSync(file, 'utf8');
-  const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const module = { exports: {} };
-  vm.runInNewContext(`(function(exports,module,require){${output}\n})(module.exports,module,require)`, { module, require, console });
-  return module.exports;
-}
+// Load the library and its relative TypeScript adapters as one real module graph.
+require.extensions['.ts'] = (module, file) => module._compile(
+  ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText,
+  file,
+);
 
 function assert(value, message) { if (!value) throw new Error(message); }
 
-const library = loadTs(path.join(__dirname, '..', 'lib', 'contentLibrary.ts'));
+const library = require(path.join(__dirname, '..', 'lib', 'contentLibrary.ts'));
 const items = library.ORIGINAL_LIBRARY;
 assert(items.length === 3, 'Expected two original samples and one licensed public reading.');
 const reader = items.find(item => item.id === 'moli-lantern-seed');

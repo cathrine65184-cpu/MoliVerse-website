@@ -5,6 +5,7 @@ const vm = require('vm');
 
 const cache = new Map();
 function load(file) {
+  if (file.endsWith('.json')) return { default: JSON.parse(fs.readFileSync(file, 'utf8')) };
   if (cache.has(file)) return cache.get(file).exports;
   const output = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const module = { exports: {} };

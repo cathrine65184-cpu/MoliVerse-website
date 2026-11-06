@@ -6,6 +6,7 @@ const vm = require('vm');
 // Minimal TypeScript loader: transpiles .ts files on demand and resolves relative imports.
 const cache = new Map();
 function load(file) {
+  if (file.endsWith('.json')) return { default: JSON.parse(fs.readFileSync(file, 'utf8')) };
   if (cache.has(file)) return cache.get(file).exports;
   const source = fs.readFileSync(file, 'utf8');
   const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
@@ -38,7 +39,7 @@ const story = ORIGINAL_LIBRARY.find(item => item.id === 'moli-lantern-seed');
 
 // ---- vocabulary collection -------------------------------------------------
 const vocab = game.collectVocab(story);
-same(vocab.map(item => item.word), ['seed', 'quiet', 'soft', 'covered', 'glow', 'path', 'returned'], 'Vocabulary must be unique and in reading order.');
+same(vocab.map(item => item.word), ['tiny', 'seed', 'quiet', 'path', 'soft', 'leaves', 'cloud', 'moon', 'glow', 'returned'], 'Vocabulary must be unique and in reading order.');
 assert(vocab.every(item => story.pages[item.page - 1].text === item.sentence), 'Each word must carry the sentence from its own page.');
 assert(vocab.every(item => item.sentence.toLowerCase().includes(item.word.toLowerCase())), 'Each story word must appear in its sentence.');
 same(game.collectVocab({ pages: [{ id: 'a', page: 1, text: 'x', vocabulary: [{ word: 'Seed', meaning: 'a' }, { word: 'seed', meaning: 'b' }, { word: '', meaning: 'c' }, { word: 'empty', meaning: ' ' }] }] }).map(item => item.word), ['Seed'], 'Duplicates, blanks and meaningless entries must be dropped.');
@@ -69,7 +70,7 @@ const summary = game.summarize(results);
 same(summary, { correct: ['seed', 'quiet'], missed: ['glow', 'path'] }, 'Summary splits remembered and missed words.');
 const p1 = game.recordRound(game.emptyVocabProgress(), results, new Date('2026-11-05T00:00:00Z'));
 assert(p1.rounds === 1 && p1.words.glow.missed === 1 && p1.words.glow.lastMissed && p1.words.seed.correct === 1 && !p1.words.seed.lastMissed, 'First round recorded.');
-same(game.trickyWords(vocab, p1), ['glow', 'path'], 'Tricky words follow story order.');
+same(game.trickyWords(vocab, p1), ['path', 'glow'], 'Tricky words follow story order.');
 const p2 = game.recordRound(p1, { glow: true, path: false });
 assert(p2.rounds === 2 && p2.words.glow.seen === 2 && p2.words.glow.correct === 1 && p2.words.glow.missed === 1 && !p2.words.glow.lastMissed && p2.words.path.lastMissed, 'Second round updates counts and recovers a word.');
 same(game.trickyWords(vocab, p2), ['path'], 'A word answered right next time stops being tricky.');
@@ -94,18 +95,18 @@ const handoff = handoffLib.handoffFromContent(story, ['glow', 'path']);
 assert(handoff.sourceText.includes('Moli found a tiny seed'), 'Hand-off carries the story text.');
 same(handoff.vocabulary.map(item => item.word), vocab.map(item => item.word), 'Hand-off carries the story vocabulary.');
 same(handoff.focusWords, ['glow', 'path'], 'Hand-off carries the tricky words.');
-same(handoffLib.targetWordsFromHandoff(handoff), ['glow', 'path', 'seed', 'quiet', 'soft', 'covered', 'returned'], 'Tricky words come first, then the rest, without duplicates.');
-same(handoffLib.targetWordsFromHandoff({ vocabulary: handoff.vocabulary, focusWords: ['not-in-story'] }).slice(0, 2), ['seed', 'quiet'], 'Unknown focus words are ignored.');
-assert(handoffLib.targetWordsFromHandoff({ vocabulary: handoff.vocabulary, focusWords: [] }).length === 7 && handoffLib.targetWordsFromHandoff({}).length === 0, 'Handles no focus words and no vocabulary.');
+same(handoffLib.targetWordsFromHandoff(handoff), ['glow', 'path', 'tiny', 'seed', 'quiet', 'soft', 'leaves', 'cloud'], 'Tricky words come first, then the rest, without duplicates.');
+same(handoffLib.targetWordsFromHandoff({ vocabulary: handoff.vocabulary, focusWords: ['not-in-story'] }).slice(0, 2), ['tiny', 'seed'], 'Unknown focus words are ignored.');
+assert(handoffLib.targetWordsFromHandoff({ vocabulary: handoff.vocabulary, focusWords: [] }).length === 8 && handoffLib.targetWordsFromHandoff({}).length === 0, 'Handles no focus words and no vocabulary.');
 
 const world = handoffLib.courseFromContentHandoff(handoff);
-same(world.learning.targetVocabulary.slice(0, 4), ['glow', 'path', 'seed', 'quiet'], 'The Create world uses the story words, tricky ones first.');
+same(world.learning.targetVocabulary.slice(0, 4), ['glow', 'path', 'tiny', 'seed'], 'The Create world uses the story words, tricky ones first.');
 const matchTask = world.tasks.find(task => task.kind === 'match');
 assert(matchTask && matchTask.options.slice(0, 2).join() === 'glow,path', 'The match task in the Create world starts with the child\'s tricky words.');
 assert(world.materials.length === 1 && world.materials[0].linked && world.materials[0].text.includes('tiny seed'), 'The story is linked as source material (no more general-knowledge mode).');
 assert(world.materials[0].parseStatus === 'ready' && world.materials[0].rightsStatus === 'owned', 'Source is ready and rights-labelled.');
 const plain = handoffLib.courseFromContentHandoff(handoffLib.handoffFromContent(story));
-assert(plain.learning.targetVocabulary.slice(0, 2).join() === 'seed,quiet', 'Without focus words the story order is used.');
+assert(plain.learning.targetVocabulary.slice(0, 2).join() === 'tiny,seed', 'Without focus words the story order is used.');
 const noVocab = handoffLib.courseFromContentHandoff({ ...handoff, vocabulary: undefined, focusWords: undefined });
 assert(noVocab.learning.targetVocabulary.length > 0, 'Older hand-off payloads without vocabulary still work.');
 assert(JSON.stringify(handoffLib.handoffFromContent(ORIGINAL_LIBRARY.find(item => item.contentType === 'sing')).vocabulary) === '[]', 'Songs hand off with an empty vocabulary.');
@@ -113,16 +114,16 @@ assert(JSON.stringify(handoffLib.handoffFromContent(ORIGINAL_LIBRARY.find(item =
 // ---- the Create world is about THIS story ---------------------------------
 same(courseLib.validateCourse(world), [], 'The grounded world must pass the course validator.');
 assert(world.title === 'Moli and the Lantern Seed · Story game', 'World title names the story.');
-same(world.objects.filter(o => o.kind !== 'mentor').map(o => o.label), ['Glow', 'Path', 'Seed'], 'Stops are named after the story words (tricky first).');
+same(world.objects.filter(o => o.kind !== 'mentor').map(o => o.label), ['Glow', 'Path', 'Tiny'], 'Stops are named after the story words (tricky first).');
 const glowStop = world.objects.find(o => o.label === 'Glow');
 assert(glowStop.dialogue.includes('Then the seed began to glow') && glowStop.dialogue.includes('to shine with a soft light'), 'A stop shows the story sentence and the meaning.');
 const gate = world.objects.find(o => o.kind === 'mentor');
 assert(gate.label === 'The story begins' && gate.dialogue.startsWith('Moli found a tiny seed'), 'The first stop shows the opening of the story.');
 const clueTask = world.tasks.find(t => t.kind === 'match');
-same(Object.keys(clueTask.clues), ['glow', 'path', 'seed', 'quiet'], 'Match task has a meaning clue for each word.');
+same(Object.keys(clueTask.clues), ['glow', 'path', 'tiny', 'seed'], 'Match task has a meaning clue for each word.');
 assert(clueTask.clues.glow === 'to shine with a soft light', 'Clues carry the story meanings.');
 const askTask = world.tasks.find(t => t.kind === 'dialogue');
-assert(askTask.options.includes(askTask.answer) && askTask.answer === 'seed' && askTask.prompt.includes('a small part of a plant that can grow'), 'The question asks for a story word by its meaning.');
+assert(askTask.options.includes(askTask.answer) && askTask.answer === 'tiny' && askTask.prompt.includes('very small'), 'The question asks for a story word by its meaning.');
 assert(!world.tasks.some(t => /Can I the clue/.test(JSON.stringify(t))), 'No ungrammatical auto-generated phrase remains.');
 assert(world.mentor.opening.includes('Moli and the Lantern Seed') && world.mentor.opening.includes('tiny seed'), 'Moli opens with the story.');
 const songWorld = handoffLib.courseFromContentHandoff(handoffLib.handoffFromContent(ORIGINAL_LIBRARY.find(item => item.contentType === 'sing')));

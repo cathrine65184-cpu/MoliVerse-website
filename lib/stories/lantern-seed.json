@@ -1,0 +1,88 @@
+{
+  "id": "moli-lantern-seed",
+  "version": 1,
+  "title": { "en": "Moli and the Lantern Seed" },
+  "learningLanguage": "en",
+  "ageRange": [6, 9],
+  "level": "beginner",
+  "themes": ["friendship", "nature", "courage"],
+  "license": {
+    "type": "original",
+    "owner": "MoliVerse",
+    "usage": "free-to-read, adaptable-for-games",
+    "source": null
+  },
+  "pages": [
+    {
+      "n": 1,
+      "text": "Moli found a tiny seed beside the quiet path. It was round, dark and cold.",
+      "translation": { "zh": "Moli 在安静的小路旁发现了一颗小小的种子。它圆圆的、黑黑的，还有点冰凉。" },
+      "simplified": { "en": "Moli finds a small, dark seed." },
+      "image": null,
+      "audio": null,
+      "vocabIds": ["tiny", "seed", "quiet", "path"]
+    },
+    {
+      "n": 2,
+      "text": "“Maybe it is sleeping,” said Moli. He carried it to the garden and made a soft bed of leaves.",
+      "translation": { "zh": "“也许它正在睡觉。”Moli 说。他把种子带到花园，用叶子做了一张柔软的小床。" },
+      "simplified": { "en": "Moli makes a leaf bed for the seed." },
+      "image": null,
+      "audio": null,
+      "vocabIds": ["soft", "leaves"]
+    },
+    {
+      "n": 3,
+      "text": "A cloud covered the moon. Moli could not see the way home, but he stayed beside the seed.",
+      "translation": { "zh": "云遮住了月亮。Moli 看不清回家的路，但他仍然留在种子旁边。" },
+      "simplified": { "en": "It gets dark. Moli stays with the seed." },
+      "image": null,
+      "audio": null,
+      "vocabIds": ["seed", "cloud", "moon"]
+    },
+    {
+      "n": 4,
+      "text": "Then the seed began to glow. One golden leaf opened, then another. A line of light crossed the garden.",
+      "translation": { "zh": "这时，种子开始发光。一片金色叶子展开了，又展开了另一片。一条光路穿过花园。" },
+      "simplified": { "en": "The seed glows and makes a path of light." },
+      "image": null,
+      "audio": null,
+      "vocabIds": ["seed", "glow"]
+    },
+    {
+      "n": 5,
+      "text": "Moli followed the shining path home. In the morning, he returned with water—and a new friend was waiting.",
+      "translation": { "zh": "Moli 沿着闪亮的小路回到了家。第二天早晨，他带着水回来，一位新朋友正在等他。" },
+      "simplified": { "en": "Moli comes back. The seed has become a friend." },
+      "image": null,
+      "audio": null,
+      "vocabIds": ["path", "returned"]
+    }
+  ],
+  "vocab": [
+    { "id": "tiny", "word": "tiny", "meaning": { "en": "very small", "zh": "非常小的", "pt": "muito pequeno" }, "sentence": "Moli found a tiny seed beside the quiet path.", "image": null, "emoji": "🤏", "pageRefs": [1] },
+    { "id": "seed", "word": "seed", "meaning": { "en": "a little part of a plant that can grow", "zh": "种子", "pt": "semente" }, "sentence": "Moli found a tiny seed beside the quiet path.", "image": null, "emoji": "🌱", "pageRefs": [1, 3, 4] },
+    { "id": "quiet", "word": "quiet", "meaning": { "en": "with very little sound", "zh": "安静的", "pt": "silencioso" }, "sentence": "Moli found a tiny seed beside the quiet path.", "image": null, "emoji": "🤫", "pageRefs": [1] },
+    { "id": "path", "word": "path", "meaning": { "en": "a way you can walk along", "zh": "小路", "pt": "caminho" }, "sentence": "Moli found a tiny seed beside the quiet path.", "image": null, "emoji": "👣", "pageRefs": [1, 5] },
+    { "id": "soft", "word": "soft", "meaning": { "en": "not hard or rough", "zh": "柔软的", "pt": "macio" }, "sentence": "He carried it to the garden and made a soft bed of leaves.", "image": null, "emoji": "🪶", "pageRefs": [2] },
+    { "id": "leaves", "word": "leaves", "meaning": { "en": "the flat parts that grow on a plant", "zh": "叶子", "pt": "folhas" }, "sentence": "He carried it to the garden and made a soft bed of leaves.", "image": null, "emoji": "🍃", "pageRefs": [2] },
+    { "id": "cloud", "word": "cloud", "meaning": { "en": "a white or grey shape in the sky", "zh": "云", "pt": "nuvem" }, "sentence": "A cloud covered the moon.", "image": null, "emoji": "☁️", "pageRefs": [3] },
+    { "id": "moon", "word": "moon", "meaning": { "en": "the round world we often see in the night sky", "zh": "月亮", "pt": "lua" }, "sentence": "A cloud covered the moon.", "image": null, "emoji": "🌙", "pageRefs": [3] },
+    { "id": "glow", "word": "glow", "meaning": { "en": "to shine with a soft light", "zh": "发出柔和的光", "pt": "brilhar suavemente" }, "sentence": "Then the seed began to glow.", "image": null, "emoji": "✨", "pageRefs": [4] },
+    { "id": "returned", "word": "returned", "meaning": { "en": "came back", "zh": "回来了", "pt": "voltou" }, "sentence": "In the morning, he returned with water—and a new friend was waiting.", "image": null, "emoji": "↩️", "pageRefs": [5] }
+  ],
+  "plotEvents": [
+    { "id": "find", "text": "Moli finds a tiny seed beside the path.", "pageRef": 1, "emoji": "🌱" },
+    { "id": "bed", "text": "Moli makes a soft bed of leaves.", "pageRef": 2, "emoji": "🍃" },
+    { "id": "stay", "text": "A cloud covers the moon. Moli stays with the seed.", "pageRef": 3, "emoji": "☁️" },
+    { "id": "glow", "text": "The seed glows and lights the garden.", "pageRef": 4, "emoji": "✨" },
+    { "id": "return", "text": "Moli goes home, then returns with water.", "pageRef": 5, "emoji": "💧" }
+  ],
+  "culture": {
+    "note": { "en": "This is an imaginary garden story, not a description of a real festival." },
+    "tags": []
+  },
+  "games": ["word-match", "story-order"],
+  "preQuestion": "The seed is dark and very small. What do you think could make it glow?",
+  "createBrief": "Create an original lantern-garden adventure where a child helps Moli care for a mysterious seed, follows a path of light and uses beginner English nature words."
+}

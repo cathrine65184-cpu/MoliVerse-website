@@ -1,0 +1,98 @@
+MoliVerse story-to-game pilot
+============================
+
+Scope
+- One original sample: Moli and the Lantern Seed, English, ages 6–9, five pages.
+- Read -> source-linked Create studio -> word matching / story sequencing -> review.
+- No AI, login, microphone, personal-data forms, new remote assets or new dependencies.
+- Nothing is published or pushed by this change.
+
+Architecture checked
+- Next.js 14 App Router, React 18, TypeScript, Tailwind, static export /out.
+- /read/ uses LibraryShell; other readers and Sing remain on their existing paths.
+- /moli-journey/ is a separate prebuilt static application and is unchanged.
+- /teach/studio/ now dispatches a bundled original story ID to StoryGameStudio.
+  Without a story query parameter, the existing ImmersiveStudio still loads.
+- Existing immersive-author Edge Function uses DeepSeek. It is not invoked here.
+- Existing Supabase tables, RLS, file storage and private imports are unchanged.
+- No applicable AGENTS.md was found in this checkout or its inspected parent directories.
+
+Run
+  npm install                    (only if dependencies are not installed)
+  npm run dev -- -p 3015
+  Open http://localhost:3015/read/?story=moli-lantern-seed
+  Read to page 5 and choose "Make a game from this story".
+
+Production-style offline verification
+  npm run build
+  python3 -m http.server 3026 --bind 127.0.0.1 --directory out
+  Open http://127.0.0.1:3026/read/?story=moli-lantern-seed
+  Wait for "Offline copy ready on this device".
+  Stop the server, reload, follow the game link and play.
+  Offline caching is disabled in development to avoid stale un-hashed dev chunks.
+  Requires HTTPS or localhost and browser service-worker/cache support. It cannot
+  work on a never-visited device without first downloading the public app assets.
+
+Data format / adding a second story later (none added in this change)
+- The canonical pilot record is lib/stories/lantern-seed.json. It stores the
+  stable id/version, multilingual title and meanings, learning language, age
+  and level separately, themes, original-material licence, page text and
+  optional translation, image/audio nulls, vocab IDs and source page refs,
+  chronological plot events, a clearly fictional culture note and game types.
+- lib/stories/adapter.ts converts this one record to existing Read/Studio data.
+  lib/contentLibrary.ts contains only the adapter call, not a second text copy.
+- For another story, create and review its own JSON record, register it via
+  storyToLibraryContent in contentLibrary.ts, and extend source-integrity tests.
+  Do not copy unsupported image/audio paths or fabricated source sentences.
+- Meanings should be short and child-friendly. Each source sentence must be a
+  verbatim substring of the cited page. Story events are paraphrases, not quotes.
+- The existing source contract carries id/version/title/language/full pages,
+  vocabulary and plot events. The reader and games use that converted record.
+- Only a short story ID is in the URL. No raw text or storage handoff token is needed.
+- Update data-integrity tests for the new story and increment its version when changed.
+
+Storage and privacy
+- Key moliverse:story-game-progress:v1 stores versioned story IDs, read flags,
+  completed matching/sequencing round counts, and per-word correct/incorrect counts.
+- Existing moliverse:content-progress:local:<id>:v<version> stores page position.
+- All storage access on the pilot path is caught. Quota/blocked/corrupt storage does
+  not prevent play. The UI reports unavailable saving; in-memory state still works.
+- No names, free text, emails, audio or images are stored by the pilot. AI is OFF
+  with no opt-in switch or free-text input in this slice.
+- Progress is device/browser-local, not per child. Shared-device users share it.
+  Browser site-data deletion clears progress and offline assets. No cloud sync.
+- Service worker only caches public /read/ and /teach/studio/ app shells, hashed
+  /_next/static/ assets and the self-hosted mascot. APIs/private files are excluded.
+  Unrelated navigation is not intercepted. Existing worker ownership is respected.
+- Existing fonts are built with next/font and self-hosted at runtime. A fresh build
+  can still require Google font downloads; no new runtime CDN requests were added.
+- Legacy authoring outside the story-specific route still has its existing AI/auth
+  behavior. Links leaving the pilot do not carry this pilot's privacy guarantees.
+
+Checks
+  npm run test:story-pilot
+  npm run test:library
+  node scripts/test-immersive.cjs
+  npm run build
+  CI=1 npm run lint < /dev/null
+
+Results
+- Source-sentence integrity, matching, order, tricky-only retry, version-isolated
+  progress, blocked/quota/corrupt storage, EN/ZH key parity, real component render
+  smoke, worker cache/readiness/failure/API bypass: passed.
+- Existing library and immersive tests: passed. Production export: passed.
+- Browser walkthrough: all five pages, reading-position restore, one deliberate
+  word error, 10-word completion, 1-word retry, sequence error/correction, keyboard
+  sequence completion, persisted game count, EN/ZH selection, 390px phone layout
+  with no horizontal overflow, server-stopped reload and Read -> Play: passed.
+- ESLint command is not configured in the existing repository; it prompts for
+  initial setup instead of running. No repo-wide lint configuration was added.
+- Storage denial was verified through injected throwing storage in tests, not by
+  changing the user's browser privacy settings. No real mainland-China connection,
+  screen-reader session, Safari or Android device was available for testing.
+
+Follow-ups (not included)
+- Translation for other pages/PT/ES, families, booking, 2.0 video, contact details.
+- More stories, accounts, cloud sync, AI extension ideas, freely authored games.
+- Partial in-progress game rounds restart on reload; completed rounds persist.
+  Correct/tricky labels describe this round, not evidence of long-term mastery.
