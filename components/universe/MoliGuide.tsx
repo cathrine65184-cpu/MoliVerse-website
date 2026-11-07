@@ -16,7 +16,7 @@ export default function MoliGuide() {
     <nav aria-label="Moli’s suggestions" className="moli-greeting">
       <strong>Hi! I'm Moli! What would you like to discover today?</strong>
       <Link href="/explore/">Explore Courses</Link>
-      <Link href="/create/">Create a Story</Link>
+      <Link href="/create/">Decorate My World</Link>
       <Link href="/meet-moli/">Talk to Moli</Link>
     </nav>
   </details>;
