@@ -117,11 +117,12 @@ export default function MeetMoli() {
           );
           if (ticket !== epoch.current) return;
           next = { uid, e, ai: c.ai, save: c.save };
+          setLive(c.ai === true);
           if (c.state) setState(restoreCompanion(JSON.stringify(c.state)));
           setNotice(
             c.ai && c.save
               ? "Private account conversation · saved after each AI reply."
-              : "This conversation stays in this tab. Your guardian controls AI and memory permissions.",
+              : c.ai ? "Live Moli is ready. This conversation stays in this tab." : "Live Moli is off in family settings. Offline cards still work.",
           );
         } catch {
           setNotice(
@@ -433,22 +434,14 @@ export default function MeetMoli() {
                   ? "Live AI help · DeepSeek"
                   : "Offline word guide · no AI request"}
               </span>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={live}
-                  disabled={!access.ai || busy || !loaded}
-                  onChange={(e) => setLive(e.target.checked)}
-                />{" "}
-                Use live Moli
-              </label>
+              {access.ai && <button type="button" disabled={busy} onClick={() => setLive(!live)}>{live ? "Use offline cards" : "Use live Moli"}</button>}
             </div>
             <p className="mm-privacy">
               {access.ai
                 ? "Live Moli sends your question and recent turns to DeepSeek. Keep private details out. AI help can make mistakes; word cards use our checked collection."
                 : (
                   <>
-                    Live conversation needs guardian permission.{" "}
+                    A guardian must activate this Explorer once before live conversation.{" "}
                     <Link href="/families/">Ask a grown-up to set it up.</Link>
                     {" "}
                     You can use all offline word cards now.

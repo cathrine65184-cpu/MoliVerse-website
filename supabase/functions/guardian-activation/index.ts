@@ -47,6 +47,7 @@ Deno.serve(async (request) => {
   }
 
   if (input.action === "activate") {
+    if (input.aiConversationConsent !== true) return json({ error: "Guardian consent for AI conversation is required to activate this Explorer." }, 403);
     const bearer = request.headers.get("Authorization") ?? "";
     const token = bearer.replace("Bearer ", "");
     const { data: userData } = await admin.auth.getUser(token);
@@ -54,12 +55,13 @@ Deno.serve(async (request) => {
     const activationToken = String(input.token ?? "");
     if (!user || !activationToken) return json({ error: "Unauthorized" }, 401);
     const { data: explorer } = await admin.from("explorers").select("*").eq("activation_token", activationToken).maybeSingle();
-    if (!explorer || new Date(explorer.activation_expires_at).getTime() < Date.now() || explorer.guardian_email.toLowerCase() !== (user.email ?? "").toLowerCase()) return json({ error: "Invalid invitation" }, 400);
+    if (!explorer || explorer.status !== "pending" || new Date(explorer.activation_expires_at).getTime() < Date.now() || explorer.guardian_email.toLowerCase() !== (user.email ?? "").toLowerCase()) return json({ error: "Invalid invitation" }, 400);
 
     await admin.from("guardians").upsert({ id: user.id, email: user.email?.toLowerCase() ?? "" });
     const { error: activationError } = await admin.from("explorers").update({ guardian_id: user.id, status: "active", activated_at: new Date().toISOString() }).eq("id", explorer.id);
     if (activationError) return json({ error: "Could not activate Explorer" }, 500);
-    await admin.from("guardian_preferences").upsert({ explorer_id: explorer.id }, { onConflict: "explorer_id" });
+    const { error: preferencesError } = await admin.from("guardian_preferences").upsert({ explorer_id: explorer.id, ai_mentor_enabled: true }, { onConflict: "explorer_id" });
+    if (preferencesError) return json({ error: "Explorer activated, but AI permission could not be saved. Please open the family dashboard." }, 500);
     return json({ explorerId: explorer.id });
   }
 

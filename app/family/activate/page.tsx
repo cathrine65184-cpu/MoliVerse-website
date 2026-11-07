@@ -5,13 +5,15 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, MailWarning, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { rememberExplorer } from "@/lib/family";
 
 function Activation() {
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("token");
-  const [state, setState] = useState<"checking" | "ready" | "error">("checking");
+  const [state, setState] = useState<"checking" | "confirm" | "saving" | "ready" | "error">("checking");
   const [message, setMessage] = useState("");
+  const [agreed, setAgreed] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -28,20 +30,28 @@ function Activation() {
         setMessage("Please open this link in the same browser after the secure email sign-in finishes.");
         return;
       }
-      const { data, error } = await supabase.functions.invoke("guardian-activation", { body: { action: "activate", token } });
-      if (!alive) return;
-      if (error || !(data as { explorerId?: string } | null)?.explorerId) {
-        setState("error");
-        setMessage("This invitation may have expired. You can start a new one from the Explorer setup page.");
-        return;
-      }
-      setState("ready");
+      setState("confirm");
     })();
     return () => { alive = false; };
   }, [token]);
 
+  async function activate() {
+    if (!agreed || !token) return;
+    setState("saving");
+    const { data, error } = await supabase.functions.invoke("guardian-activation", { body: { action: "activate", token, aiConversationConsent: true } });
+    const explorerId = (data as { explorerId?: string } | null)?.explorerId;
+    if (error || !explorerId) {
+      setState("confirm");
+      setMessage("We could not activate this Explorer. Please try again or request a new invitation.");
+      return;
+    }
+    try { rememberExplorer(explorerId); } catch {}
+    setState("ready");
+  }
+
   if (state === "checking") return <div className="mt-24 flex justify-center text-slate-400"><Loader2 className="h-6 w-6 animate-spin" /></div>;
-  return <section className="glass-card mx-auto mt-16 max-w-xl p-8 text-center sm:p-10">{state === "ready" ? <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-300" /> : <MailWarning className="mx-auto h-10 w-10 text-amber-300" />}<h1 className="mt-5 font-display text-3xl font-semibold text-white">{state === "ready" ? "You’re in control." : "We couldn’t confirm this invitation."}</h1><p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-400">{state === "ready" ? "Choose what this Explorer can do, what stays private, and whether you’d like a calm weekly learning update." : message}</p>{state === "ready" ? <button onClick={() => router.push("/family/")} className="mt-7 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3 text-sm font-semibold text-white">Open family dashboard</button> : <Link href="/explore/" className="mt-7 inline-block text-sm text-violet-300 hover:text-violet-200">Start a new invitation</Link>}</section>;
+  if (state === "confirm" || state === "saving") return <section className="glass-card mx-auto mt-16 max-w-xl p-8 sm:p-10"><ShieldCheck className="h-10 w-10 text-emerald-300"/><h1 className="mt-5 font-display text-3xl font-semibold text-white">Activate your Explorer</h1><p className="mt-3 text-sm leading-relaxed text-slate-300">As the parent or guardian, you can allow this Explorer to chat with Moli. Their questions and recent conversation will be sent to DeepSeek for AI replies. Moli may make mistakes. After this one-time confirmation, they can chat without asking again; you can turn AI off later in the family dashboard.</p><label className="mt-6 flex items-start gap-3 text-sm text-white"><input type="checkbox" className="mt-1 h-5 w-5" checked={agreed} onChange={e=>setAgreed(e.target.checked)}/><span>I am this Explorer’s parent or guardian, and I agree to AI conversations as described above.</span></label>{message&&<p role="alert" className="mt-4 text-sm text-amber-200">{message}</p>}<button disabled={!agreed||state==="saving"} onClick={activate} className="mt-7 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3 text-sm font-semibold text-white disabled:opacity-50">{state==="saving"?"Activating…":"Confirm and activate"}</button></section>;
+  return <section className="glass-card mx-auto mt-16 max-w-xl p-8 text-center sm:p-10">{state === "ready" ? <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-300" /> : <MailWarning className="mx-auto h-10 w-10 text-amber-300" />}<h1 className="mt-5 font-display text-3xl font-semibold text-white">{state === "ready" ? "You’re in control." : "We couldn’t confirm this invitation."}</h1><p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-400">{state === "ready" ? "Moli is ready. Your Explorer can chat without another approval. You can change AI and memory settings whenever you like." : message}</p>{state === "ready" ? <button onClick={() => router.push("/meet-moli/")} className="mt-7 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3 text-sm font-semibold text-white">Open Meet Moli</button> : <Link href="/explore/" className="mt-7 inline-block text-sm text-violet-300 hover:text-violet-200">Start a new invitation</Link>}</section>;
 }
 
 export default function FamilyActivationPage() {

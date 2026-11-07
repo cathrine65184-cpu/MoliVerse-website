@@ -83,7 +83,7 @@ const base = process.env.PLATFORM_TEST_ORIGIN || "http://127.0.0.1:3022";
         ),
         false,
       );
-      assert(await p.getByLabel("Use live Moli").isDisabled());
+      assert.equal(await p.getByText("Offline word guide · no AI request").count(), 1);
       await p.screenshot({
         path: "/private/tmp/meet-moli-" + width + ".png",
         fullPage: true,
@@ -96,7 +96,7 @@ const base = process.env.PLATFORM_TEST_ORIGIN || "http://127.0.0.1:3022";
     }
     const p = await page("guardian", 1280);
     await p.goto(base + "/meet-moli/");
-    await p.getByLabel("Use live Moli").check();
+    await p.getByText("Live AI help · DeepSeek").waitFor();
     await p.getByLabel("Ask Moli a language question").fill(
       "How do I say apple?",
     );
@@ -116,7 +116,7 @@ const base = process.env.PLATFORM_TEST_ORIGIN || "http://127.0.0.1:3022";
       exact: true,
     }).waitFor();
     assert.equal(modelCalls, 2);
-    assert.equal(await p.getByLabel("Use live Moli").isChecked(), false);
+    await p.getByText("Live AI help · DeepSeek").waitFor();
     await p.getByRole("link", { name: /Practise French fruit orders/ }).click();
     await p.getByText("Order 1:", { exact: false }).waitFor();
     await p.getByRole("button", { name: "🍎 Apple", exact: true }).click();
@@ -138,7 +138,7 @@ const base = process.env.PLATFORM_TEST_ORIGIN || "http://127.0.0.1:3022";
     const denied = await page("creator", 390);
     await denied.goto(base + "/meet-moli/");
     await denied.getByText(/Could not open this Explorer/).waitFor();
-    assert(await denied.getByLabel("Use live Moli").isDisabled());
+    assert.equal(await denied.getByText("Offline word guide · no AI request").count(), 1);
     await denied.close();
     const blocked = await page(null, 390);
     await blocked.addInitScript(() => {
