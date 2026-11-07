@@ -1,6 +1,8 @@
 /** Authored practice, not an assessment or a generated teacher course. */
 export const lesson = {
  id:"morning-bakery",version:1, title:"Morning at the little bakery",
+ href:"/create/?adventure=morning-bakery",language:"French",ageRange:"6–10",level:"Beginner",
+ description:"Explore two pastries, greet a visitor, create your own bakery and return for a new order.",
  goal:"Greet a daytime visitor and recognise two French bakery words.",
  foods:{
   baguette:{word:"une baguette",meaning:"a long, thin loaf of bread",hint:"Look for the long loaf with little cuts in the crust."},

@@ -63,6 +63,12 @@ function Bakery({scope,back}:{scope:string|null;back:()=>void}){
 
 export default function LearnerCreate(){
  const [guided,setGuided]=useState(false),[scope,setScope]=useState<string|null|undefined>(undefined);
+ useEffect(()=>{setGuided(new URLSearchParams(window.location.search).get("adventure")===lesson.id)},[]);
+ function leaveAdventure(){
+   setGuided(false);
+   const url=new URL(window.location.href);url.searchParams.delete("adventure");
+   window.history.replaceState(window.history.state,"",url.href);
+ }
  useEffect(()=>{
    let live=true,ticket=0,current:string|null=null;
    async function resolve(uid:string|null){
@@ -87,7 +93,7 @@ export default function LearnerCreate(){
    return ()=>{live=false;ticket++;data.subscription.unsubscribe();window.removeEventListener("storage",sync);window.removeEventListener("focus",refresh)}
  },[]);
  return <main className="b-space"><div className="b-wrap"><Link className="b-link" href="/learn/">← Learning campus</Link>
- {guided?(scope===undefined?<p role="status">Opening your bakery…</p>:<Bakery key={scope??"session"} scope={scope} back={()=>setGuided(false)}/>):<>
+ {guided?(scope===undefined?<p role="status">Opening your bakery…</p>:<Bakery key={scope??"session"} scope={scope} back={leaveAdventure}/>):<>
  <small className="b-kicker">Create with Moli</small><h1>What shall we make?</h1><p className="b-goal">Follow a little adventure, or begin with an idea of your own.</p>
  <div className="b-modes"><article><small>Guided adventure · French</small><h2>Morning at the little bakery</h2><p>Explore two pastries, welcome a visitor, then set up your own shop. Come back for a new order.</p><button className="b-primary" onClick={()=>setGuided(true)}>Open the bakery →</button></article>
  <article><small>Free creation</small><h2>A world of your own</h2><p>Decorate your room, place a keepsake, or open the story board. No quiz required to build.</p><Link href="/create/world/">Build my world →</Link> <Link href="/teach/studio/?workspace=learner&mode=young-creator">Open free creation →</Link></article></div></>}

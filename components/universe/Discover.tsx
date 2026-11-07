@@ -5,7 +5,7 @@ import "./discover.css";
 
 const paths = [
   {title:"Stories", body:"Read, listen and create your own stories.", href:"/read/", icon:BookOpen, image:"stories"},
-  {title:"Culture", body:"Meet people and explore life around the world.", href:"#workshops", icon:Globe2, image:"culture"},
+  {title:"Culture Weekly", body:"Read, wonder and talk about our world. A little journal to share together.", href:"/culture/", icon:Globe2, image:"culture"},
   {title:"Creation", body:"Turn what you learn into art, games and projects.", href:"/create/", icon:Paintbrush, image:"creation"}
 ];
 
