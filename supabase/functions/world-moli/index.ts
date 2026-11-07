@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { clean, obj } from "../../../lib/creator/workflow.ts";
 import { deepSeekProvider, type Turn } from "./provider.ts";
+import {entryForAsset} from "../../../lib/platform/vocabulary.ts";
 const assets = ["chair", "tree", "shop", "moli", "book", "bread", "stars", "valley"];
 Deno.serve(async (req) => {
   const origin = req.headers.get("origin") || "";
@@ -38,6 +39,7 @@ Deno.serve(async (req) => {
     const key = Deno.env.get("DEEPSEEK_KEY");
     if (!key) return send({ error: "Live Moli is unavailable. The room and French orders still work." }, 503);
     const text = clean(b.question, 260);
+    const learning=entryForAsset(String(b.selected),b.language==="en"?"en":"fr");
     const turns: Turn[] = [];
     if (Array.isArray(b.history)) {
       for (const t of b.history.slice(-4)) {
@@ -69,12 +71,13 @@ Deno.serve(async (req) => {
         publishedOptions: courses,
         lesson:
           "Une pomme means an apple. Learning rewards are determined only by the approved practice activity. Only mention courses present in publishedOptions. Never invent availability.",
+        vocabulary:learning?{id:learning.id,language:learning.language,level:learning.level,word:learning.pronunciation.text,meaning:learning.meaning,allowedExamples:learning.examples}:null,
       }, turns),
     );
     const reply = clean(response.reply, 390);
     if (/https?:|www\.|<[^>]*>/i.test(reply)) throw Error();
     return send({
-      reply,
+      reply: b.action==="vocabulary-example"&&learning ? learning.examples.includes(String(response.example))?String(response.example):learning.example : reply,
       suggestAsset: assets.includes(String(response.suggestAsset)) ? response.suggestAsset : null,
       courses: courses.map(({ id, title }) => ({ id, title })),
     }, 200);

@@ -26,7 +26,7 @@ module.exports = async function backend() {
   await db.exec(
     "create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema storage;create table auth.users(id uuid primary key);create table storage.objects(bucket_id text,name text);alter table storage.objects enable row level security;create policy legacy_permissive on storage.objects for all using(true) with check(true);grant usage on schema storage to authenticated,anon;grant select,insert on storage.objects to authenticated,anon;insert into storage.objects values('lb-private','somebody/art');create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint);create function auth.uid() returns uuid language sql as $$select nullif(current_setting('test.uid',true),'')::uuid$$;create function auth.jwt() returns jsonb language sql as $$select current_setting('test.jwt',true)::jsonb$$;grant usage on schema auth to public;create table public.explorers(id uuid primary key,guardian_id uuid,status text);create table public.guardian_preferences(explorer_id uuid primary key,save_memories boolean,ai_mentor_enabled boolean)",
   );
-  for (const f of ["learn-build-platform", "open-publishing", "platform-admin"]) {
+  for (const f of ["learn-build-platform", "open-publishing", "platform-admin", "growing-world", "growing-world-vocabulary-seed"]) {
     await db.exec(fs.readFileSync("supabase/" + f + ".sql", "utf8"));
   }
   await db.query("insert into auth.users values($1),($2),($3)", [ids.guardian, ids.creator, ids.admin]);
