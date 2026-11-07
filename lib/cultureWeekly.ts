@@ -13,6 +13,17 @@ export type WeeklyIssue = {
   sources: {id: string; title: string; url: string; note: string}[];
 };
 
+/** Self-contained, educator-supplied editorial previews. Keep their original HTML intact. */
+export const WEEKLY_HTML_ISSUES = [
+  {number: "02", slug: "hello-around-the-world", title: "How Do People Say Hello?", subtitle: "A tour of hellos, gestures and everyday greetings.", file: "issue-02-hello-around-the-world.html"},
+  {number: "03", slug: "foods-that-travelled", title: "Tomatoes, Chocolate and Corn: Foods That Travelled", subtitle: "Where did familiar foods begin their journeys?", file: "issue-03-foods-that-travelled.html"},
+  {number: "04", slug: "hopscotch-many-names", title: "Hopscotch Has Many Names", subtitle: "Children play similar games around the world, in different ways.", file: "issue-04-hopscotch-many-names.html"},
+  {number: "05", slug: "remembering-loved-ones", title: "Flowers, Photos and Favourite Foods: Remembering Loved Ones", subtitle: "How families in different places remember people they love.", file: "issue-05-remembering-loved-ones.html"},
+  {number: "06", slug: "clap-like-a-flamenco-dancer", title: "Clap Like a Flamenco Dancer", subtitle: "Explore rhythm, clapping and musical traditions.", file: "issue-06-clap-like-a-flamenco-dancer.html"},
+  {number: "07", slug: "when-is-lunch", title: "When Is Lunch? Different Days in Different Places", subtitle: "Why meal times and rest times differ around the world.", file: "issue-07-when-is-lunch.html"},
+  {number: "08", slug: "why-so-many-languages", title: "Why Are There So Many Languages?", subtitle: "A world question to wonder about together.", file: "issue-08-why-so-many-languages.html"},
+] as const;
+
 export const WEEKLY_ISSUES: WeeklyIssue[] = [{
   slug: "peace-in-ukraine",
   number: "01",

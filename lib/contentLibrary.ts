@@ -91,23 +91,6 @@ export const ORIGINAL_LIBRARY: LibraryContent[] = [
     createBrief: 'Create an original language activity about noticing seconds, minutes and everyday moments. Do not reproduce the book text or illustrations.',
   },
   {
-    id: 'salta-luna', version: 1, title: 'Salta, Luna', contentType: 'sing', language: 'Spanish', locale: 'es', supportLanguage: 'English',
-    suggestedAgeRange: '5–9', proficiencyLevel: 'Beginner / Pre-A1–A1', thinkingLevel: 'Listen, imitate a movement and change one detail', themes: ['Movement', 'Night', 'Animals'], minutes: 3,
-    ownerId: 'moliverse-demo', source: { name: 'MoliVerse original song sample', author: 'MoliVerse', edition: 'Demo melody v1', rightsStatus: 'original', rightsNotes: 'Original lyrics and synthesized melody made for this demo. No recorded singing voice is included.' },
-    visibility: 'public', processingStatus: 'ready', cover: { emoji: '🌙', from: '#b7b5ed', to: '#72b5c2' },
-    learningObjectives: ['Hear salta, gira, alto and bajo', 'Match each line with a movement', 'Change one animal or action'], relatedWorldIds: [], followUpActivity: 'Create a moonlit movement adventure', demo: true,
-    preQuestion: 'Listen for the action words. Which movement do you hear first?',
-    lyrics: [
-      { id: 'l1', text: 'Salta, luna, salta ya.', translation: 'Jump, moon, jump now.', start: 0, end: 2.4, action: 'Jump or lift both hands.' },
-      { id: 'l2', text: 'Gira, gato, una vez más.', translation: 'Turn, cat, one more time.', start: 2.4, end: 4.8, action: 'Turn one slow circle.' },
-      { id: 'l3', text: 'Alto, alto, toca el cielo.', translation: 'High, high, touch the sky.', start: 4.8, end: 7.2, action: 'Reach up high.' },
-      { id: 'l4', text: 'Bajo, bajo, duerme el suelo.', translation: 'Low, low, the ground is sleeping.', start: 7.2, end: 9.6, action: 'Crouch down quietly.' },
-    ],
-    audio: { kind: 'synth-demo', duration: 9.6, label: 'Original synthesized melody demo · no sung voice' },
-    postActivity: { type: 'actions', title: 'Move with the song', prompt: 'Complete each movement as you hear its line.', items: [{ id: 'jump', label: 'Jump with the moon' }, { id: 'turn', label: 'Turn with the cat' }, { id: 'high', label: 'Reach high' }, { id: 'low', label: 'Crouch low' }], answer: ['jump', 'turn', 'high', 'low'] },
-    createBrief: 'Create an original moonlit movement story in Spanish where a child follows Moli, a moon and a playful cat using salta, gira, alto and bajo.',
-  },
-  {
     id: 'cascabel', version: 1, title: 'Cascabel', contentType: 'sing', language: 'Spanish', locale: 'es', supportLanguage: 'English',
     suggestedAgeRange: '6–9', proficiencyLevel: 'All levels', thinkingLevel: 'Listen and notice rhythm', themes: ['Music', 'Rhythm'], minutes: 3,
     ownerId: 'moliverse-library', source: { name: 'Educator-provided recording', rightsStatus: 'licensed', rightsNotes: 'The uploader confirmed permission for public playback on MoliVerse. Recording artist, composer and edition were not supplied; lyrics and timestamps are not available.' },

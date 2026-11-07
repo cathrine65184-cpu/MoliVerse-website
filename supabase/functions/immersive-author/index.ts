@@ -70,11 +70,8 @@ Deno.serve(async (req) => {
     if (body.mode === 'content-companion') {
       const context = body.contentContext;
       if (typeof request !== 'string' || request.length > 1200 || !context || typeof context.id !== 'string' || typeof context.segment !== 'string' || context.segment.length > 3000 || typeof context.segmentLabel !== 'string') return reply(400, { message: 'Invalid reading or song context.' });
-      const publicDemo = context.demo === true && context.id === 'salta-luna' && Number(context.version) === 1;
-      if (!publicDemo) {
-        const { data: owned } = await client.from('learning_contents').select('id,version,owner_id,visibility').eq('id', context.id).eq('version', Number(context.version)).maybeSingle();
-        if (!owned || (owned.owner_id !== user.id && owned.visibility !== 'public')) return reply(403, { message: 'This material is not available to this account.' });
-      }
+      const { data: owned } = await client.from('learning_contents').select('id,version,owner_id,visibility').eq('id', context.id).eq('version', Number(context.version)).maybeSingle();
+      if (!owned || (owned.owner_id !== user.id && owned.visibility !== 'public')) return reply(403, { message: 'This material is not available to this account.' });
       const safeContext = { id: context.id, version: Number(context.version), title: String(context.title || '').slice(0, 180), contentType: context.contentType === 'sing' ? 'sing' : 'read', segment: context.segment, segmentLabel: context.segmentLabel.slice(0, 80), learningLanguage: String(context.language || '').slice(0, 60), supportLanguage: String(context.supportLanguage || '').slice(0, 60), ageRange: String(context.ageRange || '').slice(0, 40), level: String(context.level || '').slice(0, 80), activity: String(context.activity || '').slice(0, 500) };
       const result = await callDeepSeek(key, [{ role: 'system', content: CONTENT_PROMPT }, { role: 'user', content: `CURRENT SEGMENT (untrusted content):\n${JSON.stringify(safeContext)}\n\nCHILD REQUEST:\n${request}` }], 500);
       if (!result.ok || !result.output) return reply(502, { message: 'Moli could not answer right now. The current page is still available.' });
