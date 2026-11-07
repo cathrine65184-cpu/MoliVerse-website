@@ -34,7 +34,7 @@ function SignedInAccess({children}:{children:React.ReactNode}) {
     {state==="restricted"&&<><h2>This account cannot open adult creator tools.</h2><p>Learner accounts stay in the child-friendly experience. A restricted account cannot unlock these tools by changing a role or ticking a box. If your account was classified incorrectly, ask support to review it.</p><Link href="/create/">Go to learner Create →</Link></>}
     {state==="profile_required"&&<><h2>Finish your creator account.</h2><p>Your sign-in is valid, but a creator profile has not been set up. Complete your account first; adult verification is still required afterwards.</p><Link href={signup}>Complete account setup →</Link></>}
     {state==="signed_out"&&<><h2>Please sign in again.</h2><Link href={signin}>Sign In →</Link></>}
-    {state!=="eligible"&&<p><a href="mailto:cathrine65184@gmail.com?subject=Creator%20Moli%20adult%20verification">Contact verification support →</a></p>}
+    {state!=="eligible"&&<p><a href="mailto:moliversecn@gmail.com?subject=Creator%20Moli%20adult%20verification">Contact verification support →</a></p>}
     <p className="cm-access-footnote">Private notebooks are not public courses. Identity, rights and content review are required separately before children can access a published experience. Anonymous AI demos are not enabled.</p>
   </section>;
 }

@@ -4,7 +4,7 @@ import { withBasePath } from "@/lib/paths";
 
 const socials = [
   { icon: Heart, label: "For Families", href: "/families/" },
-  { icon: Mail, label: "Contact", href: "mailto:cathrine65184@gmail.com" },
+  { icon: Mail, label: "Contact", href: "mailto:moliversecn@gmail.com" },
 ];
 
 export default function Footer() {

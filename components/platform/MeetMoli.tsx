@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Shell } from "@/components/universe/Shell";
 import { supabase } from "@/lib/supabase";
-import { activeExplorerId } from "@/lib/family";
+import { activeExplorerId, rememberExplorer } from "@/lib/family";
 import { withBasePath } from "@/lib/paths";
 import { rpc } from "@/lib/platform/client";
 import { sprites } from "@/lib/platform/roomArt";
@@ -108,6 +108,11 @@ export default function MeetMoli() {
       try {
         e = activeExplorerId();
       } catch {}
+      if (uid && !e) {
+        const { data: explorers } = await supabase.from("explorers").select("id").eq("guardian_id", uid).eq("status", "active").order("activated_at", { ascending: false }).limit(1);
+        e = explorers?.[0]?.id || null;
+        if (e) try { rememberExplorer(e); } catch {}
+      }
       let next: Access = { uid, e: null, ai: false, save: false };
       if (uid && e) {
         try {
@@ -139,7 +144,7 @@ export default function MeetMoli() {
           );
         }
       } else {setNotice(
-          "Choose an active Explorer on the family page to enable private account features.",
+          "An active Explorer is needed for live chat. Ask a guardian to complete the one-time setup on the families page.",
         );}
       setAccess(next);
     } catch {
@@ -442,7 +447,7 @@ export default function MeetMoli() {
                 : (
                   <>
                     A guardian must activate this Explorer once before live conversation.{" "}
-                    <Link href="/families/">Ask a grown-up to set it up.</Link>
+                    <Link href="/families/#setup">Ask a grown-up to set it up.</Link>
                     {" "}
                     You can use all offline word cards now.
                   </>

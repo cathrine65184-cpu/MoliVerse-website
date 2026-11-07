@@ -1,6 +1,7 @@
 import { InkBreak } from "@/components/universe/InkSeam";
 import Link from "next/link";
 import { ArrowRight, HeartHandshake, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
+import ExplorerSetup from "@/components/family/ExplorerSetup";
 
 const promises = [
   {
@@ -30,8 +31,9 @@ export default function FamiliesPage() {
           <p className="text-xs font-medium uppercase tracking-[0.24em] text-violet-300">For families</p>
           <h1 className="mt-5 font-display text-4xl font-semibold tracking-tight text-white sm:text-6xl">A language journey your child can care about.</h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">MoliVerse helps children create and explore language stories with Moli, while families and educators remain part of the learning journey.</p>
-          <div className="mt-9 flex flex-wrap justify-center gap-3"><Link href="/explore/" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_0_36px_-10px_rgba(139,92,246,0.8)]">Set up an Explorer <ArrowRight className="h-4 w-4" /></Link><Link href="/family/" className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-6 py-3.5 text-sm font-semibold text-slate-200 hover:border-cyan-400/30 hover:text-cyan-200">Family dashboard</Link></div>
+          <div className="mt-9 flex flex-wrap justify-center gap-3"><a href="#setup" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_0_36px_-10px_rgba(139,92,246,0.8)]">Set up an Explorer <ArrowRight className="h-4 w-4" /></a><Link href="/family/" className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-6 py-3.5 text-sm font-semibold text-slate-200 hover:border-cyan-400/30 hover:text-cyan-200">Family dashboard</Link></div>
         </section>
+        <ExplorerSetup/>
 
         <InkBreak/>
         <section className="mt-12 grid gap-5 md:grid-cols-3">
