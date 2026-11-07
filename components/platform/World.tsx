@@ -12,10 +12,10 @@ import { media, readFile, rpc } from "@/lib/platform/client";
 import "./platform.css";
 import "./growing-world.css";
 
-function Picture({ a }: { a: Asset }) {
+export function Picture({ a }: { a: Asset }) {
   const clipId=useId();
   const sprite=a.source==="official"?sprites[a.id]:null;
-  if(sprite)return <svg aria-hidden="true" viewBox={sprite.box.join(" ")}><defs><clipPath id={clipId}>{sprite.clip?<polygon points={sprite.clip}/>:<rect x={sprite.box[0]} y={sprite.box[1]} width={sprite.box[2]} height={sprite.box[3]}/>}</clipPath></defs><image clipPath={`url(#${clipId})`} href={withBasePath(`/room-art/${sprite.sheet}.png`)} width="1448" height="1086"/></svg>;
+  if(sprite)return <svg aria-hidden="true" viewBox={sprite.box.join(" ")}><defs><clipPath id={clipId}>{sprite.clip?<polygon points={sprite.clip}/>:<rect x={sprite.box[0]} y={sprite.box[1]} width={sprite.box[2]} height={sprite.box[3]}/>}</clipPath></defs><image clipPath={`url(#${clipId})`} href={withBasePath(`/room-art/${sprite.sheet}.png`)} width={sprite.width||1448} height={sprite.height||1086}/></svg>;
   if (a.thumb || a.icon === "moli" || a.icon === "valley") {
     return (
       <img
@@ -131,6 +131,7 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
     [chat, converse] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const guide = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
+    if (new URLSearchParams(location.search).get("challenge") === "apple") quiz(true);
     if (new URLSearchParams(location.search).get("moli") === "1" && guide.current) {
       guide.current.open = true;
       guide.current.scrollIntoView({ block: "nearest" });

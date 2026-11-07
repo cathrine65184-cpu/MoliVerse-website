@@ -4,8 +4,8 @@ import {entryForAsset,concepts,checkVocabulary,choosePronunciation,restoreVocab,
 import {rpc} from "@/lib/platform/client";
 import {supabase} from "@/lib/supabase";
 
-export default function VocabularyCard({asset,language,e,uid,sessionOnly,onClose}:{asset:string;language:string;e:string|null;uid:string|null;sessionOnly:boolean;onClose:()=>void}){
- const entry=entryForAsset(asset,language),[events,setEvents]=useState<VocabEvent[]>([]),[phase,setPhase]=useState<"word"|"practice"|"review">("word"),[answer,setAnswer]=useState<string|null>(null),[notice,setNotice]=useState(""),[busy,setBusy]=useState(false),[ready,setReady]=useState(false),[audioNotice,setAudioNotice]=useState("");
+export default function VocabularyCard({asset,language,e,uid,sessionOnly,onClose,initialMode="word",onProgress,allowAI=true}:{asset:string;language:string;e:string|null;uid:string|null;sessionOnly:boolean;onClose:()=>void;initialMode?:"word"|"practice"|"review";onProgress?:()=>void;allowAI?:boolean}){
+ const entry=entryForAsset(asset,language),[events,setEvents]=useState<VocabEvent[]>([]),[phase,setPhase]=useState<"word"|"practice"|"review">(initialMode),[answer,setAnswer]=useState<string|null>(null),[notice,setNotice]=useState(""),[busy,setBusy]=useState(false),[ready,setReady]=useState(false),[audioNotice,setAudioNotice]=useState("");
  const [voices,setVoices]=useState<SpeechSynthesisVoice[]>([]),audio=useRef<HTMLAudioElement|null>(null),pending=useRef<VocabEvent|null>(null);
  const storageKey="moliverse:room-vocabulary:v1:"+(uid||"guest");
  const [moliExample,setMoliExample]=useState("");
@@ -30,30 +30,31 @@ export default function VocabularyCard({asset,language,e,uid,sessionOnly,onClose
      let saved=event;
      if(e)saved=await rpc<VocabEvent>("lb_vocab_record",{e,entry_id:event.entry,event_kind:event.kind,choice:event.choice,nonce:event.nonce});
      const next=[...events.filter(x=>x.nonce!==saved.nonce),saved].slice(-500);
-     if(!e&&!sessionOnly)localStorage.setItem(storageKey,JSON.stringify(next));
-     setEvents(next);pending.current=null;setNotice(e?"Vocabulary note saved privately.":sessionOnly?"Practice kept for this visit only.":"Vocabulary note saved on this device.");
+     if(!e&&!sessionOnly){try{localStorage.setItem(storageKey,JSON.stringify(next))}catch{setEvents(next);pending.current=null;setNotice("Device storage is unavailable. Your practice is kept in this card for this visit only.");return}}
+     setEvents(next);pending.current=null;onProgress?.();setNotice(e?"Vocabulary note saved privately.":sessionOnly?"Practice kept for this visit only.":"Vocabulary note saved on this device.");
    }catch{setNotice("Your answer is shown, but your vocabulary note was not saved. Please retry.")}
    finally{setBusy(false)}
  }
- function listen(){
+ function listen(text?:string){
    if(!entry)return;setAudioNotice("");
    if(sound.kind==="audio"){
      audio.current?.pause();audio.current=new Audio(sound.url);void audio.current.play().catch(()=>setAudioNotice("Audio could not play. The word and practice are still available."));return;
    }
    if(sound.kind==="device"){
      const voice=voices.find(v=>v.localService&&v.lang===sound.locale);if(!voice)return;
-     window.speechSynthesis.cancel();const line=new SpeechSynthesisUtterance(entry.pronunciation.text);line.voice=voice;line.lang=voice.lang;line.rate=.8;
+     window.speechSynthesis.cancel();const line=new SpeechSynthesisUtterance(text||entry.pronunciation.text);line.voice=voice;line.lang=voice.lang;line.rate=.8;
      line.onerror=()=>setAudioNotice("Device speech could not play. Try again or read the word together.");window.speechSynthesis.speak(line);
    }
  }
  return <section className="pv-panel pv-vocab" aria-label="Tap to Learn">
    <div className="pv-vocab-head"><small>Tap to Learn · {language==="fr"?"French":"English"}</small><button onClick={onClose}>Close word card</button></div>
    <h2 lang={language}>{entry.article} {entry.word}</h2><p>{entry.meaning}</p>
-   <button disabled={sound.kind==="unavailable"} onClick={listen}>Listen · {sound.kind==="audio"?"recording":"device voice"}</button>
+   <button disabled={sound.kind==="unavailable"} onClick={()=>listen()}>Listen · {sound.kind==="audio"?"recording":"device voice"}</button>
    {sound.kind==="unavailable"&&<p>No local {language==="fr"?"French":"English"} voice is installed. Reading and practice still work; no voice recording is sent.</p>}
    <p role="status">{audioNotice}</p>
    <p><strong>Example</strong><br/><span lang={language}>{entry.example}</span></p>
-   <details><summary>Optional Moli example</summary><p>With your guardian’s AI permission, Moli can choose another checked example for this object. This sends the object and language to DeepSeek, not a typed message. No reward or grade changes.</p><button disabled={!e||busy} onClick={async()=>{setBusy(true);try{const {data,error}=await supabase.functions.invoke("world-moli",{body:{explorer:e,action:"vocabulary-example",selected:asset,language,question:"Choose a short example for this object."}});if(error||!entry.examples.includes(data?.reply))throw Error();setMoliExample(data.reply)}catch{setMoliExample("Live Moli is unavailable or not permitted. The checked example above still works.")}finally{setBusy(false)}}}>Ask Moli for an example</button><p role="status">{moliExample}</p></details>
+   {sound.kind==="device"&&<button onClick={()=>listen(entry.example)}>Listen to example · device voice</button>}
+   {allowAI&&<details><summary>Optional Moli example</summary><p>With your guardian’s AI permission, Moli can choose another checked example for this object. This sends the object and language to DeepSeek, not a typed message. No reward or grade changes.</p><button disabled={!e||busy} onClick={async()=>{setBusy(true);try{const {data,error}=await supabase.functions.invoke("world-moli",{body:{explorer:e,action:"vocabulary-example",selected:asset,language,question:"Choose a short example for this object."}});if(error||!entry.examples.includes(data?.reply))throw Error();setMoliExample(data.reply)}catch{setMoliExample("Live Moli is unavailable or not permitted. The checked example above still works.")}finally{setBusy(false)}}}>Ask Moli for an example</button><p role="status">{moliExample}</p></details>}
    <small>{entry.article} · {entry.gender==="none"?"noun":entry.gender+" noun"} · {entry.level}</small>
    <div className="pv-toolbar">
      <button disabled={!ready||busy||summary.discoveries>0} onClick={()=>record("discovery",null)}>{summary.discoveries?"Added to my words":"Add to my words"}</button>
