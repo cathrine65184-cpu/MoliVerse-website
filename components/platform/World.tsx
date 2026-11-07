@@ -1,14 +1,21 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { activeExplorerId } from "@/lib/family";
 import { withBasePath } from "@/lib/paths";
-import { type Asset, clamp, official, orders, type Placed, validScene } from "@/lib/platform/world";
+import { type Asset, clamp, official, orders, type Placed, validScene,starterScene } from "@/lib/platform/world";
+import {sprites} from "@/lib/platform/roomArt";
+import {entryForAsset} from "@/lib/platform/vocabulary";
+import VocabularyCard from "./VocabularyCard";
 import { media, readFile, rpc } from "@/lib/platform/client";
 import "./platform.css";
+import "./growing-world.css";
 
 function Picture({ a }: { a: Asset }) {
+  const clipId=useId();
+  const sprite=a.source==="official"?sprites[a.id]:null;
+  if(sprite)return <svg aria-hidden="true" viewBox={sprite.box.join(" ")}><defs><clipPath id={clipId}>{sprite.clip?<polygon points={sprite.clip}/>:<rect x={sprite.box[0]} y={sprite.box[1]} width={sprite.box[2]} height={sprite.box[3]}/>}</clipPath></defs><image clipPath={`url(#${clipId})`} href={withBasePath(`/room-art/${sprite.sheet}.png`)} width="1448" height="1086"/></svg>;
   if (a.thumb || a.icon === "moli" || a.icon === "valley") {
     return (
       <img
@@ -20,7 +27,7 @@ function Picture({ a }: { a: Asset }) {
   }
   return <span aria-hidden>{a.icon}</span>;
 }
-function Order({ e, onEarn }: { e: string | null; onEarn: () => Promise<void> }) {
+function Order({ e, onEarn,onClose }: { e: string | null; onEarn: () => Promise<void>;onClose:()=>void }) {
   const [answers, set] = useState<string[]>([]),
     [nonce, fresh] = useState(() => crypto.randomUUID()),
     [info, msg] = useState(""),
@@ -78,6 +85,7 @@ function Order({ e, onEarn }: { e: string | null; onEarn: () => Promise<void> })
         </p>
       )}
       <p role="status">{info}</p>
+      <button onClick={onClose} disabled={busy}>Return to my room</button>
       <button
         disabled={busy}
         onClick={() => {
@@ -97,6 +105,7 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
     [earned, rewards] = useState<string[]>([]),
     [attemptCount, count] = useState(0),
     [ready, setReady] = useState(false);
+  const [assetCategory,setAssetCategory]=useState("All"),[language,setLanguage]=useState("fr"),[vocabAsset,setVocabAsset]=useState("");
   const [objects, scene] = useState<Placed[]>([]),
     [undo, past] = useState<Placed[][]>([]),
     [redo, future] = useState<Placed[][]>([]),
@@ -157,12 +166,15 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
     scene(next);
     mark(true);
   }
-  function add(id: string) {
+  function add(id: string,x=50,y=65) {
+    if(!ready)return;
+    const asset=assets.find(a=>a.id===id);if(!asset)return;
+    if(asset.collectible&&!earned.includes(id)){quiz(true);return;}
     if (objects.length >= 60) {
       msg("Room is full (60 objects).");
       return;
     }
-    const obj = { id: crypto.randomUUID(), asset: id, x: 50, y: 50, size: 18, angle: 0 };
+    const obj = { id: crypto.randomUUID(), asset: id, x:clamp(x,0,100), y:clamp(y,0,100), size: 20, angle: 0 };
     change([...objects, obj]);
     select(obj.id);
   }
@@ -202,17 +214,19 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
     setReady(false);
     try {
       const list = await inventory();
-      let saved: unknown = [], version = 0;
+      let saved: unknown = starterScene().filter(o=>list.some(a=>a.id===o.asset)), version = 0;
       if (e) {
         const w = await supabase.from("lb_worlds").select("scene,revision").eq("explorer", e).maybeSingle();
         if (w.error) throw Error("Could not open the private room.");
-        saved = w.data?.scene || [];
+        saved = w.data?.scene ?? saved;
         version = w.data?.revision || 0;
+        const settings=await rpc<{language:string}>("lb_room_settings",{e,learning_language:null});setLanguage(settings.language);
       } else if (!sessionOnly) {
         try {
-          saved = JSON.parse(localStorage.getItem(guestKey) || "[]");
+          const raw=localStorage.getItem(guestKey);if(raw!==null)saved=JSON.parse(raw);
+          setLanguage(localStorage.getItem(guestKey+":language")==="en"?"en":"fr");
         } catch {
-          saved = [];
+          saved = starterScene();
         }
       }
       if (!validScene(saved, list)) {
@@ -249,8 +263,8 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
       return;
     }
     await job(async () => {
-      if (e) rev(await rpc("lb_save_world", { e, expected: revision, objects }));
-      else localStorage.setItem(guestKey, JSON.stringify(objects));
+      if (e) {rev(await rpc("lb_save_world", { e, expected: revision, objects }));await rpc("lb_room_settings",{e,learning_language:language});}
+      else {localStorage.setItem(guestKey, JSON.stringify(objects));localStorage.setItem(guestKey+":language",language);}
       mark(false);
       msg(e ? "Private room saved to your Explorer." : "Room saved on this device.");
     });
@@ -274,23 +288,25 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
     });
   }
   const picked = objects.find((x) => x.id === sel), art = assets.find((a) => a.id === picked?.asset);
-  const shown = assets.filter((a) =>
+  const shown = assets.filter((a) =>(assetCategory==="All"||a.category===assetCategory)&&(
     source === "Official"
       ? a.source === "official"
       : source === "My Uploads"
       ? a.source === "upload"
-      : a.source === "generated"
+      : a.source === "generated")
   );
   return (
-    <main className="pv">
-      <Link href="/create/">← Create</Link>
-      <h1>My little world</h1>
+    <main className="pv pv-growing">
+      <Link href="/learn/">← Learning campus</Link>
+      <small className="pv-growing-kicker">Learn · Practise · Unlock · Decorate · Revisit</small>
+      <h1>My Growing World</h1>
+      <p>Make a cosy place that feels like you. Move things, try a new word, and make room for a little discovery.</p>
       <p>
         {e
           ? "Guardian-linked Explorer · private cloud room"
           : sessionOnly
           ? "Explorer saving unavailable · session only"
-          : "Free room · saved only in this browser"}. Build for fun or practise to collect a keepsake.
+          : "Guest room · saved only in this browser"}. Your starter furniture is free. Learning adds new keepsakes.
       </p>
       {!e && (
         <p>
@@ -337,10 +353,12 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
           </>
         )}
         <button onClick={() => quiz(!practice)}>French fruit orders</button>
+        <label>Learning language<select value={language} onChange={ev=>{setLanguage(ev.target.value);setVocabAsset("");mark(true)}}><option value="fr">Français</option><option value="en">English</option></select></label>
       </div>
       {practice && (
         <Order
           e={e}
+          onClose={()=>quiz(false)}
           onEarn={async () => {
             await inventory();
           }}
@@ -348,7 +366,8 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
       )}
       <div className="pv-world-layout">
         <section>
-          <div className="pv-view">
+          <div className="pv-view" onDragOver={ev=>{if(!play)ev.preventDefault()}} onDrop={ev=>{ev.preventDefault();if(play)return;const rect=plane.current?.getBoundingClientRect();if(rect)add(ev.dataTransfer.getData("text/x-moli-asset"),(ev.clientX-rect.left)/rect.width*100,(ev.clientY-rect.top)/rect.height*100)}}>
+            <div className="pv-room-window" aria-hidden="true"><i/><i/><i/><i/></div><div className="pv-room-floor" aria-hidden="true"/>
             <div
               className="pv-plane"
               ref={plane}
@@ -404,9 +423,15 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
                       if (drag.current) scene(drag.current.before);
                       drag.current = null;
                     }}
+                    onKeyDown={ev=>{
+                      if(play||!ready||!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(ev.key))return;
+                      ev.preventDefault();select(o.id);const step=ev.shiftKey?5:1;
+                      edit(o.id,{x:clamp(o.x+(ev.key==="ArrowLeft"?-step:ev.key==="ArrowRight"?step:0),0,100),y:clamp(o.y+(ev.key==="ArrowUp"?-step:ev.key==="ArrowDown"?step:0),0,100)});
+                    }}
                     onClick={() => {
                       select(o.id);
                       if (play) {
+                        if(entryForAsset(a.id,language))setVocabAsset(a.id);
                         notice(
                           a.id === "apple-basket"
                             ? "Une pomme · an apple. Would you like a new order?"
@@ -422,9 +447,10 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
                 );
               })}
             </div>
-            {!objects.length && <span className="pv-empty">Your room starts here. Pick a free object.</span>}
+            {!objects.length && <span className="pv-empty">A fresh arrangement. Choose furniture from your collection.</span>}
           </div>
-          <div className="pv-toolbar">
+          <details className="pv-view-tools"><summary>Things in my room · {objects.length}</summary><p>Select a covered object here. In Build mode, arrow keys also move a focused object.</p><div className="pv-toolbar">{objects.map((o,i)=><button key={o.id} onClick={()=>{select(o.id);if(play&&entryForAsset(o.asset,language))setVocabAsset(o.asset)}}>{assets.find(a=>a.id===o.asset)?.name} {i+1}</button>)}</div></details>
+          <details className="pv-view-tools"><summary>Look around the room</summary><div className="pv-toolbar">
             <label>
               Zoom<input
                 type="range"
@@ -447,7 +473,7 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
                 />
               </label>
             ))}
-          </div>
+          </div></details>
           {play
             ? (
               <>
@@ -482,23 +508,6 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
                 {art?.id === "apple-basket" && (
                   <>
                     <button onClick={() => quiz(true)}>Practise this word</button>
-                    <button
-                      onClick={() => {
-                        const voice = window.speechSynthesis?.getVoices().find((v) =>
-                          v.localService && v.lang.startsWith("fr")
-                        );
-                        if (!voice) {
-                          notice("No local French voice is available. Une pomme means an apple.");
-                          return;
-                        }
-                        const line = new SpeechSynthesisUtterance("une pomme");
-                        line.voice = voice;
-                        line.lang = voice.lang;
-                        window.speechSynthesis.speak(line);
-                      }}
-                    >
-                      Hear une pomme · device voice
-                    </button>
                   </>
                 )}
               </>
@@ -506,9 +515,10 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
             : picked && (
               <div className="pv-panel">
                 <b>{art?.name}</b>
+                {art&&entryForAsset(art.id,language)&&<button onClick={()=>setVocabAsset(art.id)}>Learn this word</button>}
                 {(["x", "y", "size", "angle"] as const).map((k) => (
                   <label key={k}>
-                    {k}
+                    {{x:"Move left / right",y:"Move up / down",size:"Size",angle:"Turn"}[k]}
                     <input
                       type="range"
                       min={k === "angle" ? -180 : k === "size" ? 6 : 0}
@@ -544,10 +554,11 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
                 </button>
               </div>
             )}
+          {vocabAsset&&<VocabularyCard key={vocabAsset+language} asset={vocabAsset} language={language} e={e} uid={uid} sessionOnly={sessionOnly} onClose={()=>setVocabAsset("")}/>}
         </section>
         {!play && (
           <aside className="pv-panel">
-            <h2>Asset library</h2>
+            <h2>My collection</h2><p>Drag into your room, or tap to add. Select an object to move, turn or learn.</p>
             {["Official", "My Uploads", "Made with Moli"].map((s) => (
               <button
                 key={s}
@@ -557,11 +568,15 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
                 {s}
               </button>
             ))}
+            <label>Collection category<select value={assetCategory} onChange={ev=>setAssetCategory(ev.target.value)}>{["All",...Array.from(new Set(assets.map(a=>a.category)))].map(c=><option key={c}>{c}</option>)}</select></label>
             <div className="pv-assets">
               {shown.map((a) => (
                 <button
                   key={a.id}
-                  disabled={!ready || a.collectible && !earned.includes(a.id)}
+                  disabled={!ready}
+                  draggable={!a.collectible||earned.includes(a.id)}
+                  onDragStart={ev=>ev.dataTransfer.setData("text/x-moli-asset",a.id)}
+                  aria-label={a.name+(a.collectible&&!earned.includes(a.id)?" · locked, learn to unlock":"")}
                   onClick={() => add(a.id)}
                 >
                   <Picture a={a} />
@@ -696,7 +711,7 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
                 onClick={() =>
                   job(async () => {
                     const { data, error } = await supabase.functions.invoke("world-moli", {
-                      body: { explorer: e, question, history: chat.slice(-4), selected: art?.id },
+                      body: { explorer: e, question, history: chat.slice(-4), selected: art?.id,language },
                     });
                     if (error || !data?.reply) {
                       throw Error("Live Moli is unavailable or not permitted. Free tools still work.");
@@ -746,7 +761,7 @@ function Studio({ e, uid, sessionOnly }: { e: string | null; uid: string | null;
           onClick={() =>
             job(async () => {
               if (e) await media("erase", { explorer: e });
-              else localStorage.removeItem(guestKey);
+              else {localStorage.removeItem(guestKey);localStorage.removeItem(guestKey+":language");localStorage.removeItem("moliverse:room-vocabulary:v1:"+(uid||"guest"));}
               askErase(false);
               await open();
             })}

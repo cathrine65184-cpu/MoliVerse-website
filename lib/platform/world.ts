@@ -17,6 +17,19 @@ export const official: Asset[] = [
   ["stars", "Paper stars", "Decorations", "✨"],
   ["valley", "Campus window", "Backgrounds", "valley"],
   ["apple-basket", "Apple basket", "Learning Collectibles", "🍎"],
+  ["table", "Tea table", "Furniture", "table"],
+  ["bed", "Little bed", "Furniture", "bed"],
+  ["lamp", "Warm lamp", "Decorations", "lamp"],
+  ["bookshelf", "Bookshelf", "Furniture", "bookshelf"],
+  ["rug", "Flower rug", "Decorations", "rug"],
+  ["desk", "Writing desk", "Furniture", "desk"],
+  ["plant", "Leafy plant", "Nature", "plant"],
+  ["cabinet", "Flower wardrobe", "Furniture", "cabinet"],
+  ["chest", "Treasure chest", "Furniture", "chest"],
+  ["mirror", "Little mirror", "Decorations", "mirror"],
+  ["clock", "Flower clock", "Decorations", "clock"],
+  ["cushions", "Soft cushions", "Decorations", "cushions"],
+  ["armchair", "Cosy armchair", "Furniture", "armchair"],
 ].map(([id, name, category, icon]) => ({
   id,
   name,
@@ -26,6 +39,14 @@ export const official: Asset[] = [
   collectible: id === "apple-basket",
 }));
 export type Placed = { id: string; asset: string; x: number; y: number; size: number; angle: number };
+export function starterScene():Placed[]{return [
+ {id:"starter-rug",asset:"rug",x:55,y:81,size:38,angle:0},
+ {id:"starter-bookshelf",asset:"bookshelf",x:22,y:51,size:27,angle:0},
+ {id:"starter-lamp",asset:"lamp",x:78,y:47,size:22,angle:0},
+ {id:"starter-table",asset:"table",x:65,y:71,size:25,angle:0},
+ {id:"starter-chair",asset:"chair",x:43,y:69,size:21,angle:0},
+ {id:"starter-moli",asset:"moli",x:84,y:81,size:14,angle:0}
+];}
 export const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 export function validScene(v: unknown, assets: Asset[]): v is Placed[] {
   if (!Array.isArray(v) || v.length > 60 || new Set(v.map((o) => o?.id)).size !== v.length) return false;

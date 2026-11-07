@@ -1,2 +1,2 @@
-import LearnerCreate from "@/components/learner/LearnerCreate";
-export default function Page(){return <LearnerCreate/>;}
+import CreateEntry from "@/components/platform/CreateEntry";
+export default function Page(){return <CreateEntry/>;}
