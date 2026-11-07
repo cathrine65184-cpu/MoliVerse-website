@@ -21,8 +21,11 @@ Deno.serve(async req=>{
     const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
     const {data:{user},error:authError}=await db.auth.getUser(token);
     if(authError||!user)throw new Problem("Please sign in again.",401);
-    // This flag is admin-managed. A self-selected teacher role or client checkbox is not age verification.
-    if(user.app_metadata?.creator_moli_adult!==true)throw new Problem("Creator Space is for invited adult educators and adult creators.",403);
+    // Adult brainstorming and creator/publication approval are deliberately separate.
+    // Service RPC rechecks the current profile + verified adult record, not client metadata.
+    const {data:eligibility,error:eligibilityError}=await db.rpc("cm_access_for",{actor:user.id});
+    check(eligibilityError);
+    if(eligibility!=="eligible")throw new Problem(eligibility==="restricted"?"This account cannot use adult creator tools. Visit Creator Moli access for support.":"Complete adult verification in Creator Moli before starting a private notebook.",403);
     const raw=await req.text();if(raw.length>35000)throw new Problem("Use a shorter excerpt or draft.",413);
     let body;try{body=obj(JSON.parse(raw))}catch{throw new Problem("Invalid request.")}
     const action=body.action, uid=user.id;
@@ -74,7 +77,11 @@ Deno.serve(async req=>{
     else if(action==="review_course_draft"){
       if(!s.versions.length)throw new Problem("Save a draft before requesting a review.",409);
       s.review=await review(context(s,"Review my latest saved version",await creatorContext()));s.reviewedVersion=s.versions.length;s.stage="REVIEW";
-    }else if(action==="submit")submit(s);
+    }else if(action==="submit"){
+      const {data:creator,error:creatorError}=await db.from("lb_creators").select("status").eq("id",uid).maybeSingle();check(creatorError);
+      if(creator?.status!=="approved")throw new Problem("Private brainstorming is available. Before submitting, complete the separate creator identity and profile review in Share a Learning Experience.",403);
+      submit(s);
+    }
     else throw new Problem("Unsupported tool.");
     return json({project:await commit()});
   }catch(e){const issue=publicError(e);return json({error:issue.message},issue.status)}

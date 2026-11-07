@@ -48,6 +48,7 @@ function Desk({ uid, admin }: { uid: string; admin: boolean }) {
     [busy, wait] = useState(false),
     [message, msg] = useState("");
   const [notebook, setNotebook] = useState("");
+  const [filesReady,setFilesReady] = useState(false);
   useEffect(() => {
     setNotebook(new URLSearchParams(location.search).get("notebook") || "");
   }, []);
@@ -58,6 +59,9 @@ function Desk({ uid, admin }: { uid: string; admin: boolean }) {
     ).maybeSingle();
     if (c.error) throw Error("Creator services unavailable. Check the platform migration.");
     profile(c.data as Creator | null);
+    if(c.data?.status==="approved") {
+      try{setFilesReady((await media<{files:boolean}>("creator_capabilities",{})).files===true)}catch{setFilesReady(false)}
+    }
     const rows = await supabase.from("lb_submissions").select(columns).eq("owner_id", uid).order(
       "updated_at",
       { ascending: false },
@@ -118,6 +122,7 @@ function Desk({ uid, admin }: { uid: string; admin: boolean }) {
   }
   const editable = !selected || ["draft", "rejected", "changes_requested"].includes(selected.status);
   async function upload(file: File) {
+    if(!filesReady){msg("Secure file upload is not available yet. Use an authorised HTTPS resource link, or return later.");return;}
     if (!accept[m.type]) return;
     await job(async () => {
       msg("Reading the file…");
@@ -143,7 +148,7 @@ function Desk({ uid, admin }: { uid: string; admin: boolean }) {
       <p role="status">{message}</p>
       {!ready && <button disabled={busy} onClick={() => job(refresh)}>Reload creator space</button>}
       {ready && creator?.status !== "approved" && (
-        <section className="pv-panel">
+        <section className="pv-panel" id="creator-profile">
           <h2>Creator profile & eligibility</h2>
           <p>
             Status:{" "}
@@ -195,10 +200,11 @@ function Desk({ uid, admin }: { uid: string; admin: boolean }) {
       )}
       {creator?.status === "approved" && (
         <>
+          <section className="pv-panel" id="creator-profile"><small>YOUR APPROVED CREATOR PROFILE</small><h2>{creator.name}</h2><p>{creator.bio}</p><p>{creator.languages} · {creator.interests}</p><Link href={"/creators/?id="+uid}>View your public profile →</Link><p>For changes to reviewed identity details, contact the review team. Adult brainstorming verification is separate from this public profile.</p></section>
           <nav className="pv-toolbar">
             <a href="#submissions">My submissions</a>
             <Link href={"/creators/?id=" + uid}>My public profile</Link>
-            <Link href="/teach/creator/">Brainstorm with Creator Moli (invited adults)</Link>
+            <Link href="/teach/creator/">Brainstorm with Creator Moli (verified adults)</Link>
             <a href="#opportunities">Opportunities</a>
           </nav>
           <section className="pv-panel" id="submissions">
@@ -283,6 +289,7 @@ function Desk({ uid, admin }: { uid: string; admin: boolean }) {
                   <label>
                     Private file · {accept[m.type]} · up to 14 MB<input
                       type="file"
+                      disabled={!filesReady||busy}
                       accept={accept[m.type]}
                       onChange={(ev) => {
                         if (ev.target.files?.[0]) void upload(ev.target.files[0]);
@@ -290,6 +297,7 @@ function Desk({ uid, admin }: { uid: string; admin: boolean }) {
                     />
                   </label>
                 )}
+                {!filesReady&&<p role="status">Secure file upload is not available yet. You can prepare a private draft using an authorised HTTPS resource link. Files will not be sent until secure processing is ready.</p>}
                 <label>
                   Or use an HTTPS resource link<input
                     type="url"

@@ -2,14 +2,14 @@
 const fs=require('node:fs'),Module=require('node:module'),assert=require('node:assert/strict'),ts=require('typescript');
 require.extensions['.ts']=(mod,file)=>mod._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText,file);
 const F=require('../lib/creator/workflow.ts'),{context}=require('../supabase/functions/creator-moli/agent.ts');
-const projects=new Map(),queue=[],calls=[];let handler,uid='a',adult=true,limited=false,failure=false;
+const projects=new Map(),queue=[],calls=[];let handler,uid='a',adult=true,limited=false,failure=false,profileRole='teacher',publisher=true;
 const db={auth:{getUser:async token=>({data:{user:token==='ok'?{id:uid,app_metadata:{creator_moli_adult:adult}}:null}})},from(table){
   const filters={}; let insertion;
   const result=()=>[...projects.values()].filter(r=>Object.entries(filters).every(([k,v])=>r[k]===v));
-  const q={select:()=>q,eq:(k,v)=>{filters[k]=v;return q},maybeSingle:async()=>({data:table==='teacher_dna'?null:structuredClone(result()[0])}),
+  const q={select:()=>q,eq:(k,v)=>{filters[k]=v;return q},maybeSingle:async()=>({data:table==='teacher_dna'?null:table==='lb_creators'?{status:publisher?'approved':'pending'}:structuredClone(result()[0])}),
    order:async()=>({data:result().map(({id,title,revision})=>({id,title,revision}))}),
    insert:v=>{insertion=v;return q},single:async()=>{const id=crypto.randomUUID(),r={id,revision:1,...insertion};projects.set(id,r);return {data:structuredClone(r)}}};return q;
- },rpc:async(name,args)=>{if(name.endsWith('quota'))return {data:!limited};const r=projects.get(args.target);
+ },rpc:async(name,args)=>{if(name==='cm_access_for')return {data:profileRole==='student'?'restricted':adult?'eligible':'unverified'};if(name.endsWith('quota'))return {data:!limited};const r=projects.get(args.target);
  if(!r||r.revision!==args.expected||r.owner_id!==args.actor||r.state.status==='submitted')return {data:null};
  r.state=structuredClone(args.next_state);r.revision++;if(args.verb==='submit')queue.push(r.id);return {data:r.revision};}};
 const original=Module._load;Module._load=function(name,...rest){if(name==='https://esm.sh/@supabase/supabase-js@2')return {createClient:()=>db};return original.call(this,name,...rest)};
@@ -25,11 +25,14 @@ global.fetch=async(url,opts)=>{assert.equal(url,'https://api.deepseek.com/chat/c
 const api=(body,token='ok')=>handler(new Request('http://test',{method:'POST',headers:{authorization:'Bearer '+token,origin:'https://moliverse.tech'},body:JSON.stringify(body)}));
 async function run(){
  assert.equal((await api({action:'list'},'bad')).status,401);adult=false;assert.equal((await api({action:'list'})).status,403);adult=true;
+ profileRole='student';assert.equal((await api({action:'list'})).status,403);profileRole='teacher';
+ // A verified adult without publishing approval can brainstorm but cannot submit.
+ publisher=false;
  let p=(await (await api({action:'create',title:'Night market notebook'})).json()).project;
  const act=(action,extra={})=>api({action,projectId:p.id,revision:p.revision,...extra});
  async function success(action,extra){const response=await act(action,extra);assert.equal(response.status,200);p=(await response.json()).project;return p}
  uid='b';assert.equal((await act('get_project_state')).status,404);assert.equal((await act('save_course_draft',{draft})).status,404);assert.deepEqual((await (await api({action:'list'})).json()).projects,[]);uid='a';
- assert.equal((await act('submit')).status,409);assert.equal((await act('publish')).status,400);
+ assert.equal((await act('submit')).status,403);assert.equal((await act('publish')).status,400);
  const scenarios=[
  ['external-slides',"I made a presentation about Ukrainian culture, but I don't know how to make it engaging for children."],
  ['vague','I like maps but I do not have a course yet.'],['personal','My grandmother taught me to ask for mangoes in Penang.'],
@@ -50,6 +53,7 @@ async function run(){
   if(label==='external-slides'){assert.equal(p.state.proposal,null);assert.equal(p.state.versions.length,0);assert(ctx.notes.some(n=>n.includes("culture")));assert.match(calls.at(-2).messages[0].content,/existing external course/);}
  }
  const rev=p.revision;failure=true;assert.match(await (await act('chat',{message:'Retry this idea'})).text(),/"error"/);
+ assert.equal((await act('submit')).status,403);publisher=true;
  assert.equal(projects.get(p.id).revision,rev);failure=false;limited=true;assert.equal((await act('chat',{message:'Hello'})).status,429);limited=false;
  assert.equal((await act('save_brainstorm_state',{revision:p.revision-1,edit:{stage:'EXPLORE'}})).status,409);
  assert.equal((await act('chat',{message:'Contact me at child@example.com'})).status,400);

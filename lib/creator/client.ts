@@ -5,7 +5,7 @@ export type Summary = Pick<Project,"id"|"title"|"revision">;
 export async function invoke(body:Record<string,unknown>,delta?:(s:string)=>void):Promise<{project?:Project;projects?:Summary[]}>{
  const {data,error}=await supabase.functions.invoke("creator-moli",{body});
  if(error){
-   let reason="Creator Space is unavailable. Check your connection and invitation, then retry.";
+   let reason="Creator Moli is unavailable. Check your connection, reload your access status and retry. Your saved notebook has not been replaced.";
    try{const j=await error.context.json();if(typeof j.error==="string")reason=j.error}catch{/* gateway errors have no project details */}
    throw Error(reason);
  }

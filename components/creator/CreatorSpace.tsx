@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import {useCallback,useEffect,useRef,useState} from "react";
-import {supabase} from "@/lib/supabase";
 import {withBasePath} from "@/lib/paths";
 import {invoke,type Project,type Summary} from "@/lib/creator/client";
 import {fields, stages, draftFields, type Field, type Draft} from "@/lib/creator/workflow";
 import "./space.css";
+import CreatorAccess from "./CreatorAccess";
+import {useSession} from "@/lib/platform/useSession";
 
 const labels:Record<Field,string>={intent:"What you want to make",topic:"Topic",inspiration:"Personal inspiration",learners:"Intended learners",goals:"Learning goals",format:"Format",activities:"Activities",constraints:"Constraints",decisions:"Decisions",questions:"Open questions"};
 const prompts=["I have an idea, but no lesson yet.","I already have a course to review.","I want to teach this outside MoliVerse."];
@@ -80,8 +81,7 @@ function Notebook({owner}:{owner:string}){
  </>;
 }
 export default function CreatorSpace(){
- const [owner,setOwner]=useState<string|null|undefined>(undefined);
- useEffect(()=>{const {data}=supabase.auth.onAuthStateChange((_event,session)=>setOwner(session?.user.app_metadata.creator_moli_adult===true?session.user.id:null));return ()=>data.subscription.unsubscribe()},[]);
+ const user=useSession();
  return <main className="creator-space"><Link href="/teach/">← For creators</Link><header><img src={withBasePath("/moli-cutout.png")} alt="" width={70} height={80}/><div><small>Creator space · Adults only</small><h1>A notebook with Moli</h1></div></header>
- {owner===undefined?<p role="status">Checking access…</p>:owner?<Notebook key={owner} owner={owner}/>:<section><h2>An invitation to create</h2><p>This private space is for approved adult creators. Sign in with your invited account; a student account cannot start an AI conversation here.</p><Link href="/account/">Go to account →</Link></section>}</main>;
+ <CreatorAccess>{user&&<Notebook key={user.id} owner={user.id}/>}</CreatorAccess></main>;
 }

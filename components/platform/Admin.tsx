@@ -6,8 +6,10 @@ import { media, rpc } from "@/lib/platform/client";
 import type { Creator, Submission } from "@/lib/platform/world";
 import { Preview } from "./Publishing";
 import { orders } from "@/lib/platform/world";
+import AdultReview from "@/components/creator/AdultReview";
 const checklist = ["rights", "safety", "age", "culture", "quality", "technical", "privacy"];
 const categories = [
+  "Adult access",
   "Applications",
   "Content review",
   "Published content",
@@ -100,6 +102,7 @@ function Console({ uid }: { uid: string }) {
         ))}
       </div>
       <p role="status">{info}</p>
+      {tab === "Adult access" && <AdultReview uid={uid}/>}
       <button disabled={busy} onClick={() => run(async () => {})}>Refresh queue</button>
       {tab === "Applications" && (
         <>

@@ -104,6 +104,10 @@ Deno.serve(async (req) => {
     const own = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: auth } },
     });
+    if (b.action === "creator_capabilities") {
+      const { data: creator } = await own.from("lb_creators").select("status").eq("id",user!.id).maybeSingle();
+      return json({files:creator?.status==="approved" && Boolean(Deno.env.get("MEDIA_WORKER_URL") && Deno.env.get("MEDIA_WORKER_TOKEN"))});
+    }
     if (b.action === "capabilities") {
       const { data: art } = await own.rpc("lb_art_access", { e: id(b.explorer) });
       const { data: pref } = await own.from("guardian_preferences").select("ai_mentor_enabled").eq(

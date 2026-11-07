@@ -13,8 +13,9 @@ const {handler}=require('./test-creator-moli.cjs');
  if(url.includes('/functions/v1/creator-moli')){
  const r=await handler(new Request(url,{method:route.request().method(),headers:route.request().headers(),body:route.request().postData()||undefined}));
  await route.fulfill({status:r.status,headers:Object.fromEntries(r.headers.entries()),body:await r.text()});
- }else await route.fulfill({json:user});});
+ }else if(url.includes('/rpc/cm_access_status'))await route.fulfill({json:'eligible'});else await route.fulfill({json:user});});
  await page.goto(base+'/teach/creator/');
+ await page.getByRole('button',{name:'Open Creator Moli'}).click();
  const name='Ferry notebook '+width;
  await page.getByLabel('New project').fill(name);await page.getByRole('button',{name:'Start notebook'}).click();await page.getByLabel('Your idea').fill('My aunt taught me to sketch on the ferry.');
  await page.getByRole('button',{name:'Send to Moli'}).click();await page.getByText('What do you remember?',{exact:false}).first().waitFor();
@@ -22,6 +23,7 @@ const {handler}=require('./test-creator-moli.cjs');
  await page.getByRole('button',{name:'Review suggestion'}).click();await page.getByRole('textbox',{name:'Topic',exact:true}).fill('Sketching from the ferry');await page.getByRole('button',{name:'Confirm',exact:true}).click();
  await page.getByRole('button',{name:'Suggest an outline'}).click();await page.getByLabel('Title',{exact:true}).fill('An artist on the ferry',{timeout:6000}).catch(async e=>{throw Error(e.message+"\n"+(await page.locator('body').innerText()).slice(-2500))});await page.getByRole('button',{name:'Save new version'}).click();
  await page.getByText('Private · saved version 1').waitFor();await page.reload();
+ await page.getByRole('button',{name:'Open Creator Moli'}).click();
  if(width<760)await page.getByRole('button',{name:'Idea board & draft'}).click();
  await page.getByText('Private · saved version 1').waitFor();
  await page.getByRole('button',{name:'Ask Moli to review saved draft'}).click();await page.getByText('Moli’s review · v1').waitFor();
