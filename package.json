@@ -10,6 +10,7 @@
     "test:library": "node scripts/test-learning-library.cjs",
     "test:bakery": "node scripts/test-learner-bakery.cjs",
     "test:growing": "node scripts/test-growing-vocabulary.cjs && node scripts/test-growing-world-sql.cjs",
+    "test:companion": "node scripts/test-meet-moli.cjs",
     "test:creator": "node scripts/test-creator-moli.cjs",
     "test:platform": "node scripts/test-platform-sql.cjs && node scripts/test-platform-media.cjs && node scripts/test-world-moli.cjs && npm --prefix services/platform-media test",
     "test:platform:browser": "node scripts/test-platform-browser.cjs && node scripts/test-world-browser.cjs",
