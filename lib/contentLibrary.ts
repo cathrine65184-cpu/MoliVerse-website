@@ -64,7 +64,7 @@ export type LibraryContent = {
   game?: StoryGameData;
   document?: { kind: 'pdf'; url: string; pageCount: number };
   lyrics?: LyricLine[];
-  audio?: { kind: 'synth-demo'; duration: number; label: string };
+  audio?: { kind: 'synth-demo'; duration: number; label: string } | { kind: 'recording'; url: string; duration: number; label: string };
   preQuestion: string;
   postActivity: {
     type: 'sequence' | 'actions';
@@ -106,6 +106,28 @@ export const ORIGINAL_LIBRARY: LibraryContent[] = [
     audio: { kind: 'synth-demo', duration: 9.6, label: 'Original synthesized melody demo · no sung voice' },
     postActivity: { type: 'actions', title: 'Move with the song', prompt: 'Complete each movement as you hear its line.', items: [{ id: 'jump', label: 'Jump with the moon' }, { id: 'turn', label: 'Turn with the cat' }, { id: 'high', label: 'Reach high' }, { id: 'low', label: 'Crouch low' }], answer: ['jump', 'turn', 'high', 'low'] },
     createBrief: 'Create an original moonlit movement story in Spanish where a child follows Moli, a moon and a playful cat using salta, gira, alto and bajo.',
+  },
+  {
+    id: 'cascabel', version: 1, title: 'Cascabel', contentType: 'sing', language: 'Spanish', locale: 'es', supportLanguage: 'English',
+    suggestedAgeRange: '6–9', proficiencyLevel: 'All levels', thinkingLevel: 'Listen and notice rhythm', themes: ['Music', 'Rhythm'], minutes: 3,
+    ownerId: 'moliverse-library', source: { name: 'Educator-provided recording', rightsStatus: 'licensed', rightsNotes: 'The uploader confirmed permission for public playback on MoliVerse. Recording artist, composer and edition were not supplied; lyrics and timestamps are not available.' },
+    visibility: 'public', processingStatus: 'ready', cover: { emoji: '🔔', from: '#f6deb4', to: '#d9e8c9' },
+    learningObjectives: ['Listen to a Spanish-language recording', 'Notice its rhythm and repeated sounds'], relatedWorldIds: [], followUpActivity: 'Share a rhythm you noticed', demo: false,
+    audio: { kind: 'recording', url: '/audio/cascabel.mp3', duration: 165.3, label: 'Educator-provided Spanish recording' },
+    preQuestion: 'What sounds do you think you will hear?',
+    postActivity: { type: 'actions', title: 'Listen and move', prompt: 'Tap along to the beat. When you have listened, choose the movements you tried.', items: [{ id: 'tap', label: 'Tapped the beat' }, { id: 'sway', label: 'Swayed to the music' }], answer: ['tap', 'sway'] },
+    createBrief: 'Create an original Spanish-language rhythm activity inspired by listening to Cascabel. Do not reproduce the recording or claim its lyrics are available.',
+  },
+  {
+    id: 'santa-donde-estas', version: 1, title: '¿Santa, Dónde Estás?', contentType: 'sing', language: 'Spanish', locale: 'es', supportLanguage: 'English',
+    suggestedAgeRange: '6–9', proficiencyLevel: 'All levels', thinkingLevel: 'Listen and notice a question', themes: ['Music', 'Questions'], minutes: 3,
+    ownerId: 'moliverse-library', source: { name: 'Educator-provided recording', rightsStatus: 'licensed', rightsNotes: 'The uploader confirmed permission for public playback on MoliVerse. Recording artist, composer and edition were not supplied; lyrics and timestamps are not available.' },
+    visibility: 'public', processingStatus: 'ready', cover: { emoji: '🎶', from: '#eac1c1', to: '#d2e4ef' },
+    learningObjectives: ['Listen to a Spanish-language recording', 'Notice the question in the title: ¿Dónde estás?'], relatedWorldIds: [], followUpActivity: 'Ask where someone is in Spanish', demo: false,
+    audio: { kind: 'recording', url: '/audio/santa-donde-estas.mp3', duration: 140.3, label: 'Educator-provided Spanish recording' },
+    preQuestion: 'The title asks “Where are you?” What might the song be about?',
+    postActivity: { type: 'actions', title: 'Listen and notice', prompt: 'Listen to the recording, then choose what you tried.', items: [{ id: 'question', label: 'Listened for “¿Dónde estás?”' }, { id: 'beat', label: 'Tapped the beat' }], answer: ['question', 'beat'] },
+    createBrief: 'Create an original Spanish question game inspired by the title ¿Santa, Dónde Estás? Do not reproduce the recording or claim its lyrics are available.',
   },
 ];
 
