@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { clean, obj } from "../../../lib/creator/workflow.ts";
 import { deepSeekProvider, type Turn } from "./provider.ts";
 import {entryForAsset} from "../../../lib/platform/vocabulary.ts";
+import {companionReply} from './companion.ts';
 const assets = ["chair", "tree", "shop", "moli", "book", "bread", "stars", "valley"];
 Deno.serve(async (req) => {
   const origin = req.headers.get("origin") || "";
@@ -25,8 +26,13 @@ Deno.serve(async (req) => {
     const { data: { user } } = await db.auth.getUser();
     if (!user) return send({ error: "A guardian session is required." }, 401);
     const raw = await req.text();
-    if (raw.length > 5000) return send({ error: "Use a shorter question." }, 413);
+    if (raw.length > 40000) return send({ error: "Use a shorter question." }, 413);
     const b = obj(JSON.parse(raw));
+    if(b.action==='companion'){
+      try{const result=await companionReply(db,user.id,b);return send(result.body,result.status)}
+      catch{return send({error:'Live Moli could not produce a checked response. Please retry, or use the offline word guide.'},503)}
+    }
+    if(raw.length>5000)return send({error:'Use a shorter question.'},413);
     const { data: access } = await db.rpc("lb_access", { e: b.explorer });
     const { data: p } = await db.from("guardian_preferences").select("ai_mentor_enabled").eq(
       "explorer_id",

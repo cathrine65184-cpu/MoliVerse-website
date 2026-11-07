@@ -1,5 +1,13 @@
 // Supplied MoliVerse artwork, rendered as sprites without altering the original sheets.
-export const sprites:Record<string,{sheet:string;box:[number,number,number,number];clip?:string}>= {
+export const sprites:Record<string,{sheet:string;box:[number,number,number,number];clip?:string;width?:number;height?:number}>= {
+ apple:{sheet:"fruit-friends",box:[0,0,443.5,443.5],width:1774,height:887},
+ strawberry:{sheet:"fruit-friends",box:[443.5,0,443.5,443.5],width:1774,height:887},
+ banana:{sheet:"fruit-friends",box:[887,0,443.5,443.5],width:1774,height:887},
+ orange:{sheet:"fruit-friends",box:[1330.5,0,443.5,443.5],width:1774,height:887},
+ cat:{sheet:"fruit-friends",box:[0,443.5,443.5,443.5],width:1774,height:887},
+ dog:{sheet:"fruit-friends",box:[443.5,443.5,443.5,443.5],width:1774,height:887},
+ rabbit:{sheet:"fruit-friends",box:[887,443.5,443.5,443.5],width:1774,height:887},
+ bird:{sheet:"fruit-friends",box:[1330.5,443.5,443.5,443.5],width:1774,height:887},
  chair:{sheet:"cafe",box:[739,65,292,485]},
  table:{sheet:"cafe",box:[7,145,370,410]},
  bed:{sheet:"bedroom",box:[12,145,455,430]},

@@ -11,9 +11,11 @@ export type VocabularyEntry = {
 };
 export const concepts:Concept[]=[
  {id:"chair",label:"a chair"},{id:"table",label:"a table"},{id:"lamp",label:"a lamp"},
- {id:"book",label:"a book"},{id:"bed",label:"a bed"},{id:"rug",label:"a rug"},{id:"apple",label:"an apple"}
+ {id:"book",label:"a book"},{id:"bed",label:"a bed"},{id:"rug",label:"a rug"},{id:"apple",label:"an apple"},
+ {id:"banana",label:"a banana"},{id:"strawberry",label:"a strawberry"},{id:"orange",label:"an orange"},
+ {id:"cat",label:"a cat"},{id:"dog",label:"a dog"},{id:"rabbit",label:"a rabbit"},{id:"bird",label:"a bird"}
 ];
-export const assetConcepts:Record<string,string>={chair:"chair",table:"table",lamp:"lamp",book:"book",bookshelf:"book",bed:"bed",rug:"rug","apple-basket":"apple"};
+export const assetConcepts:Record<string,string>={chair:"chair",table:"table",lamp:"lamp",book:"book",bookshelf:"book",bed:"bed",rug:"rug","apple-basket":"apple",apple:"apple",banana:"banana",strawberry:"strawberry",orange:"orange",cat:"cat",dog:"dog",rabbit:"rabbit",bird:"bird"};
 const rows=[
  ["chair","chaise","une","feminine","A seat with a back, for one person.","Voici une chaise.","La chaise est ici.","fr-FR"],
  ["table","table","une","feminine","Furniture with a flat top for putting things on.","Voici une table.","La table est ici.","fr-FR"],
@@ -21,13 +23,20 @@ const rows=[
  ["book","livre","un","masculine","Pages joined together for reading.","Voici un livre.","Le livre est ici.","fr-FR"],
  ["bed","lit","un","masculine","Furniture for sleeping on.","Voici un lit.","Le lit est ici.","fr-FR"],
  ["rug","tapis","un","masculine","A soft covering placed on the floor.","Voici un tapis.","Le tapis est ici.","fr-FR"],
- ["apple","pomme","une","feminine","A round fruit that grows on an apple tree.","Voici une pomme.","Une pomme, s’il vous plaît !","fr-FR"]
+ ["apple","pomme","une","feminine","A round fruit that grows on an apple tree.","Voici une pomme.","Une pomme, s’il vous plaît !","fr-FR"],
+ ["banana","banane","une","feminine","A long fruit with a skin you peel.","Voici une banane.","La banane est jaune.","fr-FR"],
+ ["strawberry","fraise","une","feminine","A small red fruit with tiny seeds on the outside.","Voici une fraise.","La fraise est rouge.","fr-FR"],
+ ["orange","orange","une","feminine","A round citrus fruit with a peel.","Voici une orange.","Je mange une orange.","fr-FR"],
+ ["cat","chat","un","masculine","A small animal that can purr and meow.","Voici un chat.","Le chat est ici.","fr-FR"],
+ ["dog","chien","un","masculine","An animal that can bark and often lives with people.","Voici un chien.","Le chien est ici.","fr-FR"],
+ ["rabbit","lapin","un","masculine","A small animal with long ears and soft fur.","Voici un lapin.","Le lapin est ici.","fr-FR"],
+ ["bird","oiseau","un","masculine","An animal with feathers, a beak and wings.","Voici un oiseau.","Un oiseau est ici.","fr-FR"]
 ] as const;
 export const vocabulary:VocabularyEntry[]=rows.flatMap(([id,word,article,gender,meaning,example,second,locale])=>{
  const source={title:`Wiktionnaire contributors — ${word}`,url:`https://fr.wiktionary.org/wiki/${word}`,license:"CC BY-SA 4.0",licenseUrl:"https://creativecommons.org/licenses/by-sa/4.0/",checkedAt:"2026-11-07",changes:"Child-friendly English definition adapted; original MoliVerse examples. No dictionary example sentences copied."};
  const options=[id,...concepts.filter(c=>c.id!==id).slice(0,2).map(c=>c.id)];
  return [{id:`fr-${id}-v1`,version:1,conceptId:id,language:"fr",word,article,gender,meaning,example,examples:[example,second],pronunciation:{provider:"local-device-tts",locale,text:`${article} ${word}`},source,reviewStatus:"reference-checked",level:"Beginner",options},
- {id:`en-${id}-v1`,version:1,conceptId:id,language:"en",word:id,article:id==="apple"?"an":"a",gender:"none",meaning,example:`Here is ${id==="apple"?"an":"a"} ${id}.`,examples:[`Here is ${id==="apple"?"an":"a"} ${id}.`,`The ${id} is here.`],pronunciation:{provider:"local-device-tts",locale:"en-GB",text:`${id==="apple"?"an":"a"} ${id}`},source,reviewStatus:"reference-checked",level:"Beginner",options}];
+ {id:`en-${id}-v1`,version:1,conceptId:id,language:"en",word:id,article:/^[aeiou]/.test(id)?"an":"a",gender:"none",meaning,example:`Here is ${/^[aeiou]/.test(id)?"an":"a"} ${id}.`,examples:[`Here is ${/^[aeiou]/.test(id)?"an":"a"} ${id}.`,`The ${id} is here.`],pronunciation:{provider:"local-device-tts",locale:"en-GB",text:`${/^[aeiou]/.test(id)?"an":"a"} ${id}`},source,reviewStatus:"reference-checked",level:"Beginner",options}];
 });
 export function entryForAsset(asset:string,language:string){return vocabulary.find(v=>v.conceptId===assetConcepts[asset]&&v.language===language&&v.reviewStatus==="reference-checked");}
 export function checkVocabulary(entry:VocabularyEntry,choice:string){return entry.options.includes(choice)&&choice===entry.conceptId;}
